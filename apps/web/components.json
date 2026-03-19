@@ -16,5 +16,8 @@
     "lib": "@/lib",
     "utils": "@take-me/ui/lib/utils",
     "ui": "@take-me/ui/components"
-  }
+  },
+  "rtl": false,
+  "menuColor": "default",
+  "menuAccent": "subtle"
 }

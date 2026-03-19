@@ -20,9 +20,24 @@
 		"enabled": true
 	},
 	"linter": {
-		"enabled": true
+		"enabled": true,
+		"rules": {
+			"a11y": {
+				"noSvgWithoutTitle": "off"
+			}
+		}
 	},
 	"assist": {
 		"enabled": true
+	},
+	"json": {
+		"formatter": {
+			"enabled": false
+		}
+	},
+	"css": {
+		"parser": {
+			"tailwindDirectives": true
+		}
 	}
 }

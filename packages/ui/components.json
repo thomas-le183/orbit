@@ -1,20 +1,23 @@
 {
-  "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "base-mira",
-  "rsc": false,
-  "tsx": true,
-  "tailwind": {
-    "config": "",
-    "css": "src/styles/globals.css",
-    "baseColor": "neutral",
-    "cssVariables": true
-  },
-  "iconLibrary": "lucide",
-  "aliases": {
-    "components": "@take-me/ui/components",
-    "utils": "@take-me/ui/lib/utils",
-    "hooks": "@take-me/ui/hooks",
-    "lib": "@take-me/ui/lib",
-    "ui": "@take-me/ui/components"
-  }
+	"$schema": "https://ui.shadcn.com/schema.json",
+	"style": "base-mira",
+	"rsc": false,
+	"tsx": true,
+	"tailwind": {
+		"config": "",
+		"css": "src/styles/globals.css",
+		"baseColor": "neutral",
+		"cssVariables": true
+	},
+	"iconLibrary": "lucide",
+	"aliases": {
+		"components": "@take-me/ui/components",
+		"utils": "@take-me/ui/lib/utils",
+		"hooks": "@take-me/ui/hooks",
+		"lib": "@take-me/ui/lib",
+		"ui": "@take-me/ui/components"
+	},
+	"rtl": false,
+	"menuColor": "default",
+	"menuAccent": "subtle"
 }
