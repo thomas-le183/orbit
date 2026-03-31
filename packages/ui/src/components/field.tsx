@@ -1,9 +1,9 @@
 "use client";
 
-import { Label } from "@take-me/ui/components/label";
-import { Separator } from "@take-me/ui/components/separator";
+import { Label } from "@orbit/ui/components/label";
+import { Separator } from "@orbit/ui/components/separator";
 
-import { cn } from "@take-me/ui/lib/utils";
+import { cn } from "@orbit/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import { useMemo } from "react";
 

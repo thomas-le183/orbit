@@ -1,4 +1,4 @@
-import { cn } from "@take-me/ui/lib/utils";
+import { cn } from "@orbit/ui/lib/utils";
 import type * as React from "react";
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {

@@ -1,5 +1,5 @@
 {
-  "name": "take-me",
+  "name": "orbit",
   "private": true,
   "scripts": {
     "build": "turbo run build",

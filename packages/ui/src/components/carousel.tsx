@@ -1,5 +1,5 @@
-import { Button } from "@take-me/ui/components/button";
-import { cn } from "@take-me/ui/lib/utils";
+import { Button } from "@orbit/ui/components/button";
+import { cn } from "@orbit/ui/lib/utils";
 import useEmblaCarousel, {
 	type UseEmblaCarouselType,
 } from "embla-carousel-react";

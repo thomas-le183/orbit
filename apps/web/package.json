@@ -13,7 +13,7 @@
 	},
 	"dependencies": {
 		"@tailwindcss/vite": "^4.1.18",
-		"@take-me/ui": "*",
+		"@orbit/ui": "*",
 		"@tanstack/react-devtools": "latest",
 		"@tanstack/react-router": "latest",
 		"@tanstack/react-router-devtools": "latest",

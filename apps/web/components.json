@@ -14,8 +14,8 @@
     "components": "@/components",
     "hooks": "@/hooks",
     "lib": "@/lib",
-    "utils": "@take-me/ui/lib/utils",
-    "ui": "@take-me/ui/components"
+    "utils": "@orbit/ui/lib/utils",
+    "ui": "@orbit/ui/components"
   },
   "rtl": false,
   "menuColor": "default",

@@ -14,9 +14,9 @@ import {
 	DropdownMenuSubContent,
 	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
-} from "@take-me/ui/components/dropdown-menu";
+} from "@orbit/ui/components/dropdown-menu";
 
-import { cn } from "@take-me/ui/lib/utils";
+import { cn } from "@orbit/ui/lib/utils";
 import { CheckIcon } from "lucide-react";
 import type * as React from "react";
 

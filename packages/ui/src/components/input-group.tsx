@@ -1,7 +1,7 @@
-import { Button } from "@take-me/ui/components/button";
-import { Input } from "@take-me/ui/components/input";
-import { Textarea } from "@take-me/ui/components/textarea";
-import { cn } from "@take-me/ui/lib/utils";
+import { Button } from "@orbit/ui/components/button";
+import { Input } from "@orbit/ui/components/input";
+import { Textarea } from "@orbit/ui/components/textarea";
+import { cn } from "@orbit/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
 

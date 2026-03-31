@@ -1,7 +1,7 @@
 "use client";
 
-import { Button, buttonVariants } from "@take-me/ui/components/button";
-import { cn } from "@take-me/ui/lib/utils";
+import { Button, buttonVariants } from "@orbit/ui/components/button";
+import { cn } from "@orbit/ui/lib/utils";
 import {
 	ChevronDownIcon,
 	ChevronLeftIcon,

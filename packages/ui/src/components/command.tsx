@@ -4,13 +4,10 @@ import {
 	DialogDescription,
 	DialogHeader,
 	DialogTitle,
-} from "@take-me/ui/components/dialog";
-import {
-	InputGroup,
-	InputGroupAddon,
-} from "@take-me/ui/components/input-group";
+} from "@orbit/ui/components/dialog";
+import { InputGroup, InputGroupAddon } from "@orbit/ui/components/input-group";
 
-import { cn } from "@take-me/ui/lib/utils";
+import { cn } from "@orbit/ui/lib/utils";
 import { Command as CommandPrimitive } from "cmdk";
 import { CheckIcon, SearchIcon } from "lucide-react";
 import type * as React from "react";

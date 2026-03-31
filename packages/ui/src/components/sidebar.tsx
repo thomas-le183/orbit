@@ -1,23 +1,23 @@
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
-import { Button } from "@take-me/ui/components/button";
-import { Input } from "@take-me/ui/components/input";
-import { Separator } from "@take-me/ui/components/separator";
+import { Button } from "@orbit/ui/components/button";
+import { Input } from "@orbit/ui/components/input";
+import { Separator } from "@orbit/ui/components/separator";
 import {
 	Sheet,
 	SheetContent,
 	SheetDescription,
 	SheetHeader,
 	SheetTitle,
-} from "@take-me/ui/components/sheet";
-import { Skeleton } from "@take-me/ui/components/skeleton";
+} from "@orbit/ui/components/sheet";
+import { Skeleton } from "@orbit/ui/components/skeleton";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
-} from "@take-me/ui/components/tooltip";
-import { useIsMobile } from "@take-me/ui/hooks/use-mobile";
-import { cn } from "@take-me/ui/lib/utils";
+} from "@orbit/ui/components/tooltip";
+import { useIsMobile } from "@orbit/ui/hooks/use-mobile";
+import { cn } from "@orbit/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";
 import * as React from "react";

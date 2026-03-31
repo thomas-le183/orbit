@@ -11,11 +11,11 @@
 	},
 	"iconLibrary": "lucide",
 	"aliases": {
-		"components": "@take-me/ui/components",
-		"utils": "@take-me/ui/lib/utils",
-		"hooks": "@take-me/ui/hooks",
-		"lib": "@take-me/ui/lib",
-		"ui": "@take-me/ui/components"
+		"components": "@orbit/ui/components",
+		"utils": "@orbit/ui/lib/utils",
+		"hooks": "@orbit/ui/hooks",
+		"lib": "@orbit/ui/lib",
+		"ui": "@orbit/ui/components"
 	},
 	"rtl": false,
 	"menuColor": "default",

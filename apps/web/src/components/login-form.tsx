@@ -1,13 +1,13 @@
-import { Button } from "@take-me/ui/components/button";
+import { Button } from "@orbit/ui/components/button";
 import {
 	Field,
 	FieldDescription,
 	FieldGroup,
 	FieldLabel,
 	FieldSeparator,
-} from "@take-me/ui/components/field";
-import { Input } from "@take-me/ui/components/input";
-import { cn } from "@take-me/ui/lib/utils";
+} from "@orbit/ui/components/field";
+import { Input } from "@orbit/ui/components/input";
+import { cn } from "@orbit/ui/lib/utils";
 import { GalleryVerticalEndIcon } from "lucide-react";
 
 export function LoginForm({
