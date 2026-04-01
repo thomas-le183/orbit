@@ -1,35 +1,35 @@
 // Success response with data
 export type ApiSuccess<T> = {
-	success: true
-	data: T
-}
+	success: true;
+	data: T;
+};
 
 // Error response
 export type ApiError = {
-	success: false
+	success: false;
 	error: {
-		code: string
-		message: string
-	}
-}
+		code: string;
+		message: string;
+	};
+};
 
 // Union — use this as the return type for all API calls
-export type ApiResponse<T> = ApiSuccess<T> | ApiError
+export type ApiResponse<T> = ApiSuccess<T> | ApiError;
 
 // Paginated success response (cursor-based)
 export type PaginatedData<T> = {
-	items: T[]
-	nextCursor: string | null
-	prevCursor: string | null
-}
+	items: T[];
+	nextCursor: string | null;
+	prevCursor: string | null;
+};
 
-export type PaginatedResponse<T> = ApiSuccess<PaginatedData<T>> | ApiError
+export type PaginatedResponse<T> = ApiSuccess<PaginatedData<T>> | ApiError;
 
 // Narrowing helpers
 export function isApiSuccess<T>(res: ApiResponse<T>): res is ApiSuccess<T> {
-	return res.success === true
+	return res.success === true;
 }
 
 export function isApiError<T>(res: ApiResponse<T>): res is ApiError {
-	return res.success === false
+	return res.success === false;
 }

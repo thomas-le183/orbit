@@ -23,7 +23,7 @@ export const session = pgTable("session", {
 	userId: text("user_id")
 		.notNull()
 		.references(() => user.id, { onDelete: "cascade" }),
-	activeWorkspaceId: text("active_workspace_id"),
+	activeOrganizationId: text("active_organization_id"),
 });
 
 export const account = pgTable("account", {
@@ -53,9 +53,9 @@ export const verification = pgTable("verification", {
 	updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// ---------- Workspace (multi-tenant) plugin tables ----------
+// ---------- Organization (multi-tenant) plugin tables ----------
 
-export const workspace = pgTable("workspace", {
+export const organization = pgTable("organization", {
 	id: text("id").primaryKey(),
 	name: text("name").notNull(),
 	slug: text("slug").unique(),
@@ -66,9 +66,9 @@ export const workspace = pgTable("workspace", {
 
 export const member = pgTable("member", {
 	id: text("id").primaryKey(),
-	workspaceId: text("workspace_id")
+	organizationId: text("organization_id")
 		.notNull()
-		.references(() => workspace.id, { onDelete: "cascade" }),
+		.references(() => organization.id, { onDelete: "cascade" }),
 	userId: text("user_id")
 		.notNull()
 		.references(() => user.id, { onDelete: "cascade" }),
@@ -76,11 +76,32 @@ export const member = pgTable("member", {
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const team = pgTable("team", {
+	id: text("id").primaryKey(),
+	name: text("name").notNull(),
+	organizationId: text("organization_id")
+		.notNull()
+		.references(() => organization.id, { onDelete: "cascade" }),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+	updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const teamMember = pgTable("team_member", {
+	id: text("id").primaryKey(),
+	teamId: text("team_id")
+		.notNull()
+		.references(() => team.id, { onDelete: "cascade" }),
+	memberId: text("member_id")
+		.notNull()
+		.references(() => member.id, { onDelete: "cascade" }),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const invitation = pgTable("invitation", {
 	id: text("id").primaryKey(),
-	workspaceId: text("workspace_id")
+	organizationId: text("organization_id")
 		.notNull()
-		.references(() => workspace.id, { onDelete: "cascade" }),
+		.references(() => organization.id, { onDelete: "cascade" }),
 	email: text("email").notNull(),
 	role: text("role"),
 	status: text("status").notNull().default("pending"),

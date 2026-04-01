@@ -4,5 +4,5 @@ export function getInitials(name: string, max = 2): string {
 		.split(/\s+/)
 		.slice(0, max)
 		.map((word) => word[0].toUpperCase())
-		.join("")
+		.join("");
 }
