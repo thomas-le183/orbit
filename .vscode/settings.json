@@ -33,4 +33,7 @@
 		"source.organizeImports.biome": "explicit"
 	},
 	"json.schemaDownload.enable": true,
+	"cSpell.words": [
+		"VITE"
+	],
 }

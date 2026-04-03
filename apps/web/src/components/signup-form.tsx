@@ -1,7 +1,10 @@
+import { useForm } from "@tanstack/react-form";
+import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@orbit/ui/components/button";
 import {
 	Field,
 	FieldDescription,
+	FieldError,
 	FieldGroup,
 	FieldLabel,
 	FieldSeparator,
@@ -9,14 +12,36 @@ import {
 import { Input } from "@orbit/ui/components/input";
 import { cn } from "@orbit/ui/lib/utils";
 import { GalleryVerticalEndIcon } from "lucide-react";
+import { signUp } from "@/lib/auth-client";
 
 export function SignupForm({
 	className,
 	...props
 }: React.ComponentProps<"div">) {
+	const navigate = useNavigate();
+
+	const form = useForm({
+		defaultValues: { name: "", email: "", password: "" },
+		onSubmit: async ({ value }) => {
+			await signUp.email({
+				name: value.name,
+				email: value.email,
+				password: value.password,
+				fetchOptions: {
+					onSuccess: () => navigate({ to: "/" }),
+				},
+			});
+		},
+	});
+
 	return (
 		<div className={cn("flex flex-col gap-6", className)} {...props}>
-			<form>
+			<form
+				onSubmit={(e) => {
+					e.preventDefault();
+					form.handleSubmit();
+				}}
+			>
 				<FieldGroup>
 					<div className="flex flex-col items-center gap-2 text-center">
 						<a
@@ -26,26 +51,95 @@ export function SignupForm({
 							<div className="flex size-8 items-center justify-center rounded-md">
 								<GalleryVerticalEndIcon className="size-6" />
 							</div>
-							<span className="sr-only">Acme Inc.</span>
+							<span className="sr-only">Orbit</span>
 						</a>
-						<h1 className="text-xl font-bold">Welcome to Acme Inc.</h1>
+						<h1 className="text-xl font-bold">Create an account</h1>
 						<FieldDescription>
-							Already have an account? <a href="#">Sign in</a>
+							Already have an account?{" "}
+							<a href="/login" className="underline underline-offset-4">
+								Sign in
+							</a>
 						</FieldDescription>
 					</div>
-					<Field>
-						<FieldLabel htmlFor="email">Email</FieldLabel>
-						<Input
-							id="email"
-							type="email"
-							placeholder="m@example.com"
-							required
-						/>
-					</Field>
-					<Field>
-						<Button type="submit">Create Account</Button>
-					</Field>
+
+					<form.Field
+						name="name"
+						children={(field) => (
+							<Field>
+								<FieldLabel htmlFor={field.name}>Name</FieldLabel>
+								<Input
+									id={field.name}
+									type="text"
+									placeholder="John Doe"
+									value={field.state.value}
+									onChange={(e) => field.handleChange(e.target.value)}
+									required
+								/>
+								{field.state.meta.errors.length > 0 && (
+									<FieldError>
+										{String(field.state.meta.errors[0])}
+									</FieldError>
+								)}
+							</Field>
+						)}
+					/>
+
+					<form.Field
+						name="email"
+						children={(field) => (
+							<Field>
+								<FieldLabel htmlFor={field.name}>Email</FieldLabel>
+								<Input
+									id={field.name}
+									type="email"
+									placeholder="m@example.com"
+									value={field.state.value}
+									onChange={(e) => field.handleChange(e.target.value)}
+									required
+								/>
+								{field.state.meta.errors.length > 0 && (
+									<FieldError>
+										{String(field.state.meta.errors[0])}
+									</FieldError>
+								)}
+							</Field>
+						)}
+					/>
+
+					<form.Field
+						name="password"
+						children={(field) => (
+							<Field>
+								<FieldLabel htmlFor={field.name}>Password</FieldLabel>
+								<Input
+									id={field.name}
+									type="password"
+									value={field.state.value}
+									onChange={(e) => field.handleChange(e.target.value)}
+									required
+								/>
+								{field.state.meta.errors.length > 0 && (
+									<FieldError>
+										{String(field.state.meta.errors[0])}
+									</FieldError>
+								)}
+							</Field>
+						)}
+					/>
+
+					<form.Subscribe
+						selector={(state) => state.isSubmitting}
+						children={(isSubmitting) => (
+							<Field>
+								<Button type="submit" disabled={isSubmitting}>
+									{isSubmitting ? "Creating account…" : "Create account"}
+								</Button>
+							</Field>
+						)}
+					/>
+
 					<FieldSeparator>Or</FieldSeparator>
+
 					<Field className="grid gap-4 sm:grid-cols-2">
 						<Button variant="outline" type="button">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">

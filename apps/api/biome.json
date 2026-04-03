@@ -1,6 +1,14 @@
 {
 	"$schema": "../../node_modules/@biomejs/biome/configuration_schema.json",
 	"root": false,
+	"linter": {
+		"rules": {
+			"style": {
+				"noNonNullAssertion": "off",
+				"useImportType": "off"
+			}
+		}
+	},
 	"javascript": {
 		"parser": {
 			"unsafeParameterDecoratorsEnabled": true

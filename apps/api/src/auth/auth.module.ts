@@ -1,15 +1,12 @@
 import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { betterAuth } from "better-auth/minimal";
 import { organization } from "better-auth/plugins";
 import { DB, type Db } from "../db/db.module";
 import * as schema from "../db/schema";
+import { AUTH } from "./auth.constants";
 import { AuthController } from "./auth.controller";
-
-export const AUTH = Symbol("AUTH");
-
-export type Auth = ReturnType<typeof betterAuth>;
 
 @Module({
 	providers: [
@@ -26,6 +23,13 @@ export type Auth = ReturnType<typeof betterAuth>;
 						provider: "pg",
 						schema,
 					}),
+					advanced: {
+						cookiePrefix: "orbit",
+						crossSubDomainCookies: {
+							enabled: true,
+							domain: config.get<string>("COOKIE_DOMAIN"),
+						},
+					},
 					emailAndPassword: { enabled: true },
 					plugins: [
 						organization({
