@@ -24,7 +24,10 @@
 		"rules": {
 			"a11y": "off",
 			"security": "off",
-			"suspicious": "off"
+			"suspicious": "off",
+			"correctness": {
+				"noChildrenProp": "off"
+			}
 		}
 	},
 	"assist": {

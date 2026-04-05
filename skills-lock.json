@@ -24,7 +24,7 @@
     "turborepo": {
       "source": "vercel/turborepo",
       "sourceType": "github",
-      "computedHash": "6003d81133edf53a174a6715c7767cf0a0acc4d3805590833a83fbaa688fa819"
+      "computedHash": "524646a320fcbe220b1b18019403a036eceee66c4447b33103348dc3533283b9"
     },
     "web-design-guidelines": {
       "source": "vercel-labs/agent-skills",

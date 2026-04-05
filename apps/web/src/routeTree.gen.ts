@@ -9,11 +9,34 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as CreateWorkspaceRouteImport } from './routes/create-workspace'
+import { Route as WorkspaceRouteImport } from './routes/_workspace'
 import { Route as PublicRouteImport } from './routes/_public'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WorkspaceOrgSlugRouteImport } from './routes/_workspace/$orgSlug'
 import { Route as PublicSignupRouteImport } from './routes/_public/signup'
 import { Route as PublicLoginRouteImport } from './routes/_public/login'
+import { Route as WorkspaceOrgSlugIndexRouteImport } from './routes/_workspace/$orgSlug/index'
+import { Route as WorkspaceOrgSlugWikiRouteImport } from './routes/_workspace/$orgSlug/wiki'
+import { Route as WorkspaceOrgSlugSettingsRouteImport } from './routes/_workspace/$orgSlug/settings'
+import { Route as WorkspaceOrgSlugChatRouteImport } from './routes/_workspace/$orgSlug/chat'
+import { Route as WorkspaceOrgSlugAiRouteImport } from './routes/_workspace/$orgSlug/ai'
 
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreateWorkspaceRoute = CreateWorkspaceRouteImport.update({
+  id: '/create-workspace',
+  path: '/create-workspace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkspaceRoute = WorkspaceRouteImport.update({
+  id: '/_workspace',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PublicRoute = PublicRouteImport.update({
   id: '/_public',
   getParentRoute: () => rootRouteImport,
@@ -22,6 +45,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const WorkspaceOrgSlugRoute = WorkspaceOrgSlugRouteImport.update({
+  id: '/$orgSlug',
+  path: '/$orgSlug',
+  getParentRoute: () => WorkspaceRoute,
 } as any)
 const PublicSignupRoute = PublicSignupRouteImport.update({
   id: '/signup',
@@ -33,39 +61,148 @@ const PublicLoginRoute = PublicLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => PublicRoute,
 } as any)
+const WorkspaceOrgSlugIndexRoute = WorkspaceOrgSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WorkspaceOrgSlugRoute,
+} as any)
+const WorkspaceOrgSlugWikiRoute = WorkspaceOrgSlugWikiRouteImport.update({
+  id: '/wiki',
+  path: '/wiki',
+  getParentRoute: () => WorkspaceOrgSlugRoute,
+} as any)
+const WorkspaceOrgSlugSettingsRoute =
+  WorkspaceOrgSlugSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => WorkspaceOrgSlugRoute,
+  } as any)
+const WorkspaceOrgSlugChatRoute = WorkspaceOrgSlugChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => WorkspaceOrgSlugRoute,
+} as any)
+const WorkspaceOrgSlugAiRoute = WorkspaceOrgSlugAiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
+  getParentRoute: () => WorkspaceOrgSlugRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/create-workspace': typeof CreateWorkspaceRoute
+  '/onboarding': typeof OnboardingRoute
   '/login': typeof PublicLoginRoute
   '/signup': typeof PublicSignupRoute
+  '/$orgSlug': typeof WorkspaceOrgSlugRouteWithChildren
+  '/$orgSlug/ai': typeof WorkspaceOrgSlugAiRoute
+  '/$orgSlug/chat': typeof WorkspaceOrgSlugChatRoute
+  '/$orgSlug/settings': typeof WorkspaceOrgSlugSettingsRoute
+  '/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
+  '/$orgSlug/': typeof WorkspaceOrgSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/create-workspace': typeof CreateWorkspaceRoute
+  '/onboarding': typeof OnboardingRoute
   '/login': typeof PublicLoginRoute
   '/signup': typeof PublicSignupRoute
+  '/$orgSlug/ai': typeof WorkspaceOrgSlugAiRoute
+  '/$orgSlug/chat': typeof WorkspaceOrgSlugChatRoute
+  '/$orgSlug/settings': typeof WorkspaceOrgSlugSettingsRoute
+  '/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
+  '/$orgSlug': typeof WorkspaceOrgSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_public': typeof PublicRouteWithChildren
+  '/_workspace': typeof WorkspaceRouteWithChildren
+  '/create-workspace': typeof CreateWorkspaceRoute
+  '/onboarding': typeof OnboardingRoute
   '/_public/login': typeof PublicLoginRoute
   '/_public/signup': typeof PublicSignupRoute
+  '/_workspace/$orgSlug': typeof WorkspaceOrgSlugRouteWithChildren
+  '/_workspace/$orgSlug/ai': typeof WorkspaceOrgSlugAiRoute
+  '/_workspace/$orgSlug/chat': typeof WorkspaceOrgSlugChatRoute
+  '/_workspace/$orgSlug/settings': typeof WorkspaceOrgSlugSettingsRoute
+  '/_workspace/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
+  '/_workspace/$orgSlug/': typeof WorkspaceOrgSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/signup'
+  fullPaths:
+    | '/'
+    | '/create-workspace'
+    | '/onboarding'
+    | '/login'
+    | '/signup'
+    | '/$orgSlug'
+    | '/$orgSlug/ai'
+    | '/$orgSlug/chat'
+    | '/$orgSlug/settings'
+    | '/$orgSlug/wiki'
+    | '/$orgSlug/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/signup'
-  id: '__root__' | '/' | '/_public' | '/_public/login' | '/_public/signup'
+  to:
+    | '/'
+    | '/create-workspace'
+    | '/onboarding'
+    | '/login'
+    | '/signup'
+    | '/$orgSlug/ai'
+    | '/$orgSlug/chat'
+    | '/$orgSlug/settings'
+    | '/$orgSlug/wiki'
+    | '/$orgSlug'
+  id:
+    | '__root__'
+    | '/'
+    | '/_public'
+    | '/_workspace'
+    | '/create-workspace'
+    | '/onboarding'
+    | '/_public/login'
+    | '/_public/signup'
+    | '/_workspace/$orgSlug'
+    | '/_workspace/$orgSlug/ai'
+    | '/_workspace/$orgSlug/chat'
+    | '/_workspace/$orgSlug/settings'
+    | '/_workspace/$orgSlug/wiki'
+    | '/_workspace/$orgSlug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PublicRoute: typeof PublicRouteWithChildren
+  WorkspaceRoute: typeof WorkspaceRouteWithChildren
+  CreateWorkspaceRoute: typeof CreateWorkspaceRoute
+  OnboardingRoute: typeof OnboardingRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/create-workspace': {
+      id: '/create-workspace'
+      path: '/create-workspace'
+      fullPath: '/create-workspace'
+      preLoaderRoute: typeof CreateWorkspaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_workspace': {
+      id: '/_workspace'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof WorkspaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_public': {
       id: '/_public'
       path: ''
@@ -80,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_workspace/$orgSlug': {
+      id: '/_workspace/$orgSlug'
+      path: '/$orgSlug'
+      fullPath: '/$orgSlug'
+      preLoaderRoute: typeof WorkspaceOrgSlugRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
     '/_public/signup': {
       id: '/_public/signup'
       path: '/signup'
@@ -93,6 +237,41 @@ declare module '@tanstack/react-router' {
       fullPath: '/login'
       preLoaderRoute: typeof PublicLoginRouteImport
       parentRoute: typeof PublicRoute
+    }
+    '/_workspace/$orgSlug/': {
+      id: '/_workspace/$orgSlug/'
+      path: '/'
+      fullPath: '/$orgSlug/'
+      preLoaderRoute: typeof WorkspaceOrgSlugIndexRouteImport
+      parentRoute: typeof WorkspaceOrgSlugRoute
+    }
+    '/_workspace/$orgSlug/wiki': {
+      id: '/_workspace/$orgSlug/wiki'
+      path: '/wiki'
+      fullPath: '/$orgSlug/wiki'
+      preLoaderRoute: typeof WorkspaceOrgSlugWikiRouteImport
+      parentRoute: typeof WorkspaceOrgSlugRoute
+    }
+    '/_workspace/$orgSlug/settings': {
+      id: '/_workspace/$orgSlug/settings'
+      path: '/settings'
+      fullPath: '/$orgSlug/settings'
+      preLoaderRoute: typeof WorkspaceOrgSlugSettingsRouteImport
+      parentRoute: typeof WorkspaceOrgSlugRoute
+    }
+    '/_workspace/$orgSlug/chat': {
+      id: '/_workspace/$orgSlug/chat'
+      path: '/chat'
+      fullPath: '/$orgSlug/chat'
+      preLoaderRoute: typeof WorkspaceOrgSlugChatRouteImport
+      parentRoute: typeof WorkspaceOrgSlugRoute
+    }
+    '/_workspace/$orgSlug/ai': {
+      id: '/_workspace/$orgSlug/ai'
+      path: '/ai'
+      fullPath: '/$orgSlug/ai'
+      preLoaderRoute: typeof WorkspaceOrgSlugAiRouteImport
+      parentRoute: typeof WorkspaceOrgSlugRoute
     }
   }
 }
@@ -110,9 +289,43 @@ const PublicRouteChildren: PublicRouteChildren = {
 const PublicRouteWithChildren =
   PublicRoute._addFileChildren(PublicRouteChildren)
 
+interface WorkspaceOrgSlugRouteChildren {
+  WorkspaceOrgSlugAiRoute: typeof WorkspaceOrgSlugAiRoute
+  WorkspaceOrgSlugChatRoute: typeof WorkspaceOrgSlugChatRoute
+  WorkspaceOrgSlugSettingsRoute: typeof WorkspaceOrgSlugSettingsRoute
+  WorkspaceOrgSlugWikiRoute: typeof WorkspaceOrgSlugWikiRoute
+  WorkspaceOrgSlugIndexRoute: typeof WorkspaceOrgSlugIndexRoute
+}
+
+const WorkspaceOrgSlugRouteChildren: WorkspaceOrgSlugRouteChildren = {
+  WorkspaceOrgSlugAiRoute: WorkspaceOrgSlugAiRoute,
+  WorkspaceOrgSlugChatRoute: WorkspaceOrgSlugChatRoute,
+  WorkspaceOrgSlugSettingsRoute: WorkspaceOrgSlugSettingsRoute,
+  WorkspaceOrgSlugWikiRoute: WorkspaceOrgSlugWikiRoute,
+  WorkspaceOrgSlugIndexRoute: WorkspaceOrgSlugIndexRoute,
+}
+
+const WorkspaceOrgSlugRouteWithChildren =
+  WorkspaceOrgSlugRoute._addFileChildren(WorkspaceOrgSlugRouteChildren)
+
+interface WorkspaceRouteChildren {
+  WorkspaceOrgSlugRoute: typeof WorkspaceOrgSlugRouteWithChildren
+}
+
+const WorkspaceRouteChildren: WorkspaceRouteChildren = {
+  WorkspaceOrgSlugRoute: WorkspaceOrgSlugRouteWithChildren,
+}
+
+const WorkspaceRouteWithChildren = WorkspaceRoute._addFileChildren(
+  WorkspaceRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PublicRoute: PublicRouteWithChildren,
+  WorkspaceRoute: WorkspaceRouteWithChildren,
+  CreateWorkspaceRoute: CreateWorkspaceRoute,
+  OnboardingRoute: OnboardingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -12,7 +12,7 @@ import {
 import { Input } from "@orbit/ui/components/input";
 import { cn } from "@orbit/ui/lib/utils";
 import { GalleryVerticalEndIcon } from "lucide-react";
-import { signIn } from "@/lib/auth-client";
+import { authClient, signIn } from "@/lib/auth-client";
 
 export function LoginForm({
 	className,
@@ -27,7 +27,15 @@ export function LoginForm({
 				email: value.email,
 				password: value.password,
 				fetchOptions: {
-					onSuccess: () => navigate({ to: "/" }),
+					onSuccess: async () => {
+						const { data: orgs } = await authClient.organization.list();
+						const slug = orgs?.[0]?.slug;
+						if (slug) {
+							navigate({ to: "/$orgSlug/home", params: { orgSlug: slug } });
+						} else {
+							navigate({ to: "/onboarding" });
+						}
+					},
 				},
 			});
 		},

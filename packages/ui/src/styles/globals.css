@@ -125,8 +125,11 @@
 		@apply border-border outline-ring/50;
 	}
 	body {
-		@apply bg-background text-foreground;
+		@apply bg-background text-foreground text-sm;
 		font-synthesis-weight: none;
 		text-rendering: optimizeLegibility;
+	}
+	button:not([disabled]) {
+		@apply cursor-pointer;
 	}
 }
