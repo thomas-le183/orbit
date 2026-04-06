@@ -3,4 +3,4 @@ export {
 	createUserSchema,
 	type UpdateUserInput,
 	updateUserSchema,
-} from "./user.ts";
+} from "./user.js";

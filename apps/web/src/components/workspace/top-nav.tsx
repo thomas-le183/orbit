@@ -124,6 +124,7 @@ export function TopNav({ orgSlug }: { orgSlug: string }) {
 							router.navigate({
 								to: "/$orgSlug/settings",
 								params: { orgSlug },
+								search: {},
 							})
 						}
 					>

@@ -1,5 +1,1 @@
-import type { betterAuth } from "better-auth/minimal";
-
-export const AUTH = Symbol("AUTH");
-
-export type Auth = ReturnType<typeof betterAuth>;
+export { AUTH, type Auth, type Session, type User } from "./auth.types";

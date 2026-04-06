@@ -25,10 +25,6 @@ import { AuthController } from "./auth.controller";
 					}),
 					advanced: {
 						cookiePrefix: "orbit",
-						crossSubDomainCookies: {
-							enabled: true,
-							domain: config.get<string>("COOKIE_DOMAIN"),
-						},
 					},
 					emailAndPassword: { enabled: true },
 					plugins: [
@@ -36,6 +32,57 @@ import { AuthController } from "./auth.controller";
 							allowUserToCreateOrganization: true,
 							teams: {
 								enabled: true,
+							},
+							organizationHooks: {
+								// === INVITATIONS ===
+								beforeCreateInvitation: async () => {},
+								afterCreateInvitation: async () => {},
+
+								beforeAcceptInvitation: async () => {},
+								afterAcceptInvitation: async () => {},
+
+								beforeCancelInvitation: async () => {},
+								afterCancelInvitation: async () => {},
+
+								beforeRejectInvitation: async () => {},
+								afterRejectInvitation: async () => {},
+
+								// === ORGANIZATIONS ===
+								beforeCreateOrganization: async () => {},
+								afterCreateOrganization: async () => {},
+
+								beforeUpdateOrganization: async () => {},
+								afterUpdateOrganization: async () => {},
+
+								beforeDeleteOrganization: async () => {},
+								afterDeleteOrganization: async () => {},
+
+								// === TEAMS ===
+								beforeCreateTeam: async () => {},
+								afterCreateTeam: async () => {},
+
+								beforeUpdateTeam: async () => {},
+								afterUpdateTeam: async () => {},
+
+								beforeDeleteTeam: async () => {},
+								afterDeleteTeam: async () => {},
+
+								// === MEMBERS ===
+								beforeAddMember: async () => {},
+								afterAddMember: async () => {},
+
+								beforeUpdateMemberRole: async () => {},
+								afterUpdateMemberRole: async () => {},
+
+								beforeRemoveMember: async () => {},
+								afterRemoveMember: async () => {},
+
+								// === TEAM MEMBERS ===
+								beforeAddTeamMember: async () => {},
+								afterAddTeamMember: async () => {},
+
+								beforeRemoveTeamMember: async () => {},
+								afterRemoveTeamMember: async () => {},
 							},
 						}),
 					],

@@ -3,7 +3,8 @@ export {
 	createUserSchema,
 	type UpdateUserInput,
 	updateUserSchema,
-} from "./schemas/index.ts";
+} from "./schemas/index.js";
+
 export {
 	type ApiError,
 	type ApiResponse,
@@ -12,5 +13,16 @@ export {
 	isApiSuccess,
 	type PaginatedData,
 	type PaginatedResponse,
-} from "./types/api.ts";
-export { cn, getInitials } from "./utils/index.ts";
+} from "./types/api.js";
+
+export {
+	type CheckoutResponse,
+	type PortalResponse,
+	SUBSCRIPTION_TIERS,
+	type SubscriptionResponse,
+	type SubscriptionTier,
+	TIER_METADATA,
+	type TierMetadata,
+} from "./types/billing.js";
+
+export { cn, getInitials } from "./utils/index.js";

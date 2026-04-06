@@ -1,2 +1,2 @@
-export { cn } from "./cn.ts";
-export { getInitials } from "./string.ts";
+export { cn } from "./cn.js";
+export { getInitials } from "./string.js";

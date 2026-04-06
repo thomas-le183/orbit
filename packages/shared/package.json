@@ -4,15 +4,27 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
 		"typecheck": "tsc --noEmit"
 	},
 	"exports": {
-		".": "./src/index.ts",
-		"./*": "./src/*.ts"
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./*": {
+			"types": "./dist/*.d.ts",
+			"default": "./dist/*.js"
+		}
 	},
+	"files": ["dist"],
 	"dependencies": {
 		"clsx": "^2.1.1",
 		"tailwind-merge": "^3.5.0",
 		"zod": "^3.25.76"
+	},
+	"devDependencies": {
+		"typescript": "^5.7.3"
 	}
 }
