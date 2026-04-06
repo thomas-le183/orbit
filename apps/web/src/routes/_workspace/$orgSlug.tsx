@@ -3,10 +3,16 @@ import {
 	ResizablePanel,
 	ResizablePanelGroup,
 } from "@orbit/ui/components/resizable";
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { AppNav } from "@/components/workspace/app-nav";
 import { AppSidebar } from "@/components/workspace/app-sidebar";
 import { TopNav } from "@/components/workspace/top-nav";
+import {
+	useOrganizations,
+	useSession,
+	useSetActiveOrganization,
+} from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_workspace/$orgSlug")({
 	component: OrgLayout,
@@ -14,6 +20,27 @@ export const Route = createFileRoute("/_workspace/$orgSlug")({
 
 function OrgLayout() {
 	const { orgSlug } = Route.useParams();
+	const { data: session } = useSession();
+	const { data: organizations } = useOrganizations();
+	const { mutate: setActive } = useSetActiveOrganization();
+
+	const targetOrg = organizations?.find((o) => o.slug === orgSlug);
+	const targetOrgId = targetOrg?.id;
+	const activeOrgId = session?.session.activeOrganizationId;
+
+	// Sync active org when slug changes
+	useEffect(() => {
+		if (targetOrgId && activeOrgId !== targetOrgId) {
+			setActive(targetOrgId);
+		}
+	}, [targetOrgId, activeOrgId, setActive]);
+
+	// Invalid slug — redirect to first org
+	if (organizations && !targetOrg) {
+		const fallback = organizations[0];
+		if (!fallback) return <Navigate to="/create-workspace" />;
+		return <Navigate to="/$orgSlug" params={{ orgSlug: fallback.slug }} />;
+	}
 	return (
 		<div className="flex h-screen flex-col">
 			<TopNav orgSlug={orgSlug} />

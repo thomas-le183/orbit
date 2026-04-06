@@ -1,27 +1,11 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { ThemeProvider } from "@/components/theme-provider";
-import { authClient } from "@/lib/auth-client";
-import { getOrgSlug } from "@/lib/subdomain";
-import type { RouterContext } from "@/router";
+import { queryClient } from "@/lib/query-client";
 
-const queryClient = new QueryClient({
-	defaultOptions: {
-		queries: {
-			staleTime: 30 * 1000,
-			retry: 1,
-		},
-	},
-});
-
-export const Route = createRootRouteWithContext<RouterContext>()({
-	beforeLoad: async () => {
-		const { data: session } = await authClient.getSession();
-		const orgSlug = getOrgSlug();
-		return { session, orgSlug };
-	},
+export const Route = createRootRoute({
 	component: RootComponent,
 });
 

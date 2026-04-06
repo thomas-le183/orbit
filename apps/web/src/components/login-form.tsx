@@ -12,32 +12,22 @@ import { cn } from "@orbit/ui/lib/utils";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { GalleryVerticalEndIcon } from "lucide-react";
-import { authClient, signIn } from "@/lib/auth-client";
+import { useSignIn } from "@/hooks/use-auth";
 
 export function LoginForm({
 	className,
 	...props
 }: React.ComponentProps<"div">) {
 	const navigate = useNavigate();
+	const signIn = useSignIn();
 
 	const form = useForm({
 		defaultValues: { email: "", password: "" },
 		onSubmit: async ({ value }) => {
-			await signIn.email({
-				email: value.email,
-				password: value.password,
-				fetchOptions: {
-					onSuccess: async () => {
-						const { data: orgs } = await authClient.organization.list();
-						const slug = orgs?.[0]?.slug;
-						if (slug) {
-							navigate({ to: "/$orgSlug", params: { orgSlug: slug } });
-						} else {
-							navigate({ to: "/onboarding" });
-						}
-					},
-				},
-			});
+			signIn.mutate(
+				{ email: value.email, password: value.password },
+				{ onSuccess: () => navigate({ to: "/" }) },
+			);
 		},
 	});
 

@@ -1,22 +1,19 @@
 import { Button } from "@orbit/ui/components/button";
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { authClient } from "@/lib/auth-client";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { useAuthRedirect } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/")({
-	beforeLoad: async ({ context }) => {
-		if (context.session) {
-			const { data: orgs } = await authClient.organization.list();
-			const slug = orgs?.[0]?.slug;
-			throw redirect({
-				to: slug ? "/$orgSlug" : "/onboarding",
-				params: slug ? { orgSlug: slug } : undefined,
-			});
-		}
-	},
 	component: LandingPage,
 });
 
 function LandingPage() {
+	const auth = useAuthRedirect();
+
+	if (auth.status === "loading") return null;
+	if (auth.status === "authenticated") {
+		return <Navigate to={auth.redirect.to} params={auth.redirect.params} />;
+	}
+
 	return (
 		<div className="relative min-h-screen overflow-hidden bg-black text-white">
 			<style>{`

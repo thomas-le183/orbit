@@ -1,16 +1,12 @@
+import "@orbit/ui/globals.css";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import ReactDOM from "react-dom/client";
 import { routeTree } from "./routeTree.gen.ts";
-import "@orbit/ui/globals.css";
 
 const router = createRouter({
 	routeTree,
 	defaultPreload: "intent",
 	scrollRestoration: true,
-	context: {
-		session: null,
-		orgSlug: null,
-	},
 });
 
 declare module "@tanstack/react-router" {

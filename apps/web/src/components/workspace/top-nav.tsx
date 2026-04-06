@@ -21,19 +21,26 @@ import {
 	SearchIcon,
 	SettingsIcon,
 } from "lucide-react";
-import { authClient, signOut, useSession } from "@/lib/auth-client";
+import {
+	useActiveOrganization,
+	useOrganizations,
+	useSession,
+	useSignOut,
+} from "@/hooks/use-auth";
 
 export function TopNav({ orgSlug }: { orgSlug: string }) {
-	const { data: session } = useSession();
 	const router = useRouter();
+	const signOut = useSignOut();
+	const { data: session } = useSession();
+	const { data: organizations } = useOrganizations();
+	const { data: activeOrganization } = useActiveOrganization();
 	const user = session?.user;
-	const { data: organizations } = authClient.useListOrganizations();
-	const { data: activeOrganization } = authClient.useActiveOrganization();
 	const initials = user?.name ? getInitials(user.name) : "?";
 
-	async function handleSignOut() {
-		await signOut();
-		router.navigate({ to: "/login" });
+	function handleSignOut() {
+		signOut.mutate(undefined, {
+			onSuccess: () => router.navigate({ to: "/" }),
+		});
 	}
 
 	return (
@@ -52,7 +59,7 @@ export function TopNav({ orgSlug }: { orgSlug: string }) {
 					{organizations?.map((org) => (
 						<DropdownMenuItem
 							key={org.id}
-							onSelect={() =>
+							onClick={() =>
 								router.navigate({
 									to: "/$orgSlug",
 									params: { orgSlug: org.slug },
@@ -67,7 +74,7 @@ export function TopNav({ orgSlug }: { orgSlug: string }) {
 					))}
 					<DropdownMenuSeparator />
 					<DropdownMenuItem
-						onSelect={() => router.navigate({ to: "/create-workspace" })}
+						onClick={() => router.navigate({ to: "/create-workspace" })}
 					>
 						<PlusIcon className="size-4" />
 						Create workspace
@@ -120,7 +127,7 @@ export function TopNav({ orgSlug }: { orgSlug: string }) {
 					</DropdownMenuGroup>
 					<DropdownMenuSeparator />
 					<DropdownMenuItem
-						onSelect={() =>
+						onClick={() =>
 							router.navigate({
 								to: "/$orgSlug/settings",
 								params: { orgSlug },
@@ -131,7 +138,7 @@ export function TopNav({ orgSlug }: { orgSlug: string }) {
 						<SettingsIcon />
 						Settings
 					</DropdownMenuItem>
-					<DropdownMenuItem variant="destructive" onSelect={handleSignOut}>
+					<DropdownMenuItem variant="destructive" onClick={handleSignOut}>
 						<LogOutIcon />
 						Sign out
 					</DropdownMenuItem>

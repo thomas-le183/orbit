@@ -12,25 +12,22 @@ import { cn } from "@orbit/ui/lib/utils";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { GalleryVerticalEndIcon } from "lucide-react";
-import { signUp } from "@/lib/auth-client";
+import { useSignUp } from "@/hooks/use-auth";
 
 export function SignupForm({
 	className,
 	...props
 }: React.ComponentProps<"div">) {
 	const navigate = useNavigate();
+	const signUp = useSignUp();
 
 	const form = useForm({
 		defaultValues: { name: "", email: "", password: "" },
 		onSubmit: async ({ value }) => {
-			await signUp.email({
-				name: value.name,
-				email: value.email,
-				password: value.password,
-				fetchOptions: {
-					onSuccess: () => navigate({ to: "/" }),
-				},
-			});
+			signUp.mutate(
+				{ name: value.name, email: value.email, password: value.password },
+				{ onSuccess: () => navigate({ to: "/" }) },
+			);
 		},
 	});
 

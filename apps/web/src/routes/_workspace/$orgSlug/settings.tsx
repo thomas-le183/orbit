@@ -9,20 +9,15 @@ import {
 } from "@orbit/ui/components/tabs";
 import { createFileRoute } from "@tanstack/react-router";
 import { BillingSettings } from "@/components/workspace/billing-settings";
-import { useSession } from "@/lib/auth-client";
+import { useSession } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_workspace/$orgSlug/settings")({
 	component: SettingsPage,
-	validateSearch: (search: Record<string, unknown>) =>
-		({
-			tab: (search.tab as string) || undefined,
-		}) as { tab?: string },
 });
 
 function SettingsPage() {
 	const { data: session } = useSession();
 	const { orgSlug } = Route.useParams();
-	const { tab } = Route.useSearch();
 	const user = session?.user;
 
 	return (
@@ -34,7 +29,7 @@ function SettingsPage() {
 				</p>
 			</div>
 
-			<Tabs defaultValue={tab ?? "profile"}>
+			<Tabs>
 				<TabsList>
 					<TabsTrigger value="profile">Profile</TabsTrigger>
 					<TabsTrigger value="workspace">Workspace</TabsTrigger>
