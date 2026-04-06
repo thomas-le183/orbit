@@ -1,5 +1,3 @@
-import { useForm } from "@tanstack/react-form";
-import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@orbit/ui/components/button";
 import {
 	Field,
@@ -11,6 +9,8 @@ import {
 } from "@orbit/ui/components/field";
 import { Input } from "@orbit/ui/components/input";
 import { cn } from "@orbit/ui/lib/utils";
+import { useForm } from "@tanstack/react-form";
+import { useNavigate } from "@tanstack/react-router";
 import { GalleryVerticalEndIcon } from "lucide-react";
 import { authClient, signIn } from "@/lib/auth-client";
 
@@ -31,7 +31,7 @@ export function LoginForm({
 						const { data: orgs } = await authClient.organization.list();
 						const slug = orgs?.[0]?.slug;
 						if (slug) {
-							navigate({ to: "/$orgSlug/home", params: { orgSlug: slug } });
+							navigate({ to: "/$orgSlug", params: { orgSlug: slug } });
 						} else {
 							navigate({ to: "/onboarding" });
 						}
@@ -83,9 +83,7 @@ export function LoginForm({
 									required
 								/>
 								{field.state.meta.errors.length > 0 && (
-									<FieldError>
-										{String(field.state.meta.errors[0])}
-									</FieldError>
+									<FieldError>{String(field.state.meta.errors[0])}</FieldError>
 								)}
 							</Field>
 						)}
@@ -112,9 +110,7 @@ export function LoginForm({
 									required
 								/>
 								{field.state.meta.errors.length > 0 && (
-									<FieldError>
-										{String(field.state.meta.errors[0])}
-									</FieldError>
+									<FieldError>{String(field.state.meta.errors[0])}</FieldError>
 								)}
 							</Field>
 						)}

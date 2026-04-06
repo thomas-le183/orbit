@@ -33,9 +33,7 @@ const mode = process.argv[2] ?? "init"; // "init" | "dev"
 async function run() {
 	const db = drizzle(process.env.DATABASE_URL!, { schema });
 
-	const seeds = mode === "dev"
-		? [...initSeeds, ...devSeeds]
-		: initSeeds;
+	const seeds = mode === "dev" ? [...initSeeds, ...devSeeds] : initSeeds;
 
 	if (seeds.length === 0) {
 		console.log(`No seeds registered for mode "${mode}".`);
@@ -51,10 +49,12 @@ async function run() {
 }
 
 if (mode === "dev") {
-	loadDevSeeds().then(run).catch((err) => {
-		console.error(err);
-		process.exit(1);
-	});
+	loadDevSeeds()
+		.then(run)
+		.catch((err) => {
+			console.error(err);
+			process.exit(1);
+		});
 } else {
 	run().catch((err) => {
 		console.error(err);

@@ -22,7 +22,9 @@ function SettingsPage() {
 		<div className="mx-auto max-w-2xl space-y-6">
 			<div>
 				<h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-				<p className="mt-1 text-sm text-muted-foreground">Manage your account and workspace preferences.</p>
+				<p className="mt-1 text-sm text-muted-foreground">
+					Manage your account and workspace preferences.
+				</p>
 			</div>
 
 			<Tabs defaultValue="profile">
@@ -54,7 +56,9 @@ function SettingsPage() {
 
 				<TabsContent value="notifications" className="mt-6">
 					<div className="rounded-xl border p-5">
-						<p className="text-sm text-muted-foreground">Notification preferences coming soon.</p>
+						<p className="text-sm text-muted-foreground">
+							Notification preferences coming soon.
+						</p>
 					</div>
 				</TabsContent>
 			</Tabs>

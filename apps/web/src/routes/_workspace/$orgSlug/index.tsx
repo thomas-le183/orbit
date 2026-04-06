@@ -5,5 +5,5 @@ export const Route = createFileRoute("/_workspace/$orgSlug/")({
 });
 
 function RouteComponent() {
-	return <div>Hello "/_workspace/$orgSlug/"!</div>;
+	return <div>This is Home page</div>;
 }

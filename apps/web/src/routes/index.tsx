@@ -8,7 +8,7 @@ export const Route = createFileRoute("/")({
 			const { data: orgs } = await authClient.organization.list();
 			const slug = orgs?.[0]?.slug;
 			throw redirect({
-				to: slug ? "/$orgSlug/home" : "/onboarding",
+				to: slug ? "/$orgSlug" : "/onboarding",
 				params: slug ? { orgSlug: slug } : undefined,
 			});
 		}

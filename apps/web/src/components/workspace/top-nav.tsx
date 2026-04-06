@@ -4,13 +4,15 @@ import { Button } from "@orbit/ui/components/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
+	DropdownMenuGroup,
 	DropdownMenuItem,
+	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@orbit/ui/components/dropdown-menu";
 import { Kbd, KbdGroup } from "@orbit/ui/components/kbd";
 import { ModeToggle } from "@orbit/ui/components/mode-toggle";
-import { Link, useRouter } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router";
 import {
 	CheckIcon,
 	ChevronsUpDownIcon,
@@ -38,11 +40,13 @@ export function TopNav({ orgSlug }: { orgSlug: string }) {
 		<header className="flex h-12 shrink-0 items-center gap-4 border-b px-4">
 			{/* Workspace selector */}
 			<DropdownMenu>
-				<DropdownMenuTrigger>
-					<Button variant="ghost" className="gap-2 font-semibold text-sm">
-						{activeOrganization?.name ?? orgSlug}
-						<ChevronsUpDownIcon className="size-3.5 text-muted-foreground" />
-					</Button>
+				<DropdownMenuTrigger
+					render={
+						<Button variant="ghost" className="gap-2 font-semibold text-sm" />
+					}
+				>
+					{activeOrganization?.name ?? orgSlug}
+					<ChevronsUpDownIcon className="size-3.5 text-muted-foreground" />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="start" className="w-56">
 					{organizations?.map((org) => (
@@ -62,11 +66,11 @@ export function TopNav({ orgSlug }: { orgSlug: string }) {
 						</DropdownMenuItem>
 					))}
 					<DropdownMenuSeparator />
-					<DropdownMenuItem>
-						<Link to="/create-workspace">
-							<PlusIcon className="size-4" />
-							Create workspace
-						</Link>
+					<DropdownMenuItem
+						onSelect={() => router.navigate({ to: "/create-workspace" })}
+					>
+						<PlusIcon className="size-4" />
+						Create workspace
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
@@ -94,27 +98,39 @@ export function TopNav({ orgSlug }: { orgSlug: string }) {
 			{/* User menu */}
 			<DropdownMenu>
 				<DropdownMenuTrigger>
-					<Button variant="ghost" size="icon" className="shrink-0 rounded-full">
-						<Avatar className="size-7">
-							<AvatarFallback className="text-xs">{initials}</AvatarFallback>
-						</Avatar>
-					</Button>
+					<Avatar>
+						<AvatarFallback>{initials}</AvatarFallback>
+					</Avatar>
 				</DropdownMenuTrigger>
-				<DropdownMenuContent align="end" className="w-56">
-					<div className="px-2 py-1.5 text-sm">
-						<p className="font-medium">{user?.name ?? "User"}</p>
-						<p className="text-xs text-muted-foreground">{user?.email}</p>
-					</div>
-					<DropdownMenuItem>
-						<Link to="/$orgSlug/settings" params={{ orgSlug }}>
-							<SettingsIcon />
-							Settings
-						</Link>
-					</DropdownMenuItem>
+				<DropdownMenuContent side="top" align="end" className="w-56">
+					<DropdownMenuGroup>
+						<DropdownMenuLabel className="flex items-center gap-2 p-2 font-normal">
+							<Avatar>
+								<AvatarFallback>{initials}</AvatarFallback>
+							</Avatar>
+							<div className="flex min-w-0 flex-col">
+								<span className="truncate text-sm font-medium">
+									{user?.name}
+								</span>
+								<span className="truncate text-xs text-muted-foreground">
+									{user?.email}
+								</span>
+							</div>
+						</DropdownMenuLabel>
+					</DropdownMenuGroup>
+					<DropdownMenuSeparator />
 					<DropdownMenuItem
-						onSelect={handleSignOut}
-						className="text-destructive focus:text-destructive"
+						onSelect={() =>
+							router.navigate({
+								to: "/$orgSlug/settings",
+								params: { orgSlug },
+							})
+						}
 					>
+						<SettingsIcon />
+						Settings
+					</DropdownMenuItem>
+					<DropdownMenuItem variant="destructive" onSelect={handleSignOut}>
 						<LogOutIcon />
 						Sign out
 					</DropdownMenuItem>

@@ -3,12 +3,12 @@ import { Link } from "@tanstack/react-router";
 import {
 	BookOpenIcon,
 	BotIcon,
-	FolderKanbanIcon,
+	HomeIcon,
 	MessageSquareIcon,
 } from "lucide-react";
 
 const topItems = [
-	{ to: "/$orgSlug", icon: FolderKanbanIcon, label: "Projects" },
+	{ to: "/$orgSlug", icon: HomeIcon, label: "Home" },
 	{ to: "/$orgSlug/wiki", icon: BookOpenIcon, label: "Wiki" },
 	{ to: "/$orgSlug/ai", icon: BotIcon, label: "AI" },
 	{ to: "/$orgSlug/chat", icon: MessageSquareIcon, label: "Chat" },
@@ -16,7 +16,7 @@ const topItems = [
 
 export function AppNav({ orgSlug }: { orgSlug: string }) {
 	return (
-		<div className="flex h-full w-16 shrink-0 flex-col items-center py-2 rounded-md text-xs">
+		<div className="flex h-full flex-col items-center p-2 rounded-md">
 			{/* Top nav */}
 			<nav className="flex flex-1 flex-col items-center gap-1">
 				{topItems.map(({ to, icon: Icon, label }) => {
