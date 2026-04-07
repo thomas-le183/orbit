@@ -1,37 +1,38 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
+  "globalDependencies": [
+    "tsconfig.json",
+    "tsconfig.*.json",
+    "biome.json",
+    "pnpm-lock.yaml",
+    ".env",
+    ".env.*"
+  ],
+  "globalEnv": ["NODE_ENV", "CI"],
   "tasks": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
-        ".env*"
+        "!**/*.test.ts",
+        "!**/*.test.tsx",
+        "!**/*.spec.ts",
+        "!**/__tests__/**"
       ],
-      "outputs": [
-        "dist/**"
-      ]
+      "outputs": ["dist/**", ".vite/**"],
+      "env": ["VITE_*"]
     },
-    "check-types": {
-      "dependsOn": [
-        "^build"
-      ]
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "tsconfig*.json"]
     },
-    "lint": {},
-    "check": {},
-    "format": {},
     "test": {
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$"
-      ]
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
     },
     "dev": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^dev"],
       "cache": false,
       "persistent": true
     }

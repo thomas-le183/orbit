@@ -9,7 +9,8 @@
 		"dev": "vite dev --port 3000",
 		"build": "tsc && vite build",
 		"preview": "vite preview",
-		"test": "vitest run"
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@orbit/ui": "workspace:*",

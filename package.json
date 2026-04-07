@@ -4,7 +4,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "check-types": "turbo run check-types",
+    "typecheck": "turbo run typecheck",
     "format": "biome format",
     "lint": "biome lint",
     "check": "biome check"
