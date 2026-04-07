@@ -2,10 +2,11 @@ import { randomUUID } from "node:crypto";
 import { hashPassword } from "better-auth/crypto";
 import type { Db } from "../../db.module";
 import * as schema from "../../schema";
-
 export async function seedAuth(db: Db) {
 	const userId = randomUUID();
 	const orgId = randomUUID();
+
+	// await reset(db, schema);
 
 	await db.insert(schema.user).values({
 		id: userId,
@@ -23,12 +24,12 @@ export async function seedAuth(db: Db) {
 		userId,
 		accountId: userId,
 		providerId: "credential",
-		password: await hashPassword("password"),
+		password: await hashPassword("orbit"),
 		createdAt: new Date(),
 		updatedAt: new Date(),
 	});
 
-	console.log(`  account       credential  (password: "password")`);
+	console.log(`  account       credential  (password: "orbit")`);
 
 	await db.insert(schema.organization).values({
 		id: orgId,
