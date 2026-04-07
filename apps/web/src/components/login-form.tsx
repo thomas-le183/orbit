@@ -26,7 +26,11 @@ export function LoginForm({
 		onSubmit: async ({ value }) => {
 			signIn.mutate(
 				{ email: value.email, password: value.password },
-				{ onSuccess: () => navigate({ to: "/" }) },
+				{
+					onSuccess: () => {
+						navigate({ to: "/" });
+					},
+				},
 			);
 		},
 	});

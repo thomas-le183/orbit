@@ -110,8 +110,11 @@ export function useSetActiveOrganization() {
 			return data;
 		},
 		onSuccess: () => {
+			// Only refresh the active-org cache. Do NOT invalidate the session
+			// query — the URL slug is the source of truth for which org is
+			// active, and refetching the session mid-navigation causes every
+			// `useSession` consumer (topnav, sidebar) to re-render and flash.
 			qc.invalidateQueries({ queryKey: authKeys.activeOrg });
-			qc.invalidateQueries({ queryKey: authKeys.session });
 		},
 	});
 }
@@ -225,47 +228,71 @@ export function useUpdateMemberRole() {
 	});
 }
 
-// ─── Auth redirect helper ────────────────────────────────────
+// ─── Query options (usable in beforeLoad) ───────────────────
 
-type AuthRedirectResult =
-	| { status: "loading" }
-	| { status: "unauthenticated" }
-	| {
-			status: "authenticated";
-			redirect: { to: string; params?: Record<string, string> };
-	  };
+export const sessionQueryOptions = {
+	queryKey: authKeys.session,
+	queryFn: async () => {
+		const { data } = await authClient.getSession();
+		return data;
+	},
+};
+
+export const organizationsQueryOptions = {
+	queryKey: authKeys.organizations,
+	queryFn: async () => {
+		const { data } = await authClient.organization.list();
+		return data ?? [];
+	},
+};
+
+// ─── Auth state helpers (for beforeLoad) ────────────────────
+
+import type { QueryClient } from "@tanstack/react-query";
+
+export type AuthState = {
+	session: Awaited<ReturnType<typeof sessionQueryOptions.queryFn>>;
+	organizations: Awaited<ReturnType<typeof organizationsQueryOptions.queryFn>>;
+};
 
 /**
- * Resolves where an authenticated user should land.
- * Shared across index, _public, and _workspace guards.
+ * Load the raw auth state via `ensureQueryData`.
+ * Makes no routing decisions — callers decide what to do with the state.
  */
-export function useAuthRedirect(): AuthRedirectResult {
-	const { data: session, isPending: sessionPending } = useSession();
-	const { data: organizations, isPending: orgsPending } = useOrganizations();
+export async function loadAuthState(
+	queryClient: QueryClient,
+): Promise<AuthState> {
+	const [session, organizations] = await Promise.all([
+		queryClient.ensureQueryData(sessionQueryOptions),
+		queryClient.ensureQueryData(organizationsQueryOptions),
+	]);
 
-	if (sessionPending || orgsPending) {
-		return { status: "loading" };
+	return { session, organizations: organizations ?? [] };
+}
+
+/**
+ * Given an authenticated user's state, decide where they should land when
+ * no workspace slug is present in the URL. Returns `null` if the user is
+ * unauthenticated (caller should allow the current public route to render).
+ */
+export function resolveAuthenticatedLanding(state: AuthState) {
+	if (!state.session?.user) return null;
+
+	if (!state.session.user.name) {
+		return { to: "/onboarding" } as const;
 	}
 
-	if (!session?.user) {
-		return { status: "unauthenticated" };
+	if (state.organizations.length === 0) {
+		return { to: "/create-workspace" } as const;
 	}
 
-	if (!session.user.name) {
-		return { status: "authenticated", redirect: { to: "/onboarding" } };
-	}
-
-	if (!organizations || organizations.length === 0) {
-		return { status: "authenticated", redirect: { to: "/create-workspace" } };
-	}
-
-	const activeOrg = organizations.find(
-		(o) => o.id === session.session.activeOrganizationId,
-	);
-	const org = activeOrg ?? organizations[0];
+	const active =
+		state.organizations.find(
+			(o) => o.id === state.session?.session.activeOrganizationId,
+		) ?? state.organizations[0];
 
 	return {
-		status: "authenticated",
-		redirect: { to: "/$orgSlug", params: { orgSlug: org.slug } },
-	};
+		to: "/$orgSlug",
+		params: { orgSlug: active.slug },
+	} as const;
 }

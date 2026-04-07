@@ -1,19 +1,20 @@
 import { Button } from "@orbit/ui/components/button";
-import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { useAuthRedirect } from "@/hooks/use-auth";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { loadAuthState, resolveAuthenticatedLanding } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/")({
+	beforeLoad: async ({ context }) => {
+		const state = await loadAuthState(context.queryClient);
+
+		const landing = resolveAuthenticatedLanding(state);
+		if (landing) {
+			throw redirect(landing);
+		}
+	},
 	component: LandingPage,
 });
 
 function LandingPage() {
-	const auth = useAuthRedirect();
-
-	if (auth.status === "loading") return null;
-	if (auth.status === "authenticated") {
-		return <Navigate to={auth.redirect.to} params={auth.redirect.params} />;
-	}
-
 	return (
 		<div className="relative min-h-screen overflow-hidden bg-black text-white">
 			<style>{`
@@ -42,12 +43,10 @@ function LandingPage() {
 				.anim-blob    { animation: blobPulse 8s ease-in-out infinite; }
 				.anim-ring    { animation: ringRotate 18s linear infinite; }
 			`}</style>
-
 			{/* Starfield */}
 			<div className="absolute inset-0 overflow-hidden">
 				<Stars />
 			</div>
-
 			{/* Nebula glow blobs */}
 			<div className="pointer-events-none absolute inset-0">
 				<div className="anim-blob absolute top-1/4 left-1/3 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-700/20 blur-[120px]" />
@@ -60,7 +59,6 @@ function LandingPage() {
 					style={{ animationDelay: "5s" }}
 				/>
 			</div>
-
 			{/* Nav */}
 			<header className="anim-fade-up relative z-10 flex items-center justify-between px-8 py-6">
 				<div className="flex items-center gap-2">
@@ -76,7 +74,6 @@ function LandingPage() {
 					</Button>
 				</nav>
 			</header>
-
 			{/* Hero */}
 			<main className="relative z-10 flex flex-col items-center justify-center px-6 pt-24 pb-40 text-center">
 				<div
@@ -118,7 +115,6 @@ function LandingPage() {
 					</div>
 				</div>
 			</main>
-
 			{/* Features */}
 			<section className="relative z-10 mx-auto max-w-5xl px-6">
 				<div className="grid gap-6 sm:grid-cols-3">

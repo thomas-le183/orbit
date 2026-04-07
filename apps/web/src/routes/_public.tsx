@@ -1,19 +1,13 @@
-import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
-import { useAuthRedirect } from "@/hooks/use-auth";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { loadAuthState, resolveAuthenticatedLanding } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_public")({
-	component: PublicGuard,
+	beforeLoad: async ({ context }) => {
+		const state = await loadAuthState(context.queryClient);
+		const landing = resolveAuthenticatedLanding(state);
+		if (landing) {
+			throw redirect(landing);
+		}
+	},
+	component: Outlet,
 });
-
-function PublicGuard() {
-	const auth = useAuthRedirect();
-
-	if (auth.status === "loading") return null;
-	if (auth.status === "authenticated") {
-		return <Navigate to={auth.redirect.to} params={auth.redirect.params} />;
-	}
-
-	return <Outlet />;
-}
-
-
