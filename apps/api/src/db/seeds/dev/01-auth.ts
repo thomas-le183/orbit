@@ -1,12 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { hashPassword } from "better-auth/crypto";
+import { reset } from "drizzle-seed";
 import type { Db } from "../../db.module";
 import * as schema from "../../schema";
+
 export async function seedAuth(db: Db) {
 	const userId = randomUUID();
 	const orgId = randomUUID();
 
-	// await reset(db, schema);
+	await reset(db, schema);
 
 	await db.insert(schema.user).values({
 		id: userId,

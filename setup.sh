@@ -85,7 +85,7 @@ fi
 
 # ── Install dependencies ───────────────────────────────────────────────────────
 echo -e "\n${YELLOW}Installing dependencies...${NC}"
-npm install || success=false
+pnpm install || success=false
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
@@ -94,7 +94,9 @@ if [ "$success" = true ]; then
     echo -e "${BOLD}Next steps:${NC}"
     echo -e "1. Review the .env files in each folder if needed"
     echo -e "2. Start infrastructure:  ${BOLD}docker compose -f docker-compose-local.yml up -d${NC}"
-    echo -e "3. Start dev server:      ${BOLD}npm run dev${NC}"
+    echo -e "3. Run DB migrations:     ${BOLD} cd apps/api && pnpm db:migrate ${NC}"
+    echo -e "4. Seed dev data:         ${BOLD} cd apps/api && pnpm db:seed:dev ${NC}"
+    echo -e "5. Start dev server:      ${BOLD} pnpm dev ${NC}"
     echo -e "\n${GREEN}Happy coding! 🚀${NC}"
 else
     echo -e "${RED}✗${NC} Some issues occurred during setup. Please check the errors above."
