@@ -10,7 +10,7 @@ import {
 import { Input } from "@orbit/ui/components/input";
 import { cn } from "@orbit/ui/lib/utils";
 import { useForm } from "@tanstack/react-form";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { GalleryVerticalEndIcon } from "lucide-react";
 import { useSignUp } from "@/hooks/use-auth";
 
@@ -24,10 +24,12 @@ export function SignupForm({
 	const form = useForm({
 		defaultValues: { name: "", email: "", password: "" },
 		onSubmit: async ({ value }) => {
-			signUp.mutate(
-				{ name: value.name, email: value.email, password: value.password },
-				{ onSuccess: () => navigate({ to: "/" }) },
-			);
+			await signUp.mutateAsync({
+				name: value.name,
+				email: value.email,
+				password: value.password,
+			});
+			await navigate({ to: "/" });
 		},
 	});
 
@@ -41,21 +43,15 @@ export function SignupForm({
 			>
 				<FieldGroup>
 					<div className="flex flex-col items-center gap-2 text-center">
-						<a
-							href="#"
-							className="flex flex-col items-center gap-2 font-medium"
-						>
-							<div className="flex size-8 items-center justify-center rounded-md">
-								<GalleryVerticalEndIcon className="size-6" />
-							</div>
-							<span className="sr-only">Orbit</span>
-						</a>
+						<div className="flex size-8 items-center justify-center rounded-md">
+							<GalleryVerticalEndIcon className="size-6" />
+						</div>
 						<h1 className="text-xl font-bold">Create an account</h1>
 						<FieldDescription>
 							Already have an account?{" "}
-							<a href="/login" className="underline underline-offset-4">
+							<Link to="/login" className="underline underline-offset-4">
 								Sign in
-							</a>
+							</Link>
 						</FieldDescription>
 					</div>
 
@@ -118,6 +114,10 @@ export function SignupForm({
 						)}
 					/>
 
+					{signUp.error && (
+						<FieldError>{signUp.error.message}</FieldError>
+					)}
+
 					<form.Subscribe
 						selector={(state) => state.isSubmitting}
 						children={(isSubmitting) => (
@@ -154,8 +154,15 @@ export function SignupForm({
 				</FieldGroup>
 			</form>
 			<FieldDescription className="px-6 text-center">
-				By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-				and <a href="#">Privacy Policy</a>.
+				By clicking continue, you agree to our{" "}
+				<Link to="/" className="underline underline-offset-4">
+					Terms of Service
+				</Link>{" "}
+				and{" "}
+				<Link to="/" className="underline underline-offset-4">
+					Privacy Policy
+				</Link>
+				.
 			</FieldDescription>
 		</div>
 	);

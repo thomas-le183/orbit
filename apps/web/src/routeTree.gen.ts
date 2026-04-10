@@ -17,6 +17,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as WorkspaceOrgSlugRouteImport } from './routes/_workspace/$orgSlug'
 import { Route as PublicSignupRouteImport } from './routes/_public/signup'
 import { Route as PublicLoginRouteImport } from './routes/_public/login'
+import { Route as PublicForgotPasswordRouteImport } from './routes/_public/forgot-password'
 import { Route as WorkspaceOrgSlugIndexRouteImport } from './routes/_workspace/$orgSlug/index'
 import { Route as WorkspaceOrgSlugWikiRouteImport } from './routes/_workspace/$orgSlug/wiki'
 import { Route as WorkspaceOrgSlugSettingsRouteImport } from './routes/_workspace/$orgSlug/settings'
@@ -61,6 +62,11 @@ const PublicLoginRoute = PublicLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => PublicRoute,
 } as any)
+const PublicForgotPasswordRoute = PublicForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => PublicRoute,
+} as any)
 const WorkspaceOrgSlugIndexRoute = WorkspaceOrgSlugIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -92,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/create-workspace': typeof CreateWorkspaceRoute
   '/onboarding': typeof OnboardingRoute
+  '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
   '/signup': typeof PublicSignupRoute
   '/$orgSlug': typeof WorkspaceOrgSlugRouteWithChildren
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/create-workspace': typeof CreateWorkspaceRoute
   '/onboarding': typeof OnboardingRoute
+  '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
   '/signup': typeof PublicSignupRoute
   '/$orgSlug/ai': typeof WorkspaceOrgSlugAiRoute
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/_workspace': typeof WorkspaceRouteWithChildren
   '/create-workspace': typeof CreateWorkspaceRoute
   '/onboarding': typeof OnboardingRoute
+  '/_public/forgot-password': typeof PublicForgotPasswordRoute
   '/_public/login': typeof PublicLoginRoute
   '/_public/signup': typeof PublicSignupRoute
   '/_workspace/$orgSlug': typeof WorkspaceOrgSlugRouteWithChildren
@@ -135,6 +144,7 @@ export interface FileRouteTypes {
     | '/'
     | '/create-workspace'
     | '/onboarding'
+    | '/forgot-password'
     | '/login'
     | '/signup'
     | '/$orgSlug'
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/'
     | '/create-workspace'
     | '/onboarding'
+    | '/forgot-password'
     | '/login'
     | '/signup'
     | '/$orgSlug/ai'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/_workspace'
     | '/create-workspace'
     | '/onboarding'
+    | '/_public/forgot-password'
     | '/_public/login'
     | '/_public/signup'
     | '/_workspace/$orgSlug'
@@ -238,6 +250,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicLoginRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_public/forgot-password': {
+      id: '/_public/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof PublicForgotPasswordRouteImport
+      parentRoute: typeof PublicRoute
+    }
     '/_workspace/$orgSlug/': {
       id: '/_workspace/$orgSlug/'
       path: '/'
@@ -277,11 +296,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface PublicRouteChildren {
+  PublicForgotPasswordRoute: typeof PublicForgotPasswordRoute
   PublicLoginRoute: typeof PublicLoginRoute
   PublicSignupRoute: typeof PublicSignupRoute
 }
 
 const PublicRouteChildren: PublicRouteChildren = {
+  PublicForgotPasswordRoute: PublicForgotPasswordRoute,
   PublicLoginRoute: PublicLoginRoute,
   PublicSignupRoute: PublicSignupRoute,
 }

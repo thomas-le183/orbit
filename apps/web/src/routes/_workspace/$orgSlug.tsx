@@ -10,11 +10,11 @@ import {
 	notFound,
 	Outlet,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { AppNav } from "@/components/workspace/app-nav";
 import { AppSidebar } from "@/components/workspace/app-sidebar";
 import { TopNav } from "@/components/workspace/top-nav";
-import { useOrganizations } from "@/hooks/use-auth";
-import { authClient } from "@/lib/auth-client";
+import { useOrganizations, useSetActiveOrganization } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_workspace/$orgSlug")({
 	beforeLoad: ({ context, params }) => {
@@ -27,13 +27,7 @@ export const Route = createFileRoute("/_workspace/$orgSlug")({
 			throw notFound();
 		}
 
-		// Fire-and-forget: sync the backend active org to match the URL.
-		// The mutation's onSuccess intentionally only invalidates the
-		// active-org cache key, not the session, so this does not cause any
-		// `useSession` consumer to re-render mid-navigation.
-		if (authState.session?.session.activeOrganizationId !== targetOrg.id) {
-			void authClient.organization.setActive({ organizationId: targetOrg.id });
-		}
+		return { targetOrg };
 	},
 	component: OrgLayout,
 	notFoundComponent: OrgNotFound,
@@ -41,6 +35,14 @@ export const Route = createFileRoute("/_workspace/$orgSlug")({
 
 function OrgLayout() {
 	const { orgSlug } = Route.useParams();
+	const { authState, targetOrg } = Route.useRouteContext();
+	const setActive = useSetActiveOrganization();
+
+	useEffect(() => {
+		if (authState.session?.activeOrganizationId !== targetOrg.id) {
+			setActive.mutate(targetOrg.id);
+		}
+	}, [authState.session?.activeOrganizationId, targetOrg.id, setActive.mutate]);
 
 	return (
 		<div className="flex h-screen flex-col">

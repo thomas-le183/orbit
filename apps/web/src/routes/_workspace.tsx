@@ -5,11 +5,11 @@ export const Route = createFileRoute("/_workspace")({
 	beforeLoad: async ({ context }) => {
 		const state = await loadAuthState(context.queryClient);
 
-		if (!state.session?.user) {
+		if (!state.user) {
 			throw redirect({ to: "/login" });
 		}
 
-		if (!state.session.user.name) {
+		if (!state.user.name) {
 			throw redirect({ to: "/onboarding" });
 		}
 

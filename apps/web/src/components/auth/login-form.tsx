@@ -10,7 +10,7 @@ import {
 import { Input } from "@orbit/ui/components/input";
 import { cn } from "@orbit/ui/lib/utils";
 import { useForm } from "@tanstack/react-form";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { GalleryVerticalEndIcon } from "lucide-react";
 import { useSignIn } from "@/hooks/use-auth";
 
@@ -24,14 +24,11 @@ export function LoginForm({
 	const form = useForm({
 		defaultValues: { email: "", password: "" },
 		onSubmit: async ({ value }) => {
-			signIn.mutate(
-				{ email: value.email, password: value.password },
-				{
-					onSuccess: () => {
-						navigate({ to: "/" });
-					},
-				},
-			);
+			await signIn.mutateAsync({
+				email: value.email,
+				password: value.password,
+			});
+			await navigate({ to: "/" });
 		},
 	});
 
@@ -45,21 +42,15 @@ export function LoginForm({
 			>
 				<FieldGroup>
 					<div className="flex flex-col items-center gap-2 text-center">
-						<a
-							href="/login"
-							className="flex flex-col items-center gap-2 font-medium"
-						>
-							<div className="flex size-8 items-center justify-center rounded-md">
-								<GalleryVerticalEndIcon className="size-6" />
-							</div>
-							<span className="sr-only">Orbit</span>
-						</a>
+						<div className="flex size-8 items-center justify-center rounded-md">
+							<GalleryVerticalEndIcon className="size-6" />
+						</div>
 						<h1 className="text-xl font-bold">Welcome back</h1>
 						<FieldDescription>
 							Don&apos;t have an account?{" "}
-							<a href="/signup" className="underline underline-offset-4">
+							<Link to="/signup" className="underline underline-offset-4">
 								Sign up
-							</a>
+							</Link>
 						</FieldDescription>
 					</div>
 
@@ -89,12 +80,12 @@ export function LoginForm({
 							<Field>
 								<div className="flex items-center justify-between">
 									<FieldLabel htmlFor={field.name}>Password</FieldLabel>
-									<a
-										href="/forgot-password"
+									<Link
+										to="/forgot-password"
 										className="text-sm underline underline-offset-4"
 									>
 										Forgot password?
-									</a>
+									</Link>
 								</div>
 								<Input
 									id={field.name}
@@ -109,6 +100,10 @@ export function LoginForm({
 							</Field>
 						)}
 					/>
+
+					{signIn.error && (
+						<FieldError>{signIn.error.message}</FieldError>
+					)}
 
 					<form.Subscribe
 						selector={(state) => state.isSubmitting}
@@ -146,8 +141,15 @@ export function LoginForm({
 				</FieldGroup>
 			</form>
 			<FieldDescription className="px-6 text-center">
-				By clicking continue, you agree to our <a href="/">Terms of Service</a>{" "}
-				and <a href="/">Privacy Policy</a>.
+				By clicking continue, you agree to our{" "}
+				<Link to="/" className="underline underline-offset-4">
+					Terms of Service
+				</Link>{" "}
+				and{" "}
+				<Link to="/" className="underline underline-offset-4">
+					Privacy Policy
+				</Link>
+				.
 			</FieldDescription>
 		</div>
 	);

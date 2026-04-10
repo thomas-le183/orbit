@@ -6,9 +6,7 @@ import { authClient } from "@/lib/auth-client";
 export const authKeys = {
 	session: ["auth", "session"] as const,
 	organizations: ["auth", "organizations"] as const,
-	activeOrg: ["auth", "active-organization"] as const,
-	fullOrg: (orgId: string) => ["auth", "organization", orgId] as const,
-	members: ["auth", "members"] as const,
+	org: (orgId: string) => ["auth", "org", orgId] as const,
 };
 
 // ─── Queries ──────────────────────────────────────────────────
@@ -33,26 +31,6 @@ export function useOrganizations() {
 	});
 }
 
-export function useActiveOrganization() {
-	return useQuery({
-		queryKey: authKeys.activeOrg,
-		queryFn: async () => {
-			const { data } = await authClient.organization.getFullOrganization();
-			return data;
-		},
-	});
-}
-
-export function useMembers() {
-	return useQuery({
-		queryKey: authKeys.members,
-		queryFn: async () => {
-			const { data } = await authClient.organization.getFullOrganization();
-			return data?.members ?? [];
-		},
-	});
-}
-
 // ─── Mutations ────────────────────────────────────────────────
 
 export function useSignIn() {
@@ -65,6 +43,7 @@ export function useSignIn() {
 		},
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: authKeys.session });
+			qc.invalidateQueries({ queryKey: authKeys.organizations });
 		},
 	});
 }
@@ -83,6 +62,7 @@ export function useSignUp() {
 		},
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: authKeys.session });
+			qc.invalidateQueries({ queryKey: authKeys.organizations });
 		},
 	});
 }
@@ -110,11 +90,9 @@ export function useSetActiveOrganization() {
 			return data;
 		},
 		onSuccess: () => {
-			// Only refresh the active-org cache. Do NOT invalidate the session
-			// query — the URL slug is the source of truth for which org is
-			// active, and refetching the session mid-navigation causes every
-			// `useSession` consumer (topnav, sidebar) to re-render and flash.
-			qc.invalidateQueries({ queryKey: authKeys.activeOrg });
+			// Refresh session so activeOrganizationId stays current.
+			// Org data itself doesn't change on setActive — no need to invalidate it.
+			qc.invalidateQueries({ queryKey: authKeys.session });
 		},
 	});
 }
@@ -144,9 +122,9 @@ export function useUpdateOrganization() {
 			if (error) throw error;
 			return data;
 		},
-		onSuccess: () => {
+		onSuccess: (_, { organizationId }) => {
 			qc.invalidateQueries({ queryKey: authKeys.organizations });
-			qc.invalidateQueries({ queryKey: authKeys.activeOrg });
+			qc.invalidateQueries({ queryKey: authKeys.org(organizationId) });
 		},
 	});
 }
@@ -161,9 +139,9 @@ export function useDeleteOrganization() {
 			if (error) throw error;
 			return data;
 		},
-		onSuccess: () => {
+		onSuccess: (_, organizationId) => {
 			qc.invalidateQueries({ queryKey: authKeys.organizations });
-			qc.invalidateQueries({ queryKey: authKeys.activeOrg });
+			qc.removeQueries({ queryKey: authKeys.org(organizationId) });
 		},
 	});
 }
@@ -180,10 +158,8 @@ export function useInviteMember() {
 			if (error) throw error;
 			return data;
 		},
-		onSuccess: () => {
-			qc.invalidateQueries({
-				queryKey: authKeys.members,
-			});
+		onSuccess: (_, { organizationId }) => {
+			qc.invalidateQueries({ queryKey: authKeys.org(organizationId) });
 		},
 	});
 }
@@ -199,10 +175,8 @@ export function useRemoveMember() {
 			if (error) throw error;
 			return data;
 		},
-		onSuccess: () => {
-			qc.invalidateQueries({
-				queryKey: authKeys.members,
-			});
+		onSuccess: (_, { organizationId }) => {
+			qc.invalidateQueries({ queryKey: authKeys.org(organizationId) });
 		},
 	});
 }
@@ -220,10 +194,8 @@ export function useUpdateMemberRole() {
 			if (error) throw error;
 			return data;
 		},
-		onSuccess: () => {
-			qc.invalidateQueries({
-				queryKey: authKeys.members,
-			});
+		onSuccess: (_, { organizationId }) => {
+			qc.invalidateQueries({ queryKey: authKeys.org(organizationId) });
 		},
 	});
 }
@@ -250,35 +222,42 @@ export const organizationsQueryOptions = {
 
 import type { QueryClient } from "@tanstack/react-query";
 
+type SessionData = Awaited<ReturnType<typeof sessionQueryOptions.queryFn>>;
+
 export type AuthState = {
-	session: Awaited<ReturnType<typeof sessionQueryOptions.queryFn>>;
+	user: NonNullable<SessionData>["user"] | null;
+	session: NonNullable<SessionData>["session"] | null;
 	organizations: Awaited<ReturnType<typeof organizationsQueryOptions.queryFn>>;
 };
 
 /**
- * Load the raw auth state via `ensureQueryData`.
- * Makes no routing decisions — callers decide what to do with the state.
+ * Load auth state for use in `beforeLoad` guards.
+ * Uses `fetchQuery` so stale data (e.g. after sign-in/sign-out) is always
+ * re-fetched before routing decisions are made.
  */
 export async function loadAuthState(
 	queryClient: QueryClient,
 ): Promise<AuthState> {
-	const [session, organizations] = await Promise.all([
-		queryClient.ensureQueryData(sessionQueryOptions),
-		queryClient.ensureQueryData(organizationsQueryOptions),
+	const [sessionData, organizations] = await Promise.all([
+		queryClient.fetchQuery(sessionQueryOptions),
+		queryClient.fetchQuery(organizationsQueryOptions),
 	]);
 
-	return { session, organizations: organizations ?? [] };
+	return {
+		user: sessionData?.user ?? null,
+		session: sessionData?.session ?? null,
+		organizations: organizations ?? [],
+	};
 }
 
 /**
- * Given an authenticated user's state, decide where they should land when
- * no workspace slug is present in the URL. Returns `null` if the user is
- * unauthenticated (caller should allow the current public route to render).
+ * Given an authenticated user's state, decide where they should land.
+ * Returns `null` if unauthenticated — caller should allow the route to render.
  */
 export function resolveAuthenticatedLanding(state: AuthState) {
-	if (!state.session?.user) return null;
+	if (!state.user) return null;
 
-	if (!state.session.user.name) {
+	if (!state.user.name) {
 		return { to: "/onboarding" } as const;
 	}
 
@@ -288,7 +267,7 @@ export function resolveAuthenticatedLanding(state: AuthState) {
 
 	const active =
 		state.organizations.find(
-			(o) => o.id === state.session?.session.activeOrganizationId,
+			(o) => o.id === state.session?.activeOrganizationId,
 		) ?? state.organizations[0];
 
 	return {

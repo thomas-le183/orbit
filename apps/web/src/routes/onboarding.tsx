@@ -5,13 +5,13 @@ export const Route = createFileRoute("/onboarding")({
 	beforeLoad: async ({ context }) => {
 		const state = await loadAuthState(context.queryClient);
 
-		if (!state.session?.user) {
+		if (!state.user) {
 			throw redirect({ to: "/login" });
 		}
 
 		// User already has a name — they don't belong on the onboarding
 		// screen. Send them to their real landing destination.
-		if (state.session.user.name) {
+		if (state.user.name) {
 			const landing = resolveAuthenticatedLanding(state);
 			if (landing) throw redirect(landing);
 		}

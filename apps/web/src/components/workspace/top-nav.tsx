@@ -21,19 +21,14 @@ import {
 	SearchIcon,
 	SettingsIcon,
 } from "lucide-react";
-import {
-	useActiveOrganization,
-	useOrganizations,
-	useSession,
-	useSignOut,
-} from "@/hooks/use-auth";
+import { useOrganizations, useSession, useSignOut } from "@/hooks/use-auth";
 
 export function TopNav({ orgSlug }: { orgSlug: string }) {
 	const router = useRouter();
 	const signOut = useSignOut();
 	const { data: session } = useSession();
 	const { data: organizations } = useOrganizations();
-	const { data: activeOrganization } = useActiveOrganization();
+	const activeOrganization = organizations?.find((o) => o.slug === orgSlug);
 	const user = session?.user;
 	const initials = user?.name ? getInitials(user.name) : "?";
 

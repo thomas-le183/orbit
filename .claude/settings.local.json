@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -h \"^export\" /Users/thinhle/Documents/Development/orbit/node_modules/.pnpm/better-auth@1.5.6_@opentelemetry+api@1.9.1_drizzle-kit@0.31.10_drizzle-orm@0.45.2_@open_fa64feec9ddd1c5885271f7634eb96eb/node_modules/better-auth/dist/api/routes/*.d.mts)",
+      "Bash(ls -la /Users/thinhle/Documents/Development/orbit/node_modules/.pnpm/better-auth@1.5.6*/node_modules/better-auth/)",
+      "Bash(find /Users/thinhle/Documents/Development/orbit/node_modules/.pnpm/better-auth@1.5.6*/node_modules/better-auth -name \"*.d.ts\" -type f)",
+      "Bash(ls -la /Users/thinhle/Documents/Development/orbit/node_modules/.pnpm/better-auth@1.5.6*/node_modules/better-auth/client/)",
+      "Bash(find /Users/thinhle/Documents/Development/orbit/node_modules/.pnpm/better-auth@1.5.6*/node_modules/better-auth/dist -name \"auth.d.mts\")",
+      "Bash(find /Users/thinhle/Documents/Development/orbit/node_modules/.pnpm/better-auth@1.5.6*/node_modules/better-auth/dist/api -name \"*.d.mts\")"
+    ]
+  }
+}
