@@ -22,6 +22,13 @@
       "when": 1775481454880,
       "tag": "0002_perpetual_forgotten_one",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1775844449078,
+      "tag": "0003_funny_hercules",
+      "breakpoints": true
     }
   ]
 }
