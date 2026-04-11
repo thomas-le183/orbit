@@ -114,9 +114,7 @@ export function SignupForm({
 						)}
 					/>
 
-					{signUp.error && (
-						<FieldError>{signUp.error.message}</FieldError>
-					)}
+					{signUp.error && <FieldError>{signUp.error.message}</FieldError>}
 
 					<form.Subscribe
 						selector={(state) => state.isSubmitting}

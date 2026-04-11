@@ -1,10 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { HomeIcon } from "lucide-react";
 
-const navItems = [
-	{ to: "/$orgSlug", icon: HomeIcon, label: "Home" },
-	
-] as const;
+const navItems = [{ to: "/$orgSlug", icon: HomeIcon, label: "Home" }] as const;
 
 export function AppSidebar({ orgSlug }: { orgSlug: string }) {
 	return (
@@ -15,7 +12,7 @@ export function AppSidebar({ orgSlug }: { orgSlug: string }) {
 					<Link
 						key={to}
 						to={to}
-						params={{orgSlug}}
+						params={{ orgSlug }}
 						activeOptions={{ exact: false }}
 						className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground [&.active]:bg-accent [&.active]:text-accent-foreground"
 					>

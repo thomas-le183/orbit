@@ -10,11 +10,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@orbit/ui/components/card";
-import {
-	Progress,
-	ProgressIndicator,
-	ProgressTrack,
-} from "@orbit/ui/components/progress";
+import { Progress } from "@orbit/ui/components/progress";
 import { cn } from "@orbit/ui/lib/utils";
 import {
 	CheckIcon,
@@ -101,13 +97,7 @@ export function BillingSettings({ orgSlug }: { orgSlug: string }) {
 									: ` / ${metadata.memberLimit}`}
 							</span>
 						</div>
-						{metadata.memberLimit !== -1 && (
-							<Progress value={usagePercent}>
-								<ProgressTrack>
-									<ProgressIndicator />
-								</ProgressTrack>
-							</Progress>
-						)}
+						{metadata.memberLimit !== -1 && <Progress value={usagePercent} />}
 					</CardContent>
 				</Card>
 
@@ -173,8 +163,7 @@ export function BillingSettings({ orgSlug }: { orgSlug: string }) {
 						const plan = TIER_METADATA[tier];
 						const isCurrent = tier === currentTier;
 						const tiers = Object.keys(TIER_METADATA) as SubscriptionTier[];
-						const isUpgrade =
-							tiers.indexOf(tier) > tiers.indexOf(currentTier);
+						const isUpgrade = tiers.indexOf(tier) > tiers.indexOf(currentTier);
 
 						return (
 							<Card

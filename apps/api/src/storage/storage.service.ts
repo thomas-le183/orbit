@@ -12,7 +12,7 @@ export class StorageService {
 	private readonly client: S3Client;
 	private readonly bucket: string;
 
-	constructor(private readonly config: ConfigService) {
+	constructor(config: ConfigService) {
 		const endpoint = config.get<string>("STORAGE_ENDPOINT");
 		const forcePathStyle =
 			config.get<string>("STORAGE_FORCE_PATH_STYLE") === "true";

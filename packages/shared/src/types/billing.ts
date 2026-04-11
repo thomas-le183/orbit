@@ -119,4 +119,3 @@ export const TIER_METADATA: Record<SubscriptionTier, TierMetadata> = {
 		],
 	},
 };
-
