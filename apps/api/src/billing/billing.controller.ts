@@ -30,7 +30,9 @@ export class BillingController {
 	) {}
 
 	@Get(":orgSlug/subscription")
-	async getSubscription(@Param("orgSlug") orgSlug: string): Promise<SubscriptionResponse> {
+	async getSubscription(
+		@Param("orgSlug") orgSlug: string,
+	): Promise<SubscriptionResponse> {
 		const org = await this.billingService.getOrgBySlug(orgSlug);
 		if (!org) throw new NotFoundException("Organization not found");
 
@@ -102,7 +104,9 @@ export class BillingController {
 	}
 
 	@Post(":orgSlug/portal")
-	async createPortal(@Param("orgSlug") orgSlug: string): Promise<PortalResponse> {
+	async createPortal(
+		@Param("orgSlug") orgSlug: string,
+	): Promise<PortalResponse> {
 		const org = await this.billingService.getOrgBySlug(orgSlug);
 		if (!org) throw new NotFoundException("Organization not found");
 

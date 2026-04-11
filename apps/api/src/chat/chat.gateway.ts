@@ -12,7 +12,12 @@ import {
 import { fromNodeHeaders } from "better-auth/node";
 import { and, eq } from "drizzle-orm";
 import type { Server, Socket } from "socket.io";
-import { AUTH, type Auth, type Session, type User } from "../auth/auth.constants";
+import {
+	AUTH,
+	type Auth,
+	type Session,
+	type User,
+} from "../auth/auth.constants";
 import { DB, type Db } from "../db/db.module";
 import * as schema from "../db/schema";
 import { MessagesService } from "./messages/messages.service";
@@ -162,7 +167,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		@MessageBody() payload: { messageId: string; content: string },
 	) {
 		const { user, session } = socket.data;
-		const orgRole = await this.getOrgRole(user.id, session.activeOrganizationId);
+		const orgRole = await this.getOrgRole(
+			user.id,
+			session.activeOrganizationId,
+		);
 
 		const updated = await this.messagesService.editMessage(
 			payload.messageId,
@@ -189,7 +197,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		@MessageBody() payload: { messageId: string },
 	) {
 		const { user, session } = socket.data;
-		const orgRole = await this.getOrgRole(user.id, session.activeOrganizationId);
+		const orgRole = await this.getOrgRole(
+			user.id,
+			session.activeOrganizationId,
+		);
 		const roomId = await this.getRoomIdForMessage(payload.messageId);
 
 		await this.messagesService.softDeleteMessage(
@@ -341,24 +352,21 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 						eq(schema.channelMember.userId, userId),
 					),
 				});
-				if (!membership)
-					throw new WsException("Not a member of this channel");
+				if (!membership) throw new WsException("Not a member of this channel");
 			}
 			return;
 		}
 
 		if (roomId.startsWith("conversation:")) {
 			const conversationId = roomId.slice("conversation:".length);
-			const participant =
-				await this.db.query.conversationParticipant.findFirst({
+			const participant = await this.db.query.conversationParticipant.findFirst(
+				{
 					where: and(
-						eq(
-							schema.conversationParticipant.conversationId,
-							conversationId,
-						),
+						eq(schema.conversationParticipant.conversationId, conversationId),
 						eq(schema.conversationParticipant.userId, userId),
 					),
-				});
+				},
+			);
 			if (!participant) throw new WsException("Not a participant");
 			return;
 		}
@@ -366,9 +374,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		throw new WsException(`Invalid roomId format: ${roomId}`);
 	}
 
-	private async getRoomIdForMessage(
-		messageId: string,
-	): Promise<string | null> {
+	private async getRoomIdForMessage(messageId: string): Promise<string | null> {
 		const msg = await this.db.query.message.findFirst({
 			where: eq(schema.message.id, messageId),
 		});

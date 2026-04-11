@@ -72,7 +72,8 @@ export class MessagesService {
 					eq(schema.channelMember.userId, userId),
 				),
 			});
-			if (!membership) throw new ForbiddenException("Not a member of this channel");
+			if (!membership)
+				throw new ForbiddenException("Not a member of this channel");
 		}
 
 		const cursor = await this.resolveCursor(beforeId);
@@ -195,7 +196,12 @@ export class MessagesService {
 		return this.getFullMessage(id);
 	}
 
-	async editMessage(messageId: string, userId: string, orgRole: string, content: string) {
+	async editMessage(
+		messageId: string,
+		userId: string,
+		orgRole: string,
+		content: string,
+	) {
 		const msg = await this.db.query.message.findFirst({
 			where: eq(schema.message.id, messageId),
 		});

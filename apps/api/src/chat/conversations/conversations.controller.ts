@@ -10,6 +10,7 @@ import type { Session, User } from "../../auth/auth.constants";
 import { CurrentSession } from "../../common/decorators/current-session.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { AuthGuard } from "../../common/guards/auth.guard";
+import { FindOrCreateConversationDto } from "./conversations.dto";
 import { ConversationsService } from "./conversations.service";
 
 @UseGuards(AuthGuard)
@@ -18,10 +19,7 @@ export class ConversationsController {
 	constructor(private readonly conversationsService: ConversationsService) {}
 
 	@Get()
-	async list(
-		@CurrentUser() user: User,
-		@CurrentSession() session: Session,
-	) {
+	async list(@CurrentUser() user: User, @CurrentSession() session: Session) {
 		const orgId = this.requireOrgId(session);
 		return this.conversationsService.listConversations(orgId, user.id);
 	}
@@ -30,10 +28,14 @@ export class ConversationsController {
 	async findOrCreate(
 		@CurrentUser() user: User,
 		@CurrentSession() session: Session,
-		@Body() body: { participantIds: string[] },
+		@Body() body: FindOrCreateConversationDto,
 	) {
 		const orgId = this.requireOrgId(session);
-		return this.conversationsService.findOrCreate(orgId, user.id, body.participantIds);
+		return this.conversationsService.findOrCreate(
+			orgId,
+			user.id,
+			body.participantIds,
+		);
 	}
 
 	private requireOrgId(session: Session): string {

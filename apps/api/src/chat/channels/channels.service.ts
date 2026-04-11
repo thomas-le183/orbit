@@ -92,7 +92,9 @@ export class ChannelsService {
 			});
 		}
 
-		return this.db.query.channel.findFirst({ where: eq(schema.channel.id, id) });
+		return this.db.query.channel.findFirst({
+			where: eq(schema.channel.id, id),
+		});
 	}
 
 	async updateChannel(

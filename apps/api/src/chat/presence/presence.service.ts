@@ -88,7 +88,10 @@ export class PresenceService {
 				updatedAt: new Date(),
 			})
 			.onConflictDoUpdate({
-				target: [schema.userPresence.userId, schema.userPresence.organizationId],
+				target: [
+					schema.userPresence.userId,
+					schema.userPresence.organizationId,
+				],
 				set: {
 					status,
 					customStatus: customStatus ?? null,
@@ -116,7 +119,10 @@ export class PresenceService {
 				updatedAt: new Date(),
 			})
 			.onConflictDoUpdate({
-				target: [schema.userPresence.userId, schema.userPresence.organizationId],
+				target: [
+					schema.userPresence.userId,
+					schema.userPresence.organizationId,
+				],
 				set: {
 					status: "offline",
 					lastSeenAt: new Date(),

@@ -1,8 +1,15 @@
-import { Body, Controller, ForbiddenException, Patch, UseGuards } from "@nestjs/common";
+import {
+	Body,
+	Controller,
+	ForbiddenException,
+	Patch,
+	UseGuards,
+} from "@nestjs/common";
 import type { Session, User } from "../../auth/auth.constants";
 import { CurrentSession } from "../../common/decorators/current-session.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { AuthGuard } from "../../common/guards/auth.guard";
+import { UpdatePresenceDto } from "./presence.dto";
 import { PresenceService } from "./presence.service";
 
 @UseGuards(AuthGuard)
@@ -14,12 +21,7 @@ export class PresenceController {
 	async update(
 		@CurrentUser() user: User,
 		@CurrentSession() session: Session,
-		@Body()
-		body: {
-			status?: string;
-			customStatus?: string | null;
-			customStatusEmoji?: string | null;
-		},
+		@Body() body: UpdatePresenceDto,
 	) {
 		if (!session.activeOrganizationId) {
 			throw new ForbiddenException("No active organization");

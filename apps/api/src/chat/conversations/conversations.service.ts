@@ -31,14 +31,10 @@ export class ConversationsService {
 		// Attach participants to each conversation
 		return Promise.all(
 			conversations.map(async (conv) => {
-				const participants = await this.db.query.conversationParticipant.findMany(
-					{
-						where: eq(
-							schema.conversationParticipant.conversationId,
-							conv.id,
-						),
-					},
-				);
+				const participants =
+					await this.db.query.conversationParticipant.findMany({
+						where: eq(schema.conversationParticipant.conversationId, conv.id),
+					});
 				return { ...conv, participants };
 			}),
 		);
@@ -79,9 +75,7 @@ export class ConversationsService {
 				},
 			);
 
-			const existingSet = participants
-				.map((p) => p.userId)
-				.sort();
+			const existingSet = participants.map((p) => p.userId).sort();
 
 			const isExactMatch =
 				existingSet.length === participantSet.length &&

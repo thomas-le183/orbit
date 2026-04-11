@@ -50,7 +50,9 @@ export class BillingService {
 		});
 	}
 
-	async getOrgSubscriptionTier(organizationId: string): Promise<SubscriptionTier> {
+	async getOrgSubscriptionTier(
+		organizationId: string,
+	): Promise<SubscriptionTier> {
 		const sub = await this.getSubscription(organizationId);
 		if (!sub || sub.status === "canceled" || sub.status === "unpaid") {
 			return "free";
