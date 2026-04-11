@@ -3,10 +3,13 @@ import { AuthModule } from "../auth/auth.module";
 import { AttachmentsController } from "./attachments/attachments.controller";
 import { ChannelsController } from "./channels/channels.controller";
 import { ChannelsService } from "./channels/channels.service";
+import { ChatGateway } from "./chat.gateway";
 import { ConversationsController } from "./conversations/conversations.controller";
 import { ConversationsService } from "./conversations/conversations.service";
 import { MessagesController } from "./messages/messages.controller";
 import { MessagesService } from "./messages/messages.service";
+import { PresenceController } from "./presence/presence.controller";
+import { PresenceService } from "./presence/presence.service";
 
 @Module({
 	imports: [AuthModule],
@@ -15,8 +18,15 @@ import { MessagesService } from "./messages/messages.service";
 		ConversationsController,
 		MessagesController,
 		AttachmentsController,
+		PresenceController,
 	],
-	providers: [ChannelsService, ConversationsService, MessagesService],
+	providers: [
+		ChatGateway,
+		ChannelsService,
+		ConversationsService,
+		MessagesService,
+		PresenceService,
+	],
 	exports: [MessagesService],
 })
 export class ChatModule {}
