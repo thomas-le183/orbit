@@ -1,4 +1,8 @@
 {
+  "attribution": {
+    "commit": "Generated with AI\n\nCo-Authored-By: AI <ai@example.com>",
+    "pr": ""
+  },
   "permissions": {
     "allow": [
       "Bash(grep -h \"^export\" /Users/thinhle/Documents/Development/orbit/node_modules/.pnpm/better-auth@1.5.6_@opentelemetry+api@1.9.1_drizzle-kit@0.31.10_drizzle-orm@0.45.2_@open_fa64feec9ddd1c5885271f7634eb96eb/node_modules/better-auth/dist/api/routes/*.d.mts)",
@@ -20,7 +24,10 @@
       "Bash(DATABASE_URL=\"postgresql://orbit:orbit@localhost:5433/orbit\" npx drizzle-kit migrate)",
       "Bash(npm install:*)",
       "Bash(pnpm add:*)",
-      "Bash(docker compose:*)"
+      "Bash(docker compose:*)",
+      "Bash(.claude/skills/brainstorming/scripts/start-server.sh --project-dir /Users/thinhle/Documents/Development/orbit)",
+      "Bash(npx @biomejs/biome format --write apps/web/src/components/workspace/app-sidebar.tsx)",
+      "Bash(bash .claude/skills/brainstorming/scripts/start-server.sh --project-dir /Users/thinhle/Documents/Development/orbit)"
     ]
   }
 }

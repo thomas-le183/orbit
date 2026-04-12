@@ -34,7 +34,6 @@ export const Route = createFileRoute("/_workspace/$orgSlug")({
 });
 
 function OrgLayout() {
-	const { orgSlug } = Route.useParams();
 	const { authState, targetOrg } = Route.useRouteContext();
 	const setActive = useSetActiveOrganization();
 
@@ -46,10 +45,12 @@ function OrgLayout() {
 
 	return (
 		<div className="flex h-screen flex-col">
-			<TopNav orgSlug={orgSlug} />
-			<div className="flex flex-1 gap-2 overflow-hidden p-2">
-				<AppNav orgSlug={orgSlug} />
-				<ResizablePanelGroup orientation="horizontal">
+			<TopNav />
+			<div className="flex flex-1 overflow-hidden bg-nav-chrome">
+				<AppNav />
+				<ResizablePanelGroup
+					orientation="horizontal"
+				>
 					<ResizablePanel
 						id="sidebar"
 						defaultSize="15%"
@@ -59,12 +60,12 @@ function OrgLayout() {
 						collapsedSize={0}
 						groupResizeBehavior="preserve-pixel-size"
 					>
-						<AppSidebar orgSlug={orgSlug} />
+						<AppSidebar />
 					</ResizablePanel>
 
 					<ResizableHandle />
 
-					<ResizablePanel id="main" defaultSize="85%">
+					<ResizablePanel id="main" defaultSize="85%" className="bg-background">
 						<main className="h-full overflow-auto p-6">
 							<Outlet />
 						</main>

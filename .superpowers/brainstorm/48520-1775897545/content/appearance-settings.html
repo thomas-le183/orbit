@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Appearance Settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #111;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 28px;
+    color: #e8e8e8;
+  }
+
+  .page-label { text-align: center; font-size: 11px; color: #444; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 20px; font-family: monospace; }
+
+  /* ── Preview shell (mini app) ── */
+  .preview-shell {
+    max-width: 860px;
+    margin: 0 auto 24px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #1f1f1f;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    height: 56px;
+    display: flex;
+    align-items: center;
+    transition: background .3s, border-color .3s;
+  }
+  .preview-nav {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+  }
+  .preview-logo { font-weight: 700; font-size: 14px; transition: font-family .3s; }
+  .preview-nav-items { display: flex; gap: 16px; margin-left: 24px; }
+  .preview-nav-item { font-size: 12px; opacity: 0.4; transition: font-family .3s; }
+  .preview-btn {
+    padding: 6px 14px; border-radius: 5px; font-size: 11px; font-weight: 600;
+    color: white; margin-left: auto; transition: background .3s, border-radius .3s, font-family .3s;
+  }
+  .preview-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; margin-left: 8px;
+    transition: background .3s, color .3s, border-radius .3s;
+  }
+
+  /* ── Settings panel ── */
+  .settings-panel {
+    max-width: 860px;
+    margin: 0 auto;
+    background: #0d0d0d;
+    border: 1px solid #1f1f1f;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .settings-header {
+    padding: 16px 20px 14px;
+    border-bottom: 1px solid #1a1a1a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .settings-title { font-size: 13px; font-weight: 600; color: #e8e8e8; }
+  .settings-sub { font-size: 11px; color: #444; margin-top: 1px; }
+
+  .settings-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .settings-col { padding: 20px; }
+  .settings-col:first-child { border-right: 1px solid #1a1a1a; }
+
+  .section-label {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: #444; font-family: monospace; margin-bottom: 12px;
+  }
+
+  /* ── Color swatches ── */
+  .color-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .color-swatch {
+    width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+    position: relative; transition: transform .12s;
+    border: 2px solid transparent;
+  }
+  .color-swatch:hover { transform: scale(1.1); }
+  .color-swatch.selected { border-color: white; box-shadow: 0 0 0 1px rgba(255,255,255,0.3); }
+  .color-swatch.selected::after {
+    content: '✓';
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 12px; font-weight: 700;
+  }
+
+  /* ── Custom hex input ── */
+  .hex-row { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+  .hex-preview { width: 28px; height: 28px; border-radius: 6px; border: 1px solid #2a2a2a; transition: background .15s; }
+  .hex-input {
+    flex: 1; height: 30px; background: #111; border: 1px solid #222;
+    border-radius: 5px; padding: 0 10px; font-size: 11px; font-family: monospace;
+    color: #e8e8e8; outline: none;
+  }
+  .hex-input:focus { border-color: #333; }
+
+  /* ── Font picker ── */
+  .font-options { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+  .font-option {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 6px;
+    border: 1px solid #1a1a1a; background: #0a0a0a;
+    cursor: pointer; transition: border-color .12s;
+  }
+  .font-option:hover { border-color: #2a2a2a; }
+  .font-option.selected { border-color: var(--accent, #3b82f6); background: #0f1a2a; }
+  .font-option-name { font-size: 13px; font-weight: 500; color: #e8e8e8; flex: 1; }
+  .font-option-sample { font-size: 11px; color: #444; }
+  .font-option-badge {
+    font-size: 9px; padding: 2px 6px; border-radius: 3px;
+    background: #1a1a1a; color: #555; font-family: monospace;
+  }
+  .font-option-badge.default { background: #0f1d35; color: #3b82f6; }
+  .radio { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid #333; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .radio.checked { border-color: var(--accent, #3b82f6); }
+  .radio.checked::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent, #3b82f6); }
+
+  /* ── Density ── */
+  .density-options { display: flex; gap: 8px; margin-bottom: 20px; }
+  .density-option {
+    flex: 1; padding: 10px 8px; border-radius: 6px;
+    border: 1px solid #1a1a1a; background: #0a0a0a;
+    cursor: pointer; text-align: center; transition: border-color .12s;
+  }
+  .density-option:hover { border-color: #2a2a2a; }
+  .density-option.selected { border-color: var(--accent, #3b82f6); background: #0f1a2a; }
+  .density-label { font-size: 11px; font-weight: 500; color: #e8e8e8; margin-bottom: 6px; }
+  .density-lines { display: flex; flex-direction: column; gap: 3px; align-items: center; }
+  .density-line { background: #2a2a2a; border-radius: 1px; width: 80%; }
+
+  /* ── Presets ── */
+  .presets-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .preset {
+    border-radius: 7px; overflow: hidden; cursor: pointer;
+    border: 2px solid transparent; transition: border-color .12s, transform .1s;
+  }
+  .preset:hover { transform: translateY(-1px); }
+  .preset.selected { border-color: var(--accent, #3b82f6); }
+  .preset-preview { height: 52px; display: flex; }
+  .preset-rail { width: 18px; }
+  .preset-sidebar { width: 50px; }
+  .preset-content { flex: 1; }
+  .preset-label {
+    padding: 6px 8px; font-size: 10px; font-weight: 500;
+    border-top: 1px solid rgba(0,0,0,0.1);
+  }
+
+  /* ── Save button ── */
+  .save-row {
+    padding: 14px 20px;
+    border-top: 1px solid #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .save-note { font-size: 10px; color: #333; font-family: monospace; }
+  .save-btn {
+    padding: 7px 18px; background: var(--accent, #3b82f6); color: white;
+    border: none; border-radius: 5px; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: opacity .15s;
+  }
+  .save-btn:hover { opacity: 0.85; }
+</style>
+</head>
+<body>
+
+<div class="page-label">appearance settings — live preview above</div>
+
+<!-- Live preview bar -->
+<div class="preview-shell" id="preview" style="background:#0d0d0d; border-color:#1f1f1f;">
+  <div class="preview-nav">
+    <span class="preview-logo" id="preview-logo">Orbit</span>
+    <div class="preview-nav-items">
+      <span class="preview-nav-item" id="preview-text">Chat</span>
+      <span class="preview-nav-item" id="preview-text2">Tasks</span>
+      <span class="preview-nav-item" id="preview-text3">Time</span>
+    </div>
+    <span class="preview-btn" id="preview-btn" style="background:#3b82f6; border-radius:5px;">Get started</span>
+    <span class="preview-badge" id="preview-badge" style="background:rgba(59,130,246,0.15); color:#3b82f6; border-radius:20px; margin-left:8px;">beta</span>
+  </div>
+</div>
+
+<!-- Settings Panel -->
+<div class="settings-panel">
+  <div class="settings-header">
+    <div>
+      <div class="settings-title">Appearance</div>
+      <div class="settings-sub">Customize your personal experience — only visible to you</div>
+    </div>
+  </div>
+
+  <div class="settings-body">
+
+    <!-- Left col: color + font -->
+    <div class="settings-col">
+
+      <!-- Accent color -->
+      <div class="section-label">// accent color</div>
+      <div class="color-grid" id="color-grid">
+        <div class="color-swatch selected" style="background:#3b82f6" data-color="#3b82f6" onclick="pickColor(this)" title="Blue"></div>
+        <div class="color-swatch" style="background:#6366f1" data-color="#6366f1" onclick="pickColor(this)" title="Indigo"></div>
+        <div class="color-swatch" style="background:#8b5cf6" data-color="#8b5cf6" onclick="pickColor(this)" title="Violet"></div>
+        <div class="color-swatch" style="background:#ec4899" data-color="#ec4899" onclick="pickColor(this)" title="Pink"></div>
+        <div class="color-swatch" style="background:#f43f5e" data-color="#f43f5e" onclick="pickColor(this)" title="Rose"></div>
+        <div class="color-swatch" style="background:#f97316" data-color="#f97316" onclick="pickColor(this)" title="Orange"></div>
+        <div class="color-swatch" style="background:#eab308" data-color="#eab308" onclick="pickColor(this)" title="Yellow"></div>
+        <div class="color-swatch" style="background:#22c55e" data-color="#22c55e" onclick="pickColor(this)" title="Green"></div>
+        <div class="color-swatch" style="background:#14b8a6" data-color="#14b8a6" onclick="pickColor(this)" title="Teal"></div>
+        <div class="color-swatch" style="background:#0ea5e9" data-color="#0ea5e9" onclick="pickColor(this)" title="Sky"></div>
+        <div class="color-swatch" style="background:#64748b" data-color="#64748b" onclick="pickColor(this)" title="Slate"></div>
+        <div class="color-swatch" style="background:#e2e8f0; border:1px solid #334155;" data-color="#e2e8f0" onclick="pickColor(this)" title="Silver"></div>
+      </div>
+
+      <div class="hex-row">
+        <div class="hex-preview" id="hex-preview" style="background:#3b82f6"></div>
+        <input class="hex-input" id="hex-input" value="#3b82f6" maxlength="7" oninput="hexChanged(this)" placeholder="#000000"/>
+      </div>
+
+      <!-- Font family -->
+      <div class="section-label">// font family</div>
+      <div class="font-options" id="font-options">
+        <div class="font-option selected" data-font="Inter" onclick="pickFont(this)">
+          <div class="radio checked" id="radio-inter"></div>
+          <div>
+            <div class="font-option-name" style="font-family:'Inter',sans-serif">Inter</div>
+            <div class="font-option-sample" style="font-family:'Inter',sans-serif">The quick brown fox jumps over the lazy dog</div>
+          </div>
+          <div class="font-option-badge default">default</div>
+        </div>
+        <div class="font-option" data-font="Geist" onclick="pickFont(this)">
+          <div class="radio" id="radio-geist"></div>
+          <div>
+            <div class="font-option-name" style="font-family:'Geist',sans-serif">Geist</div>
+            <div class="font-option-sample" style="font-family:'Geist',sans-serif">The quick brown fox jumps over the lazy dog</div>
+          </div>
+          <div class="font-option-badge">modern</div>
+        </div>
+        <div class="font-option" data-font="DM Sans" onclick="pickFont(this)">
+          <div class="radio" id="radio-dm"></div>
+          <div>
+            <div class="font-option-name" style="font-family:'DM Sans',sans-serif">DM Sans</div>
+            <div class="font-option-sample" style="font-family:'DM Sans',sans-serif">The quick brown fox jumps over the lazy dog</div>
+          </div>
+          <div class="font-option-badge">humanist</div>
+        </div>
+        <div class="font-option" data-font="JetBrains Mono" onclick="pickFont(this)">
+          <div class="radio" id="radio-jb"></div>
+          <div>
+            <div class="font-option-name" style="font-family:'JetBrains Mono',monospace">JetBrains Mono</div>
+            <div class="font-option-sample" style="font-family:'JetBrains Mono',monospace">The quick brown fox jumps over the lazy dog</div>
+          </div>
+          <div class="font-option-badge">mono</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right col: density + presets -->
+    <div class="settings-col">
+
+      <!-- Density -->
+      <div class="section-label">// density</div>
+      <div class="density-options" id="density-options">
+        <div class="density-option" data-density="compact" onclick="pickDensity(this)">
+          <div class="density-label">Compact</div>
+          <div class="density-lines">
+            <div class="density-line" style="height:2px"></div>
+            <div class="density-line" style="height:2px"></div>
+            <div class="density-line" style="height:2px"></div>
+            <div class="density-line" style="height:2px"></div>
+            <div class="density-line" style="height:2px"></div>
+          </div>
+        </div>
+        <div class="density-option selected" data-density="default" onclick="pickDensity(this)">
+          <div class="density-label">Default</div>
+          <div class="density-lines">
+            <div class="density-line" style="height:2px"></div>
+            <div class="density-line" style="height:2px"></div>
+            <div class="density-line" style="height:2px"></div>
+            <div class="density-line" style="height:2px"></div>
+          </div>
+        </div>
+        <div class="density-option" data-density="comfortable" onclick="pickDensity(this)">
+          <div class="density-label">Comfortable</div>
+          <div class="density-lines">
+            <div class="density-line" style="height:2px"></div>
+            <div class="density-line" style="height:2px"></div>
+            <div class="density-line" style="height:2px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Theme presets -->
+      <div class="section-label" style="margin-top:8px">// theme presets</div>
+      <div class="presets-grid" id="presets-grid">
+
+        <div class="preset selected" data-preset="default" onclick="pickPreset(this,'#3b82f6','Inter','default','dark')">
+          <div class="preset-preview">
+            <div class="preset-rail" style="background:#111"></div>
+            <div class="preset-sidebar" style="background:#0a0a0a"></div>
+            <div class="preset-content" style="background:#0d0d0d;display:flex;align-items:center;justify-content:center;">
+              <div style="width:60%;height:4px;background:#3b82f6;border-radius:2px"></div>
+            </div>
+          </div>
+          <div class="preset-label" style="background:#0a0a0a;color:#888">Default Dark</div>
+        </div>
+
+        <div class="preset" data-preset="discord-light" onclick="pickPreset(this,'#3b82f6','Inter','default','light')">
+          <div class="preset-preview">
+            <div class="preset-rail" style="background:#e3e5e8"></div>
+            <div class="preset-sidebar" style="background:#f2f3f5"></div>
+            <div class="preset-content" style="background:#ffffff;display:flex;align-items:center;justify-content:center;">
+              <div style="width:60%;height:4px;background:#3b82f6;border-radius:2px"></div>
+            </div>
+          </div>
+          <div class="preset-label" style="background:#f2f3f5;color:#4e5058">Discord Light</div>
+        </div>
+
+        <div class="preset" data-preset="midnight" onclick="pickPreset(this,'#8b5cf6','Inter','default','dark')">
+          <div class="preset-preview">
+            <div class="preset-rail" style="background:#0f0a1e"></div>
+            <div class="preset-sidebar" style="background:#130d28"></div>
+            <div class="preset-content" style="background:#180f30;display:flex;align-items:center;justify-content:center;">
+              <div style="width:60%;height:4px;background:#8b5cf6;border-radius:2px"></div>
+            </div>
+          </div>
+          <div class="preset-label" style="background:#130d28;color:#888">Midnight</div>
+        </div>
+
+        <div class="preset" data-preset="forest" onclick="pickPreset(this,'#22c55e','DM Sans','comfortable','dark')">
+          <div class="preset-preview">
+            <div class="preset-rail" style="background:#0a1209"></div>
+            <div class="preset-sidebar" style="background:#0d1a0c"></div>
+            <div class="preset-content" style="background:#101f10;display:flex;align-items:center;justify-content:center;">
+              <div style="width:60%;height:4px;background:#22c55e;border-radius:2px"></div>
+            </div>
+          </div>
+          <div class="preset-label" style="background:#0d1a0c;color:#888">Forest</div>
+        </div>
+
+        <div class="preset" data-preset="rose" onclick="pickPreset(this,'#f43f5e','Geist','default','dark')">
+          <div class="preset-preview">
+            <div class="preset-rail" style="background:#1a0a0e"></div>
+            <div class="preset-sidebar" style="background:#1f0d11"></div>
+            <div class="preset-content" style="background:#231016;display:flex;align-items:center;justify-content:center;">
+              <div style="width:60%;height:4px;background:#f43f5e;border-radius:2px"></div>
+            </div>
+          </div>
+          <div class="preset-label" style="background:#1f0d11;color:#888">Rose</div>
+        </div>
+
+        <div class="preset" data-preset="linear" onclick="pickPreset(this,'#6366f1','Geist','compact','dark')">
+          <div class="preset-preview">
+            <div class="preset-rail" style="background:#0a0a0f"></div>
+            <div class="preset-sidebar" style="background:#0d0d14"></div>
+            <div class="preset-content" style="background:#111118;display:flex;align-items:center;justify-content:center;">
+              <div style="width:60%;height:4px;background:#6366f1;border-radius:2px"></div>
+            </div>
+          </div>
+          <div class="preset-label" style="background:#0d0d14;color:#888">Linear</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="save-row">
+    <span class="save-note">// changes apply instantly · synced to your account</span>
+    <button class="save-btn" id="save-btn">Save preferences</button>
+  </div>
+</div>
+
+<script>
+let state = { color: '#3b82f6', font: 'Inter', density: 'default', mode: 'dark' };
+
+function applyPreview() {
+  const { color, font } = state;
+  document.getElementById('preview-btn').style.background = color;
+  document.getElementById('preview-badge').style.background = color + '25';
+  document.getElementById('preview-badge').style.color = color;
+  document.getElementById('preview-logo').style.fontFamily = `'${font}', sans-serif`;
+  document.getElementById('preview-text').style.fontFamily = `'${font}', sans-serif`;
+  document.getElementById('preview-text2').style.fontFamily = `'${font}', sans-serif`;
+  document.getElementById('preview-text3').style.fontFamily = `'${font}', sans-serif`;
+  document.getElementById('hex-preview').style.background = color;
+  document.getElementById('hex-input').value = color;
+  document.querySelectorAll('.radio.checked').forEach(r => r.style.borderColor = color);
+  document.querySelectorAll('.radio.checked::after').forEach(r => r.style.background = color);
+  document.querySelectorAll('.font-option.selected, .density-option.selected').forEach(el => {
+    el.style.borderColor = color;
+  });
+  document.querySelectorAll('.preset.selected').forEach(el => el.style.borderColor = color);
+  document.getElementById('save-btn').style.background = color;
+  document.documentElement.style.setProperty('--accent', color);
+
+  // preview shell bg
+  const isDark = state.mode === 'dark';
+  document.getElementById('preview').style.background = isDark ? '#0d0d0d' : '#ffffff';
+  document.getElementById('preview').style.borderColor = isDark ? '#1f1f1f' : '#e3e5e8';
+}
+
+function pickColor(el) {
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  state.color = el.dataset.color;
+  applyPreview();
+}
+
+function hexChanged(el) {
+  const val = el.value;
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+    document.getElementById('hex-preview').style.background = val;
+    state.color = val;
+    applyPreview();
+  }
+}
+
+function pickFont(el) {
+  document.querySelectorAll('.font-option').forEach(o => { o.classList.remove('selected'); });
+  document.querySelectorAll('.radio').forEach(r => r.classList.remove('checked'));
+  el.classList.add('selected');
+  el.style.borderColor = state.color;
+  state.font = el.dataset.font;
+  const radioId = 'radio-' + el.dataset.font.toLowerCase().replace(' ', '-').replace('jetbrains mono','jb').replace('dm sans','dm');
+  const radio = document.getElementById(radioId) || el.querySelector('.radio');
+  if (radio) { radio.classList.add('checked'); radio.style.borderColor = state.color; }
+  applyPreview();
+}
+
+function pickDensity(el) {
+  document.querySelectorAll('.density-option').forEach(o => { o.classList.remove('selected'); o.style.borderColor = ''; });
+  el.classList.add('selected');
+  el.style.borderColor = state.color;
+  state.density = el.dataset.density;
+}
+
+function pickPreset(el, color, font, density, mode) {
+  document.querySelectorAll('.preset').forEach(p => { p.classList.remove('selected'); p.style.borderColor = ''; });
+  el.classList.add('selected');
+
+  // apply color
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+  const match = document.querySelector(`.color-swatch[data-color="${color}"]`);
+  if (match) match.classList.add('selected');
+  state.color = color;
+
+  // apply font
+  const fontEl = document.querySelector(`.font-option[data-font="${font}"]`);
+  if (fontEl) pickFont(fontEl);
+
+  // apply density
+  const densEl = document.querySelector(`.density-option[data-density="${density}"]`);
+  if (densEl) pickDensity(densEl);
+
+  state.mode = mode;
+  applyPreview();
+  el.style.borderColor = color;
+}
+
+applyPreview();
+</script>
+</body>
+</html>

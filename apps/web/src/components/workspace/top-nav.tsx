@@ -12,7 +12,7 @@ import {
 } from "@orbit/ui/components/dropdown-menu";
 import { Kbd, KbdGroup } from "@orbit/ui/components/kbd";
 import { ModeToggle } from "@orbit/ui/components/mode-toggle";
-import { useRouter } from "@tanstack/react-router";
+import { useParams, useRouter } from "@tanstack/react-router";
 import {
 	CheckIcon,
 	ChevronsUpDownIcon,
@@ -23,7 +23,8 @@ import {
 } from "lucide-react";
 import { useOrganizations, useSession, useSignOut } from "@/hooks/use-auth";
 
-export function TopNav({ orgSlug }: { orgSlug: string }) {
+export function TopNav() {
+	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
 	const router = useRouter();
 	const signOut = useSignOut();
 	const { data: session } = useSession();
@@ -39,16 +40,19 @@ export function TopNav({ orgSlug }: { orgSlug: string }) {
 	}
 
 	return (
-		<header className="flex h-12 shrink-0 items-center gap-4 border-b px-4">
+		<header className="flex h-11 shrink-0 items-center gap-4 border-b border-border bg-nav-chrome px-4">
 			{/* Workspace selector */}
 			<DropdownMenu>
 				<DropdownMenuTrigger
 					render={
-						<Button variant="ghost" className="gap-2 font-semibold text-sm" />
+						<Button
+							variant="ghost"
+							className="gap-2 font-semibold text-sm text-nav-chrome-fg hover:bg-nav-chrome-hover"
+						/>
 					}
 				>
 					{activeOrganization?.name ?? orgSlug}
-					<ChevronsUpDownIcon className="size-3.5 text-muted-foreground" />
+					<ChevronsUpDownIcon className="size-3.5 text-nav-chrome-fg/50" />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="start" className="w-56">
 					{organizations?.map((org) => (
@@ -80,7 +84,7 @@ export function TopNav({ orgSlug }: { orgSlug: string }) {
 			{/* Global search trigger */}
 			<Button
 				variant="outline"
-				className="mx-auto h-8 w-full max-w-md justify-start gap-2 text-sm text-muted-foreground"
+				className="mx-auto w-full max-w-md justify-start gap-2 border-nav-chrome-fg/15 bg-nav-chrome-hover text-nav-chrome-fg hover:bg-nav-chrome-active"
 				onClick={() => {
 					// TODO: open command palette
 				}}

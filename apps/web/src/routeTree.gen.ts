@@ -20,9 +20,15 @@ import { Route as PublicLoginRouteImport } from './routes/_public/login'
 import { Route as PublicForgotPasswordRouteImport } from './routes/_public/forgot-password'
 import { Route as WorkspaceOrgSlugIndexRouteImport } from './routes/_workspace/$orgSlug/index'
 import { Route as WorkspaceOrgSlugWikiRouteImport } from './routes/_workspace/$orgSlug/wiki'
+import { Route as WorkspaceOrgSlugTimeRouteImport } from './routes/_workspace/$orgSlug/time'
+import { Route as WorkspaceOrgSlugTasksRouteImport } from './routes/_workspace/$orgSlug/tasks'
 import { Route as WorkspaceOrgSlugSettingsRouteImport } from './routes/_workspace/$orgSlug/settings'
 import { Route as WorkspaceOrgSlugChatRouteImport } from './routes/_workspace/$orgSlug/chat'
 import { Route as WorkspaceOrgSlugAiRouteImport } from './routes/_workspace/$orgSlug/ai'
+import { Route as WorkspaceOrgSlugSettingsWorkspaceRouteImport } from './routes/_workspace/$orgSlug/settings/workspace'
+import { Route as WorkspaceOrgSlugSettingsProfileRouteImport } from './routes/_workspace/$orgSlug/settings/profile'
+import { Route as WorkspaceOrgSlugSettingsNotificationsRouteImport } from './routes/_workspace/$orgSlug/settings/notifications'
+import { Route as WorkspaceOrgSlugSettingsBillingRouteImport } from './routes/_workspace/$orgSlug/settings/billing'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -77,6 +83,16 @@ const WorkspaceOrgSlugWikiRoute = WorkspaceOrgSlugWikiRouteImport.update({
   path: '/wiki',
   getParentRoute: () => WorkspaceOrgSlugRoute,
 } as any)
+const WorkspaceOrgSlugTimeRoute = WorkspaceOrgSlugTimeRouteImport.update({
+  id: '/time',
+  path: '/time',
+  getParentRoute: () => WorkspaceOrgSlugRoute,
+} as any)
+const WorkspaceOrgSlugTasksRoute = WorkspaceOrgSlugTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => WorkspaceOrgSlugRoute,
+} as any)
 const WorkspaceOrgSlugSettingsRoute =
   WorkspaceOrgSlugSettingsRouteImport.update({
     id: '/settings',
@@ -93,6 +109,30 @@ const WorkspaceOrgSlugAiRoute = WorkspaceOrgSlugAiRouteImport.update({
   path: '/ai',
   getParentRoute: () => WorkspaceOrgSlugRoute,
 } as any)
+const WorkspaceOrgSlugSettingsWorkspaceRoute =
+  WorkspaceOrgSlugSettingsWorkspaceRouteImport.update({
+    id: '/workspace',
+    path: '/workspace',
+    getParentRoute: () => WorkspaceOrgSlugSettingsRoute,
+  } as any)
+const WorkspaceOrgSlugSettingsProfileRoute =
+  WorkspaceOrgSlugSettingsProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => WorkspaceOrgSlugSettingsRoute,
+  } as any)
+const WorkspaceOrgSlugSettingsNotificationsRoute =
+  WorkspaceOrgSlugSettingsNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => WorkspaceOrgSlugSettingsRoute,
+  } as any)
+const WorkspaceOrgSlugSettingsBillingRoute =
+  WorkspaceOrgSlugSettingsBillingRouteImport.update({
+    id: '/billing',
+    path: '/billing',
+    getParentRoute: () => WorkspaceOrgSlugSettingsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -104,9 +144,15 @@ export interface FileRoutesByFullPath {
   '/$orgSlug': typeof WorkspaceOrgSlugRouteWithChildren
   '/$orgSlug/ai': typeof WorkspaceOrgSlugAiRoute
   '/$orgSlug/chat': typeof WorkspaceOrgSlugChatRoute
-  '/$orgSlug/settings': typeof WorkspaceOrgSlugSettingsRoute
+  '/$orgSlug/settings': typeof WorkspaceOrgSlugSettingsRouteWithChildren
+  '/$orgSlug/tasks': typeof WorkspaceOrgSlugTasksRoute
+  '/$orgSlug/time': typeof WorkspaceOrgSlugTimeRoute
   '/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
   '/$orgSlug/': typeof WorkspaceOrgSlugIndexRoute
+  '/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
+  '/$orgSlug/settings/notifications': typeof WorkspaceOrgSlugSettingsNotificationsRoute
+  '/$orgSlug/settings/profile': typeof WorkspaceOrgSlugSettingsProfileRoute
+  '/$orgSlug/settings/workspace': typeof WorkspaceOrgSlugSettingsWorkspaceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -117,9 +163,15 @@ export interface FileRoutesByTo {
   '/signup': typeof PublicSignupRoute
   '/$orgSlug/ai': typeof WorkspaceOrgSlugAiRoute
   '/$orgSlug/chat': typeof WorkspaceOrgSlugChatRoute
-  '/$orgSlug/settings': typeof WorkspaceOrgSlugSettingsRoute
+  '/$orgSlug/settings': typeof WorkspaceOrgSlugSettingsRouteWithChildren
+  '/$orgSlug/tasks': typeof WorkspaceOrgSlugTasksRoute
+  '/$orgSlug/time': typeof WorkspaceOrgSlugTimeRoute
   '/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
   '/$orgSlug': typeof WorkspaceOrgSlugIndexRoute
+  '/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
+  '/$orgSlug/settings/notifications': typeof WorkspaceOrgSlugSettingsNotificationsRoute
+  '/$orgSlug/settings/profile': typeof WorkspaceOrgSlugSettingsProfileRoute
+  '/$orgSlug/settings/workspace': typeof WorkspaceOrgSlugSettingsWorkspaceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,9 +186,15 @@ export interface FileRoutesById {
   '/_workspace/$orgSlug': typeof WorkspaceOrgSlugRouteWithChildren
   '/_workspace/$orgSlug/ai': typeof WorkspaceOrgSlugAiRoute
   '/_workspace/$orgSlug/chat': typeof WorkspaceOrgSlugChatRoute
-  '/_workspace/$orgSlug/settings': typeof WorkspaceOrgSlugSettingsRoute
+  '/_workspace/$orgSlug/settings': typeof WorkspaceOrgSlugSettingsRouteWithChildren
+  '/_workspace/$orgSlug/tasks': typeof WorkspaceOrgSlugTasksRoute
+  '/_workspace/$orgSlug/time': typeof WorkspaceOrgSlugTimeRoute
   '/_workspace/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
   '/_workspace/$orgSlug/': typeof WorkspaceOrgSlugIndexRoute
+  '/_workspace/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
+  '/_workspace/$orgSlug/settings/notifications': typeof WorkspaceOrgSlugSettingsNotificationsRoute
+  '/_workspace/$orgSlug/settings/profile': typeof WorkspaceOrgSlugSettingsProfileRoute
+  '/_workspace/$orgSlug/settings/workspace': typeof WorkspaceOrgSlugSettingsWorkspaceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,8 +209,14 @@ export interface FileRouteTypes {
     | '/$orgSlug/ai'
     | '/$orgSlug/chat'
     | '/$orgSlug/settings'
+    | '/$orgSlug/tasks'
+    | '/$orgSlug/time'
     | '/$orgSlug/wiki'
     | '/$orgSlug/'
+    | '/$orgSlug/settings/billing'
+    | '/$orgSlug/settings/notifications'
+    | '/$orgSlug/settings/profile'
+    | '/$orgSlug/settings/workspace'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -164,8 +228,14 @@ export interface FileRouteTypes {
     | '/$orgSlug/ai'
     | '/$orgSlug/chat'
     | '/$orgSlug/settings'
+    | '/$orgSlug/tasks'
+    | '/$orgSlug/time'
     | '/$orgSlug/wiki'
     | '/$orgSlug'
+    | '/$orgSlug/settings/billing'
+    | '/$orgSlug/settings/notifications'
+    | '/$orgSlug/settings/profile'
+    | '/$orgSlug/settings/workspace'
   id:
     | '__root__'
     | '/'
@@ -180,8 +250,14 @@ export interface FileRouteTypes {
     | '/_workspace/$orgSlug/ai'
     | '/_workspace/$orgSlug/chat'
     | '/_workspace/$orgSlug/settings'
+    | '/_workspace/$orgSlug/tasks'
+    | '/_workspace/$orgSlug/time'
     | '/_workspace/$orgSlug/wiki'
     | '/_workspace/$orgSlug/'
+    | '/_workspace/$orgSlug/settings/billing'
+    | '/_workspace/$orgSlug/settings/notifications'
+    | '/_workspace/$orgSlug/settings/profile'
+    | '/_workspace/$orgSlug/settings/workspace'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -271,6 +347,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceOrgSlugWikiRouteImport
       parentRoute: typeof WorkspaceOrgSlugRoute
     }
+    '/_workspace/$orgSlug/time': {
+      id: '/_workspace/$orgSlug/time'
+      path: '/time'
+      fullPath: '/$orgSlug/time'
+      preLoaderRoute: typeof WorkspaceOrgSlugTimeRouteImport
+      parentRoute: typeof WorkspaceOrgSlugRoute
+    }
+    '/_workspace/$orgSlug/tasks': {
+      id: '/_workspace/$orgSlug/tasks'
+      path: '/tasks'
+      fullPath: '/$orgSlug/tasks'
+      preLoaderRoute: typeof WorkspaceOrgSlugTasksRouteImport
+      parentRoute: typeof WorkspaceOrgSlugRoute
+    }
     '/_workspace/$orgSlug/settings': {
       id: '/_workspace/$orgSlug/settings'
       path: '/settings'
@@ -292,6 +382,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceOrgSlugAiRouteImport
       parentRoute: typeof WorkspaceOrgSlugRoute
     }
+    '/_workspace/$orgSlug/settings/workspace': {
+      id: '/_workspace/$orgSlug/settings/workspace'
+      path: '/workspace'
+      fullPath: '/$orgSlug/settings/workspace'
+      preLoaderRoute: typeof WorkspaceOrgSlugSettingsWorkspaceRouteImport
+      parentRoute: typeof WorkspaceOrgSlugSettingsRoute
+    }
+    '/_workspace/$orgSlug/settings/profile': {
+      id: '/_workspace/$orgSlug/settings/profile'
+      path: '/profile'
+      fullPath: '/$orgSlug/settings/profile'
+      preLoaderRoute: typeof WorkspaceOrgSlugSettingsProfileRouteImport
+      parentRoute: typeof WorkspaceOrgSlugSettingsRoute
+    }
+    '/_workspace/$orgSlug/settings/notifications': {
+      id: '/_workspace/$orgSlug/settings/notifications'
+      path: '/notifications'
+      fullPath: '/$orgSlug/settings/notifications'
+      preLoaderRoute: typeof WorkspaceOrgSlugSettingsNotificationsRouteImport
+      parentRoute: typeof WorkspaceOrgSlugSettingsRoute
+    }
+    '/_workspace/$orgSlug/settings/billing': {
+      id: '/_workspace/$orgSlug/settings/billing'
+      path: '/billing'
+      fullPath: '/$orgSlug/settings/billing'
+      preLoaderRoute: typeof WorkspaceOrgSlugSettingsBillingRouteImport
+      parentRoute: typeof WorkspaceOrgSlugSettingsRoute
+    }
   }
 }
 
@@ -310,10 +428,34 @@ const PublicRouteChildren: PublicRouteChildren = {
 const PublicRouteWithChildren =
   PublicRoute._addFileChildren(PublicRouteChildren)
 
+interface WorkspaceOrgSlugSettingsRouteChildren {
+  WorkspaceOrgSlugSettingsBillingRoute: typeof WorkspaceOrgSlugSettingsBillingRoute
+  WorkspaceOrgSlugSettingsNotificationsRoute: typeof WorkspaceOrgSlugSettingsNotificationsRoute
+  WorkspaceOrgSlugSettingsProfileRoute: typeof WorkspaceOrgSlugSettingsProfileRoute
+  WorkspaceOrgSlugSettingsWorkspaceRoute: typeof WorkspaceOrgSlugSettingsWorkspaceRoute
+}
+
+const WorkspaceOrgSlugSettingsRouteChildren: WorkspaceOrgSlugSettingsRouteChildren =
+  {
+    WorkspaceOrgSlugSettingsBillingRoute: WorkspaceOrgSlugSettingsBillingRoute,
+    WorkspaceOrgSlugSettingsNotificationsRoute:
+      WorkspaceOrgSlugSettingsNotificationsRoute,
+    WorkspaceOrgSlugSettingsProfileRoute: WorkspaceOrgSlugSettingsProfileRoute,
+    WorkspaceOrgSlugSettingsWorkspaceRoute:
+      WorkspaceOrgSlugSettingsWorkspaceRoute,
+  }
+
+const WorkspaceOrgSlugSettingsRouteWithChildren =
+  WorkspaceOrgSlugSettingsRoute._addFileChildren(
+    WorkspaceOrgSlugSettingsRouteChildren,
+  )
+
 interface WorkspaceOrgSlugRouteChildren {
   WorkspaceOrgSlugAiRoute: typeof WorkspaceOrgSlugAiRoute
   WorkspaceOrgSlugChatRoute: typeof WorkspaceOrgSlugChatRoute
-  WorkspaceOrgSlugSettingsRoute: typeof WorkspaceOrgSlugSettingsRoute
+  WorkspaceOrgSlugSettingsRoute: typeof WorkspaceOrgSlugSettingsRouteWithChildren
+  WorkspaceOrgSlugTasksRoute: typeof WorkspaceOrgSlugTasksRoute
+  WorkspaceOrgSlugTimeRoute: typeof WorkspaceOrgSlugTimeRoute
   WorkspaceOrgSlugWikiRoute: typeof WorkspaceOrgSlugWikiRoute
   WorkspaceOrgSlugIndexRoute: typeof WorkspaceOrgSlugIndexRoute
 }
@@ -321,7 +463,9 @@ interface WorkspaceOrgSlugRouteChildren {
 const WorkspaceOrgSlugRouteChildren: WorkspaceOrgSlugRouteChildren = {
   WorkspaceOrgSlugAiRoute: WorkspaceOrgSlugAiRoute,
   WorkspaceOrgSlugChatRoute: WorkspaceOrgSlugChatRoute,
-  WorkspaceOrgSlugSettingsRoute: WorkspaceOrgSlugSettingsRoute,
+  WorkspaceOrgSlugSettingsRoute: WorkspaceOrgSlugSettingsRouteWithChildren,
+  WorkspaceOrgSlugTasksRoute: WorkspaceOrgSlugTasksRoute,
+  WorkspaceOrgSlugTimeRoute: WorkspaceOrgSlugTimeRoute,
   WorkspaceOrgSlugWikiRoute: WorkspaceOrgSlugWikiRoute,
   WorkspaceOrgSlugIndexRoute: WorkspaceOrgSlugIndexRoute,
 }

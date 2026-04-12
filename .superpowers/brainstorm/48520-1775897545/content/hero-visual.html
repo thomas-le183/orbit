@@ -1,0 +1,150 @@
+<style>
+  .cards { grid-template-columns: 1fr 1fr; }
+
+  /* Grid lines */
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(59,130,246,0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.08) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* Node graph animation */
+  @keyframes pulse-node { 0%,100%{opacity:.5;r:3} 50%{opacity:1;r:4.5} }
+  @keyframes dash-flow { to { stroke-dashoffset: -20; } }
+
+  /* Terminal blink */
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .cursor { animation: blink 1s step-end infinite; }
+
+  /* Orbit ring */
+  @keyframes spin-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes spin-rev  { from{transform:rotate(0deg)} to{transform:rotate(-360deg)} }
+</style>
+
+<h2>What's the hero visual?</h2>
+<p class="subtitle">The centerpiece under the headline — this sets the technical mood of the whole page</p>
+
+<div class="cards">
+
+  <!-- A: Blueprint Grid + UI mockup -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image grid-bg" style="background-color:#0a0a0a;height:200px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+      <!-- Faint corner markers -->
+      <div style="position:absolute;top:12px;left:12px;width:16px;height:16px;border-top:1px solid #3b82f640;border-left:1px solid #3b82f640;"></div>
+      <div style="position:absolute;top:12px;right:12px;width:16px;height:16px;border-top:1px solid #3b82f640;border-right:1px solid #3b82f640;"></div>
+      <div style="position:absolute;bottom:12px;left:12px;width:16px;height:16px;border-bottom:1px solid #3b82f640;border-left:1px solid #3b82f640;"></div>
+      <div style="position:absolute;bottom:12px;right:12px;width:16px;height:16px;border-bottom:1px solid #3b82f640;border-right:1px solid #3b82f640;"></div>
+      <!-- Mini app UI card -->
+      <div style="background:#141414;border:1px solid #222;border-radius:8px;width:200px;padding:12px;box-shadow:0 0 40px rgba(59,130,246,0.12);">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+          <div style="width:6px;height:6px;border-radius:50%;background:#3b82f6;"></div>
+          <div style="width:60px;height:4px;background:#1f1f1f;border-radius:2px;"></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <div style="width:50px;height:32px;background:#1a1a1a;border-radius:4px;border:1px solid #222;"></div>
+          <div style="flex:1;height:32px;background:#111;border-radius:4px;border:1px solid #1f1f1f;"></div>
+        </div>
+        <div style="height:2px;background:linear-gradient(90deg,#3b82f6,transparent);border-radius:1px;margin-bottom:8px;width:70%;"></div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div style="height:4px;background:#1a1a1a;border-radius:2px;width:90%;"></div>
+          <div style="height:4px;background:#1a1a1a;border-radius:2px;width:65%;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Blueprint Grid + App Preview</h3>
+      <p>Technical grid lines as background, with a crisp preview of the actual app UI. Grounded, product-forward, engineering feel.</p>
+    </div>
+  </div>
+
+  <!-- B: Node / Network graph -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0a0a0a;height:200px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+      <svg width="240" height="160" viewBox="0 0 240 160">
+        <!-- Edges -->
+        <g stroke="#3b82f6" stroke-width="0.8" stroke-dasharray="4 4" opacity="0.35">
+          <line x1="120" y1="80" x2="48" y2="40" style="animation:dash-flow 2s linear infinite"/>
+          <line x1="120" y1="80" x2="192" y2="40" style="animation:dash-flow 2.5s linear infinite"/>
+          <line x1="120" y1="80" x2="48" y2="120" style="animation:dash-flow 3s linear infinite"/>
+          <line x1="120" y1="80" x2="192" y2="120" style="animation:dash-flow 2.2s linear infinite"/>
+          <line x1="48" y1="40" x2="16" y2="80" style="animation:dash-flow 1.8s linear infinite"/>
+          <line x1="192" y1="40" x2="224" y2="80" style="animation:dash-flow 2.8s linear infinite"/>
+        </g>
+        <!-- Outer nodes -->
+        <g fill="#3b82f6" opacity="0.5">
+          <circle cx="48" cy="40" r="3.5" style="animation:pulse-node 2.2s ease-in-out infinite"/>
+          <circle cx="192" cy="40" r="3.5" style="animation:pulse-node 3s ease-in-out infinite"/>
+          <circle cx="48" cy="120" r="3.5" style="animation:pulse-node 2.7s ease-in-out infinite"/>
+          <circle cx="192" cy="120" r="3.5" style="animation:pulse-node 2s ease-in-out infinite"/>
+          <circle cx="16" cy="80" r="2.5" style="animation:pulse-node 3.2s ease-in-out infinite"/>
+          <circle cx="224" cy="80" r="2.5" style="animation:pulse-node 1.9s ease-in-out infinite"/>
+        </g>
+        <!-- Center node -->
+        <circle cx="120" cy="80" r="14" fill="#0d1f3c" stroke="#3b82f6" stroke-width="1" opacity="0.9"/>
+        <circle cx="120" cy="80" r="6" fill="#3b82f6" opacity="0.9" style="animation:pulse-node 2.5s ease-in-out infinite"/>
+      </svg>
+    </div>
+    <div class="card-body">
+      <h3>B — Network / Node Graph</h3>
+      <p>Animated connection graph — nodes and pulsing edges. Evokes data flow, connectivity, distributed systems. Pure sci-tech.</p>
+    </div>
+  </div>
+
+  <!-- C: Terminal / Code block -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0a0a0a;height:200px;display:flex;align-items:center;justify-content:center;padding:16px;">
+      <div style="background:#0d0d0d;border:1px solid #1f1f1f;border-radius:8px;width:100%;font-family:monospace;font-size:9px;overflow:hidden;">
+        <div style="background:#141414;padding:7px 10px;display:flex;align-items:center;gap:5px;border-bottom:1px solid #1f1f1f;">
+          <div style="width:7px;height:7px;border-radius:50%;background:#ff5f57;"></div>
+          <div style="width:7px;height:7px;border-radius:50%;background:#febc2e;"></div>
+          <div style="width:7px;height:7px;border-radius:50%;background:#28c840;"></div>
+          <span style="color:#444;font-size:8px;margin-left:4px;">orbit — terminal</span>
+        </div>
+        <div style="padding:10px 12px;line-height:1.9;color:#3b82f6;">
+          <div><span style="color:#444;">$</span> <span style="color:#888;">orbit connect --workspace</span></div>
+          <div style="color:#3b82f6;">✓ <span style="color:#666;">Authenticated as</span> <span style="color:#fff;">team@orbit.so</span></div>
+          <div style="color:#3b82f6;">✓ <span style="color:#666;">Workspace</span> <span style="color:#fff;">acme-corp</span> <span style="color:#666;">synced</span></div>
+          <div><span style="color:#444;">$</span> <span style="color:#888;">orbit status</span></div>
+          <div><span style="color:#3b82f6;">●</span> <span style="color:#666;">6 members online · 3 active channels</span></div>
+          <div><span style="color:#444;">$</span> <span style="color:#3b82f660;" style="animation:blink 1s step-end infinite;">█</span><span class="cursor" style="color:#3b82f6;">█</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Terminal / CLI Output</h3>
+      <p>A styled terminal showing Orbit commands. Developer-native, understated cool. Appeals directly to engineers.</p>
+    </div>
+  </div>
+
+  <!-- D: Geometric / Abstract -->
+  <div class="card" data-choice="d" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0a0a0a;height:200px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+      <svg width="200" height="160" viewBox="0 0 200 160" style="overflow:visible;">
+        <!-- Outer ring -->
+        <circle cx="100" cy="80" r="60" fill="none" stroke="#3b82f6" stroke-width="0.5" stroke-dasharray="3 6" opacity="0.25" style="animation:spin-slow 18s linear infinite;transform-origin:100px 80px"/>
+        <!-- Mid ring -->
+        <circle cx="100" cy="80" r="40" fill="none" stroke="#3b82f6" stroke-width="0.8" stroke-dasharray="6 4" opacity="0.35" style="animation:spin-rev 12s linear infinite;transform-origin:100px 80px"/>
+        <!-- Inner ring -->
+        <circle cx="100" cy="80" r="22" fill="none" stroke="#3b82f6" stroke-width="1" opacity="0.5" style="animation:spin-slow 6s linear infinite;transform-origin:100px 80px"/>
+        <!-- Center -->
+        <circle cx="100" cy="80" r="8" fill="#0f1d35" stroke="#3b82f6" stroke-width="1.5" opacity="0.9"/>
+        <circle cx="100" cy="80" r="3" fill="#3b82f6" opacity="1"/>
+        <!-- Tick marks on outer ring -->
+        <g stroke="#3b82f6" stroke-width="1" opacity="0.4">
+          <line x1="100" y1="18" x2="100" y2="22"/>
+          <line x1="100" y1="138" x2="100" y2="142"/>
+          <line x1="38" y1="80" x2="42" y2="80"/>
+          <line x1="158" y1="80" x2="162" y2="80"/>
+        </g>
+        <!-- Satellite dot on mid ring -->
+        <circle cx="140" cy="80" r="3.5" fill="#3b82f6" opacity="0.8" style="animation:spin-slow 4s linear infinite;transform-origin:100px 80px"/>
+      </svg>
+    </div>
+    <div class="card-body">
+      <h3>D — Geometric / Scientific Diagram</h3>
+      <p>Spinning orbital rings with technical tick marks. Directly ties into the "Orbit" name. Scientific instrument aesthetic.</p>
+    </div>
+  </div>
+
+</div>

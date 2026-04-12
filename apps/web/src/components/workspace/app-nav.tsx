@@ -1,48 +1,51 @@
 import { cn } from "@orbit/ui/lib/utils";
-import { Link } from "@tanstack/react-router";
+import { Link, useParams } from "@tanstack/react-router";
 import {
-	BookOpenIcon,
 	BotIcon,
-	HomeIcon,
+	ClockIcon,
+	ListTodoIcon,
 	MessageSquareIcon,
+	Settings2Icon,
 } from "lucide-react";
 
-const topItems = [
-	{ to: "/$orgSlug", icon: HomeIcon, label: "Home" },
-	{ to: "/$orgSlug/wiki", icon: BookOpenIcon, label: "Wiki" },
-	{ to: "/$orgSlug/ai", icon: BotIcon, label: "AI" },
+const modules = [
 	{ to: "/$orgSlug/chat", icon: MessageSquareIcon, label: "Chat" },
+	{ to: "/$orgSlug/tasks", icon: ListTodoIcon, label: "Tasks" },
+	{ to: "/$orgSlug/time", icon: ClockIcon, label: "Time" },
+	{ to: "/$orgSlug/ai", icon: BotIcon, label: "AI" },
 ] as const;
 
-export function AppNav({ orgSlug }: { orgSlug: string }) {
+export function AppNav() {
+	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
 	return (
-		<div className="flex h-full flex-col items-center p-2 rounded-md">
-			{/* Top nav */}
-			<nav className="flex flex-1 flex-col items-center gap-1">
-				{topItems.map(({ to, icon: Icon, label }) => {
-					const isProjects = to === "/$orgSlug";
-					return (
-						<Link
-							key={to}
-							to={to}
-							params={{ orgSlug }}
-							activeOptions={{ exact: isProjects }}
-							className={cn(
-								"group flex w-full flex-col items-center gap-0.5 py-1.5 text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground",
-							)}
-						>
-							<div
-								className={cn(
-									"flex items-center justify-center rounded-lg p-2 transition-colors group-hover:bg-accent in-[.active]:bg-accent",
-								)}
-							>
-								<Icon size={16} />
-							</div>
-							<span className="leading-tight">{label}</span>
-						</Link>
-					);
-				})}
+		<div className="flex h-full w-11 shrink-0 flex-col items-center bg-nav-chrome py-2 border-r">
+			<nav className="flex flex-1 flex-col items-center gap-1 w-full">
+				{modules.map(({ to, icon: Icon, label }) => (
+					<Link
+						key={to}
+						to={to}
+						params={{ orgSlug }}
+						title={label}
+						className={cn(
+							"relative flex h-auto w-full flex-col items-center justify-center gap-1 px-1 py-1.5 text-nav-chrome-fg/60 transition-colors hover:text-nav-chrome-fg",
+							"[&.active]:text-nav-chrome-fg [&.active]:before:absolute [&.active]:before:left-0 [&.active]:before:top-1 [&.active]:before:bottom-1 [&.active]:before:w-0.5 [&.active]:before:rounded-r [&.active]:before:bg-primary",
+						)}
+					>
+						<Icon size={16} />
+						{/* <span className="text-[10px] leading-none">{label}</span> */}
+					</Link>
+				))}
 			</nav>
+
+			<Link
+				to="/$orgSlug/settings"
+				params={{ orgSlug }}
+				title="Settings"
+				className="relative flex h-auto w-full flex-col items-center justify-center gap-1 px-1 py-1.5 text-nav-chrome-fg/60 transition-colors hover:text-nav-chrome-fg [&.active]:text-nav-chrome-fg [&.active]:before:absolute [&.active]:before:left-0 [&.active]:before:top-1 [&.active]:before:bottom-1 [&.active]:before:w-0.5 [&.active]:before:rounded-r [&.active]:before:bg-primary"
+			>
+				<Settings2Icon size={16} />
+				<span className="text-[10px] leading-none">Settings</span>
+			</Link>
 		</div>
 	);
 }
