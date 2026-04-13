@@ -46,11 +46,9 @@ function OrgLayout() {
 	return (
 		<div className="flex h-screen flex-col">
 			<TopNav />
-			<div className="flex flex-1 overflow-hidden bg-nav-chrome">
+			<div className="flex flex-1 overflow-hidden bg-tab-inactive-background">
 				<AppNav />
-				<ResizablePanelGroup
-					orientation="horizontal"
-				>
+				<ResizablePanelGroup orientation="horizontal">
 					<ResizablePanel
 						id="sidebar"
 						defaultSize="15%"

@@ -11,16 +11,42 @@
 @theme inline {
 	--font-heading: var(--font-sans);
 
-	/* Nav chrome — tab bar */
-	--color-nav-chrome: var(--nav-chrome);
-	--color-nav-chrome-fg: var(--nav-chrome-fg);
-	--color-nav-chrome-hover: var(--nav-chrome-hover);
-	--color-nav-chrome-active: var(--nav-chrome-active);
-	/* tab active / inactive */
-	--color-nav-chrome-tab-active: var(--nav-chrome-tab-active);
-	--color-nav-chrome-tab-active-fg: var(--nav-chrome-tab-active-fg);
-	--color-nav-chrome-tab-active-border: var(--nav-chrome-tab-active-border);
-	--color-nav-chrome-tab-inactive-fg: var(--nav-chrome-tab-inactive-fg);
+	/* tab.* */
+	--color-tab-active-background: var(--tab-active-background);
+	--color-tab-inactive-background: var(--tab-inactive-background);
+	--color-tab-active-foreground: var(--tab-active-foreground);
+	--color-tab-inactive-foreground: var(--tab-inactive-foreground);
+	--color-tab-active-border-top: var(--tab-active-border-top);
+	--color-tab-hover-background: var(--tab-hover-background);
+	--color-tab-hover-foreground: var(--tab-hover-foreground);
+	--color-tab-unfocused-active-foreground: var(
+		--tab-unfocused-active-foreground
+	);
+	--color-tab-unfocused-inactive-foreground: var(
+		--tab-unfocused-inactive-foreground
+	);
+
+	/* list.* */
+	--color-list-hover-background: var(--list-hover-background);
+	--color-list-hover-foreground: var(--list-hover-foreground);
+	--color-list-active-selection-background: var(
+		--list-active-selection-background
+	);
+	--color-list-active-selection-foreground: var(
+		--list-active-selection-foreground
+	);
+	--color-list-inactive-selection-background: var(
+		--list-inactive-selection-background
+	);
+	--color-list-inactive-selection-foreground: var(
+		--list-inactive-selection-foreground
+	);
+	--color-list-focus-background: var(--list-focus-background);
+	--color-list-focus-foreground: var(--list-focus-foreground);
+
+	/* badge.* */
+	--color-badge-background: var(--badge-background);
+	--color-badge-foreground: var(--badge-foreground);
 
 	/* Sidebar */
 	--color-sidebar-ring: var(--sidebar-ring);
@@ -69,157 +95,201 @@
 	--radius-3xl: calc(var(--radius) * 2.2);
 	--radius-4xl: calc(var(--radius) * 2.6);
 	--font-sans: "Inter Variable", sans-serif;
-
-	/* VS Code 2026 extras */
-	--color-vscode-link: var(--vscode-link);
-	--color-vscode-success: var(--vscode-success);
-	--color-vscode-warning: var(--vscode-warning);
-	--color-vscode-selection: var(--vscode-selection);
-	--color-vscode-widget: var(--vscode-widget);
-	--color-vscode-widget-border: var(--vscode-widget-border);
 }
 
 :root {
 	/* ── VS Code 2026 Light ─────────────────────────────────────────────── */
-	/* Tab section reference:                                                */
-	/*   tab.inactiveBackground    #FAFAFD  ← nav bar / sidebar bg          */
-	/*   tab.inactiveForeground    #606060  ← default icon / text           */
-	/*   tab.activeBackground      #FFFFFF  ← active page bg (editor bg)   */
-	/*   tab.activeForeground      #202020  ← active icon / text            */
-	/*   tab.activeBorderTop       #000000  ← active indicator line         */
-	/*   tab.unfocusedInactiveFg   #BBBBBB  ← very muted / blurred state   */
 
-	/* Nav chrome ---------------------------------------------------------- */
-	--nav-chrome: oklch(0.986 0.004 286);           /* #FAFAFD  tab.inactiveBackground */
-	--nav-chrome-fg: oklch(0.489 0 0);              /* #606060  tab.inactiveForeground */
-	--nav-chrome-hover: oklch(0 0 0 / 6%);          /* subtle button hover in bar */
-	--nav-chrome-active: oklch(0 0 0 / 18%);        /* pressed button state in bar */
-	/* tab active / inactive */
-	--nav-chrome-tab-active: oklch(1 0 0);          /* #FFFFFF  tab.activeBackground */
-	--nav-chrome-tab-active-fg: oklch(0.244 0 0);   /* #202020  tab.activeForeground */
-	--nav-chrome-tab-active-border: oklch(0 0 0);   /* #000000  tab.activeBorderTop */
-	--nav-chrome-tab-inactive-fg: oklch(0.792 0 0); /* #BBBBBB  tab.unfocusedInactiveForeground */
+	/* tab.* --------------------------------------------------------------- */
+	--tab-active-background: oklch(1 0 0); /* #FFFFFF  tab.activeBackground */
+	--tab-inactive-background: oklch(
+		0.986 0.004 286
+	); /* #FAFAFD  tab.inactiveBackground */
+	--tab-active-foreground: oklch(0.244 0 0); /* #202020  tab.activeForeground */
+	--tab-inactive-foreground: oklch(
+		0.489 0 0
+	); /* #606060  tab.inactiveForeground */
+	--tab-active-border-top: oklch(
+		0.529 0.174 255
+	); /* #0069CC  tab.activeBorderTop */
+	--tab-hover-background: oklch(0 0 0 / 6%); /*          tab.hoverBackground */
+	--tab-hover-foreground: oklch(0.244 0 0); /* #202020  tab.hoverForeground */
+	--tab-unfocused-active-foreground: oklch(
+		0.489 0 0
+	); /* #606060  tab.unfocusedActiveForeground */
+	--tab-unfocused-inactive-foreground: oklch(
+		0.792 0 0
+	); /* #BBBBBB  tab.unfocusedInactiveForeground */
 
-	/* Core ---------------------------------------------------------------- */
-	--background: oklch(1 0 0);                     /* #FFFFFF  editor.background */
-	--foreground: oklch(0.244 0 0);                 /* #202020 */
-	--card: oklch(0.986 0.004 286);                 /* #FAFAFD  widget bg */
+	/* list.* -------------------------------------------------------------- */
+	--list-hover-background: oklch(
+		0 0 0 /
+		6%
+	); /*          list.hoverBackground */
+	--list-hover-foreground: oklch(0.244 0 0); /* #202020  list.hoverForeground */
+	--list-active-selection-background: oklch(
+		0.529 0.174 255 /
+		10%
+	); /* #0069CC1A  list.activeSelectionBackground */
+	--list-active-selection-foreground: oklch(
+		0.244 0 0
+	); /* #202020  list.activeSelectionForeground */
+	--list-inactive-selection-background: oklch(
+		0 0 0 /
+		6%
+	); /*          list.inactiveSelectionBackground */
+	--list-inactive-selection-foreground: oklch(
+		0.489 0 0
+	); /* #606060  list.inactiveSelectionForeground */
+	--list-focus-background: oklch(
+		0 0 0 /
+		10%
+	); /*          list.focusBackground */
+	--list-focus-foreground: oklch(0.244 0 0); /* #202020  list.focusForeground */
+
+	/* badge.* ------------------------------------------------------------- */
+	--badge-background: oklch(0.529 0.174 255); /* #0069CC  badge.background */
+	--badge-foreground: oklch(1 0 0); /* #FFFFFF  badge.foreground */
+
+	/* Core — shadcn tokens mapped to VS Code values ----------------------- */
+	--background: oklch(1 0 0); /* editor.background */
+	--foreground: oklch(0.244 0 0); /* editor.foreground */
+	--card: oklch(0.986 0.004 286); /* editorWidget.background */
 	--card-foreground: oklch(0.244 0 0);
 	--popover: oklch(0.986 0.004 286);
 	--popover-foreground: oklch(0.244 0 0);
-	--primary: oklch(0.529 0.174 255);              /* #0069CC  button.background */
-	--primary-foreground: oklch(1 0 0);
-	--secondary: oklch(0.937 0 0);                  /* #EAEAEA */
+	--primary: oklch(0.529 0.174 255); /* button.background */
+	--primary-foreground: oklch(1 0 0); /* button.foreground */
+	--secondary: oklch(0.937 0 0); /* #EAEAEA */
 	--secondary-foreground: oklch(0.244 0 0);
-	--muted: oklch(0.937 0 0);                      /* #EAEAEA */
-	--muted-foreground: oklch(0.489 0 0);           /* #606060 */
+	--muted: oklch(0.937 0 0);
+	--muted-foreground: oklch(0.489 0 0); /* tab.inactiveForeground */
 	--accent: oklch(0.937 0 0);
 	--accent-foreground: oklch(0.244 0 0);
-	--destructive: oklch(0.472 0.190 29);           /* #ad0707 */
-	--border: oklch(0.914 0.004 286);               /* #E2E2E5  widget.border */
-	--input: oklch(0.882 0 0 / 40%);                /* #D8D8D866 */
-	--ring: oklch(0.529 0.174 255);                 /* #0069CC  focusBorder */
+	--destructive: oklch(0.472 0.19 29); /* #ad0707 */
+	--border: oklch(0.914 0.004 286); /* widget.border */
+	--input: oklch(0.882 0 0 / 40%);
+	--ring: oklch(0.529 0.174 255); /* focusBorder */
 	--radius: 0.375rem;
 
 	/* Charts -------------------------------------------------------------- */
-	--chart-1: oklch(0.529 0.174 255);              /* #1A5CFF  blue */
-	--chart-2: oklch(0.539 0.136 128);              /* #388A34  green */
-	--chart-3: oklch(0.680 0.139 93);               /* #d18616  orange */
-	--chart-4: oklch(0.433 0.175 310);              /* #652D90  purple */
-	--chart-5: oklch(0.472 0.190 29);               /* #ad0707  red */
+	--chart-1: oklch(0.529 0.174 255);
+	--chart-2: oklch(0.539 0.136 128);
+	--chart-3: oklch(0.68 0.139 93);
+	--chart-4: oklch(0.433 0.175 310);
+	--chart-5: oklch(0.472 0.19 29);
 
 	/* Sidebar ------------------------------------------------------------- */
-	/* list.hoverBackground     #DADADA4f → hover item bg                   */
-	/* list.activeSelectionBg   #0069CC1A → active route / selected item    */
-	/* list.activeSelectionFg   #202020   → selected item text              */
-	--sidebar: oklch(0.986 0.004 286);              /* #FAFAFD  sideBar.background */
-	--sidebar-foreground: oklch(0.244 0 0);         /* #202020  sideBar.foreground */
+	--sidebar: oklch(0.986 0.004 286); /* sideBar.background */
+	--sidebar-foreground: oklch(0.244 0 0);
 	--sidebar-primary: oklch(0.529 0.174 255);
 	--sidebar-primary-foreground: oklch(1 0 0);
-	--sidebar-accent: oklch(0 0 0 / 12%);           /* #DADADA4f  list.hoverBackground */
-	--sidebar-accent-foreground: oklch(0.244 0 0);  /* #202020    list.activeSelectionForeground */
-	--sidebar-active: oklch(0.529 0.174 255 / 10%); /* #0069CC1A  list.activeSelectionBackground */
-	--sidebar-border: oklch(0.958 0.002 248);       /* #F0F1F2    sideBar.border */
+	--sidebar-accent: oklch(0 0 0 / 12%); /* list.hoverBackground */
+	--sidebar-accent-foreground: oklch(0.244 0 0);
+	--sidebar-active: oklch(
+		0.529 0.174 255 /
+		10%
+	); /* list.activeSelectionBackground */
+	--sidebar-border: oklch(0.958 0.002 248); /* sideBar.border */
 	--sidebar-ring: oklch(0.529 0.174 255);
-
-	/* VS Code 2026 extras ------------------------------------------------- */
-	--vscode-link: oklch(0.529 0.174 255);             /* #0069CC */
-	--vscode-success: oklch(0.539 0.136 128);          /* #587c0c */
-	--vscode-warning: oklch(0.680 0.139 93);           /* #B69500 */
-	--vscode-selection: oklch(0.529 0.174 255 / 25%);  /* #0069CC40 */
-	--vscode-widget: oklch(0.986 0.004 286);           /* #FAFAFD */
-	--vscode-widget-border: oklch(0.914 0.004 286);    /* #E2E2E5 */
 }
 
 .dark {
 	/* ── VS Code 2026 Dark ──────────────────────────────────────────────── */
-	/* Tab section reference:                                                */
-	/*   tab.inactiveBackground    #191A1B  ← nav bar / sidebar bg          */
-	/*   tab.inactiveForeground    #8C8C8C  ← default icon / text           */
-	/*   tab.activeBackground      #121314  ← active page bg (editor bg)   */
-	/*   tab.activeForeground      #bfbfbf  ← active icon / text            */
-	/*   tab.activeBorderTop       #3994BC  ← active indicator line         */
-	/*   tab.unfocusedInactiveFg   #444444  ← very muted / blurred state   */
 
-	/* Nav chrome ---------------------------------------------------------- */
-	--nav-chrome: oklch(0.217 0.003 248);           /* #191A1B  tab.inactiveBackground */
-	--nav-chrome-fg: oklch(0.640 0 0);              /* #8C8C8C  tab.inactiveForeground */
-	--nav-chrome-hover: oklch(1 0 0 / 9%);          /* subtle button hover in bar */
-	--nav-chrome-active: oklch(1 0 0 / 22%);        /* pressed button state in bar */
-	/* tab active / inactive */
-	--nav-chrome-tab-active: oklch(0.186 0.003 248); /* #121314  tab.activeBackground */
-	--nav-chrome-tab-active-fg: oklch(0.805 0 0);    /* #bfbfbf  tab.activeForeground */
-	--nav-chrome-tab-active-border: oklch(0.630 0.104 231); /* #3994BC  tab.activeBorderTop */
-	--nav-chrome-tab-inactive-fg: oklch(0.337 0 0);  /* #444444  tab.unfocusedInactiveForeground */
+	/* tab.* --------------------------------------------------------------- */
+	--tab-active-background: oklch(
+		0.186 0.003 248
+	); /* #121314  tab.activeBackground */
+	--tab-inactive-background: oklch(
+		0.217 0.003 248
+	); /* #191A1B  tab.inactiveBackground */
+	--tab-active-foreground: oklch(0.805 0 0); /* #bfbfbf  tab.activeForeground */
+	--tab-inactive-foreground: oklch(
+		0.64 0 0
+	); /* #8C8C8C  tab.inactiveForeground */
+	--tab-active-border-top: oklch(
+		0.63 0.104 231
+	); /* #3994BC  tab.activeBorderTop */
+	--tab-hover-background: oklch(1 0 0 / 9%); /*          tab.hoverBackground */
+	--tab-hover-foreground: oklch(0.805 0 0); /* #bfbfbf  tab.hoverForeground */
+	--tab-unfocused-active-foreground: oklch(
+		0.64 0 0
+	); /* #8C8C8C  tab.unfocusedActiveForeground */
+	--tab-unfocused-inactive-foreground: oklch(
+		0.337 0 0
+	); /* #444444  tab.unfocusedInactiveForeground */
 
-	/* Core ---------------------------------------------------------------- */
-	--background: oklch(0.186 0.003 248);           /* #121314  editor.background */
-	--foreground: oklch(0.799 0.004 220);           /* #BBBEBF  editor.foreground */
-	--card: oklch(0.247 0.002 248);                 /* #202122  editorWidget.background */
-	--card-foreground: oklch(0.805 0 0);            /* #bfbfbf */
+	/* list.* -------------------------------------------------------------- */
+	--list-hover-background: oklch(
+		1 0 0 /
+		5%
+	); /*          list.hoverBackground */
+	--list-hover-foreground: oklch(0.805 0 0); /* #bfbfbf  list.hoverForeground */
+	--list-active-selection-background: oklch(
+		0.63 0.104 231 /
+		15%
+	); /* #3994BC26  list.activeSelectionBackground */
+	--list-active-selection-foreground: oklch(
+		0.943 0 0
+	); /* #ededed  list.activeSelectionForeground */
+	--list-inactive-selection-background: oklch(
+		1 0 0 /
+		5%
+	); /*          list.inactiveSelectionBackground */
+	--list-inactive-selection-foreground: oklch(
+		0.64 0 0
+	); /* #8C8C8C  list.inactiveSelectionForeground */
+	--list-focus-background: oklch(
+		1 0 0 /
+		8%
+	); /*          list.focusBackground */
+	--list-focus-foreground: oklch(0.943 0 0); /* #ededed  list.focusForeground */
+
+	/* badge.* ------------------------------------------------------------- */
+	--badge-background: oklch(0.63 0.104 231); /* #3994BC  badge.background */
+	--badge-foreground: oklch(1 0 0); /*          badge.foreground */
+
+	/* Core — shadcn tokens mapped to VS Code values ----------------------- */
+	--background: oklch(0.186 0.003 248); /* editor.background */
+	--foreground: oklch(0.799 0.004 220); /* editor.foreground */
+	--card: oklch(0.247 0.002 248); /* editorWidget.background */
+	--card-foreground: oklch(0.805 0 0);
 	--popover: oklch(0.247 0.002 248);
 	--popover-foreground: oklch(0.805 0 0);
-	--primary: oklch(0.630 0.104 231);              /* #3994BC  badge/focus blue */
+	--primary: oklch(0.63 0.104 231); /* button.background */
 	--primary-foreground: oklch(1 0 0);
-	--secondary: oklch(0.264 0.002 248);            /* #242526  checkbox.background */
+	--secondary: oklch(0.264 0.002 248);
 	--secondary-foreground: oklch(0.805 0 0);
-	--muted: oklch(0.217 0.003 248);               /* #191A1B  sideBar.background */
-	--muted-foreground: oklch(0.640 0 0);           /* #8C8C8C */
+	--muted: oklch(0.217 0.003 248);
+	--muted-foreground: oklch(0.64 0 0); /* tab.inactiveForeground */
 	--accent: oklch(0.264 0.002 248);
 	--accent-foreground: oklch(0.805 0 0);
-	--destructive: oklch(0.738 0.138 33);           /* #f48771 */
-	--border: oklch(0.288 0.002 248);               /* #2A2B2C */
-	--input: oklch(0.327 0.003 229);                /* #333536  input.border */
-	--ring: oklch(0.630 0.104 231);
+	--destructive: oklch(0.738 0.138 33); /* #f48771 */
+	--border: oklch(0.288 0.002 248); /* widget.border */
+	--input: oklch(0.327 0.003 229);
+	--ring: oklch(0.63 0.104 231); /* focusBorder */
 
 	/* Charts -------------------------------------------------------------- */
-	--chart-1: oklch(0.668 0.102 230);              /* #57A3F8  blue */
-	--chart-2: oklch(0.767 0.117 154);              /* #86CF86  green */
-	--chart-3: oklch(0.813 0.093 76);               /* #E0B97F  yellow */
-	--chart-4: oklch(0.620 0.140 310);              /* #AD80D7  purple */
-	--chart-5: oklch(0.738 0.138 33);               /* #EF8773  red */
+	--chart-1: oklch(0.668 0.102 230);
+	--chart-2: oklch(0.767 0.117 154);
+	--chart-3: oklch(0.813 0.093 76);
+	--chart-4: oklch(0.62 0.14 310);
+	--chart-5: oklch(0.738 0.138 33);
 
 	/* Sidebar ------------------------------------------------------------- */
-	/* list.hoverBackground     #FFFFFF0D → hover item bg                   */
-	/* list.activeSelectionBg   #3994BC26 → active route / selected item    */
-	/* list.activeSelectionFg   #ededed   → selected item text              */
-	--sidebar: oklch(0.217 0.003 248);              /* #191A1B  sideBar.background */
-	--sidebar-foreground: oklch(0.805 0 0);         /* #bfbfbf  sideBar.foreground */
-	--sidebar-primary: oklch(0.630 0.104 231);
+	--sidebar: oklch(0.217 0.003 248); /* sideBar.background */
+	--sidebar-foreground: oklch(0.805 0 0);
+	--sidebar-primary: oklch(0.63 0.104 231);
 	--sidebar-primary-foreground: oklch(1 0 0);
-	--sidebar-accent: oklch(1 0 0 / 5%);            /* #FFFFFF0D  list.hoverBackground */
-	--sidebar-accent-foreground: oklch(0.943 0 0);  /* #ededed    list.activeSelectionForeground */
-	--sidebar-active: oklch(0.630 0.104 231 / 15%); /* #3994BC26  list.activeSelectionBackground */
-	--sidebar-border: oklch(0.288 0.002 248);       /* #2A2B2C    sideBar.border */
-	--sidebar-ring: oklch(0.630 0.104 231);
-
-	/* VS Code 2026 extras ------------------------------------------------- */
-	--vscode-link: oklch(0.668 0.102 230);             /* #48A0C7 */
-	--vscode-success: oklch(0.767 0.117 154);          /* #73c991 */
-	--vscode-warning: oklch(0.813 0.093 76);           /* #e5ba7d */
-	--vscode-selection: oklch(0.630 0.104 231 / 20%);  /* #3994BC26 */
-	--vscode-widget: oklch(0.247 0.002 248);           /* #202122 */
-	--vscode-widget-border: oklch(0.288 0.002 248);    /* #2A2B2C */
+	--sidebar-accent: oklch(1 0 0 / 5%); /* list.hoverBackground */
+	--sidebar-accent-foreground: oklch(0.943 0 0);
+	--sidebar-active: oklch(
+		0.63 0.104 231 /
+		15%
+	); /* list.activeSelectionBackground */
+	--sidebar-border: oklch(0.288 0.002 248); /* sideBar.border */
+	--sidebar-ring: oklch(0.63 0.104 231);
 }
 
 @layer base {

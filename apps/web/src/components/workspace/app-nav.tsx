@@ -5,7 +5,7 @@ import {
 	ClockIcon,
 	ListTodoIcon,
 	MessageSquareIcon,
-	Settings2Icon,
+	SettingsIcon,
 } from "lucide-react";
 
 const modules = [
@@ -15,10 +15,19 @@ const modules = [
 	{ to: "/$orgSlug/ai", icon: BotIcon, label: "AI" },
 ] as const;
 
+const navItemClass = cn(
+	"relative flex h-auto w-full flex-col items-center justify-center gap-1 px-1 py-1.5",
+	"text-tab-inactive-foreground transition-colors",
+	"hover:bg-tab-hover-background hover:text-tab-hover-foreground",
+	"[&.active]:text-tab-active-foreground",
+	"[&.active]:before:absolute [&.active]:before:left-0 [&.active]:before:top-1 [&.active]:before:bottom-1",
+	"[&.active]:before:w-0.5 [&.active]:before:rounded-r [&.active]:before:bg-tab-active-border-top",
+);
+
 export function AppNav() {
 	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
 	return (
-		<div className="flex h-full w-11 shrink-0 flex-col items-center bg-nav-chrome py-2 border-r">
+		<div className="flex h-full w-11 shrink-0 flex-col items-center bg-tab-inactive-background py-2 border-r">
 			<nav className="flex flex-1 flex-col items-center gap-1 w-full">
 				{modules.map(({ to, icon: Icon, label }) => (
 					<Link
@@ -26,13 +35,9 @@ export function AppNav() {
 						to={to}
 						params={{ orgSlug }}
 						title={label}
-						className={cn(
-							"relative flex h-auto w-full flex-col items-center justify-center gap-1 px-1 py-1.5 text-nav-chrome-fg/60 transition-colors hover:text-nav-chrome-fg",
-							"[&.active]:text-nav-chrome-fg [&.active]:before:absolute [&.active]:before:left-0 [&.active]:before:top-1 [&.active]:before:bottom-1 [&.active]:before:w-0.5 [&.active]:before:rounded-r [&.active]:before:bg-primary",
-						)}
+						className={navItemClass}
 					>
 						<Icon size={16} />
-						{/* <span className="text-[10px] leading-none">{label}</span> */}
 					</Link>
 				))}
 			</nav>
@@ -41,10 +46,9 @@ export function AppNav() {
 				to="/$orgSlug/settings"
 				params={{ orgSlug }}
 				title="Settings"
-				className="relative flex h-auto w-full flex-col items-center justify-center gap-1 px-1 py-1.5 text-nav-chrome-fg/60 transition-colors hover:text-nav-chrome-fg [&.active]:text-nav-chrome-fg [&.active]:before:absolute [&.active]:before:left-0 [&.active]:before:top-1 [&.active]:before:bottom-1 [&.active]:before:w-0.5 [&.active]:before:rounded-r [&.active]:before:bg-primary"
+				className={navItemClass}
 			>
-				<Settings2Icon size={16} />
-				<span className="text-[10px] leading-none">Settings</span>
+				<SettingsIcon size={16} />
 			</Link>
 		</div>
 	);

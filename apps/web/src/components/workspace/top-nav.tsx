@@ -40,19 +40,19 @@ export function TopNav() {
 	}
 
 	return (
-		<header className="flex h-11 shrink-0 items-center gap-4 border-b border-border bg-nav-chrome px-4">
+		<header className="flex h-11 shrink-0 items-center gap-4 border-b border-border bg-tab-inactive-background px-4">
 			{/* Workspace selector */}
 			<DropdownMenu>
 				<DropdownMenuTrigger
 					render={
 						<Button
 							variant="ghost"
-							className="gap-2 font-semibold text-sm text-nav-chrome-fg hover:bg-nav-chrome-hover"
+							className="gap-2 font-semibold text-sm text-tab-inactive-foreground hover:bg-tab-hover-background"
 						/>
 					}
 				>
 					{activeOrganization?.name ?? orgSlug}
-					<ChevronsUpDownIcon className="size-3.5 text-nav-chrome-fg/50" />
+					<ChevronsUpDownIcon className="size-3.5 text-tab-inactive-foreground/50" />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="start" className="w-56">
 					{organizations?.map((org) => (
@@ -84,7 +84,7 @@ export function TopNav() {
 			{/* Global search trigger */}
 			<Button
 				variant="outline"
-				className="mx-auto w-full max-w-md justify-start gap-2 border-nav-chrome-fg/15 bg-nav-chrome-hover text-nav-chrome-fg hover:bg-nav-chrome-active"
+				className="mx-auto w-full max-w-md justify-start gap-2 border-tab-inactive-foreground/15 bg-tab-hover-background text-tab-inactive-foreground hover:bg-muted"
 				onClick={() => {
 					// TODO: open command palette
 				}}
