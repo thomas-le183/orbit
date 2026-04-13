@@ -43,7 +43,7 @@ export function SettingsSidebar({ isAdmin }: { isAdmin: boolean }) {
 						</p>
 						<div className="flex flex-col gap-0.5">
 							<Link
-								to="/$orgSlug/settings/workspace"
+								to="/$orgSlug/settings/general"
 								params={params}
 								className={itemClass}
 							>
