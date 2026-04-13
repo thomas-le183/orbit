@@ -5,6 +5,8 @@ import {
 	ClockIcon,
 	ListTodoIcon,
 	MessageSquareIcon,
+	PanelLeftCloseIcon,
+	PanelLeftOpenIcon,
 	SettingsIcon,
 } from "lucide-react";
 
@@ -24,7 +26,13 @@ const navItemClass = cn(
 	"[&.active]:before:w-0.5 [&.active]:before:rounded-r [&.active]:before:bg-tab-active-border-top",
 );
 
-export function AppNav() {
+export function AppNav({
+	isSidebarCollapsed,
+	onToggleSidebar,
+}: {
+	isSidebarCollapsed: boolean;
+	onToggleSidebar: () => void;
+}) {
 	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
 	return (
 		<div className="flex h-full w-11 shrink-0 flex-col items-center bg-tab-inactive-background py-2 border-r">
@@ -42,14 +50,28 @@ export function AppNav() {
 				))}
 			</nav>
 
-			<Link
-				to="/$orgSlug/settings"
-				params={{ orgSlug }}
-				title="Settings"
-				className={navItemClass}
-			>
-				<SettingsIcon size={16} />
-			</Link>
+			<div className="flex flex-col items-center gap-1 w-full">
+				<button
+					type="button"
+					title={isSidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
+					onClick={onToggleSidebar}
+					className={navItemClass}
+				>
+					{isSidebarCollapsed ? (
+						<PanelLeftOpenIcon size={16} />
+					) : (
+						<PanelLeftCloseIcon size={16} />
+					)}
+				</button>
+				<Link
+					to="/$orgSlug/settings"
+					params={{ orgSlug }}
+					title="Settings"
+					className={navItemClass}
+				>
+					<SettingsIcon size={16} />
+				</Link>
+			</div>
 		</div>
 	);
 }

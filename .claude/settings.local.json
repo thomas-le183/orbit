@@ -27,7 +27,15 @@
       "Bash(docker compose:*)",
       "Bash(.claude/skills/brainstorming/scripts/start-server.sh --project-dir /Users/thinhle/Documents/Development/orbit)",
       "Bash(npx @biomejs/biome format --write apps/web/src/components/workspace/app-sidebar.tsx)",
-      "Bash(bash .claude/skills/brainstorming/scripts/start-server.sh --project-dir /Users/thinhle/Documents/Development/orbit)"
+      "Bash(bash .claude/skills/brainstorming/scripts/start-server.sh --project-dir /Users/thinhle/Documents/Development/orbit)",
+      "Bash(gh api:*)",
+      "Bash(node -e ':*)",
+      "Bash(npx skills:*)",
+      "Read(//Users/thinhle/.agents/skills/**)",
+      "Read(//Users/thinhle/.claude/skills/**)",
+      "Bash(npx biome:*)",
+      "Bash(grep -v \"^$\")",
+      "Bash(node -e \"const m = require\\('/Users/thinhle/Documents/Development/orbit/node_modules/react-resizable-panels/dist/react-resizable-panels.cjs'\\); console.log\\(Object.keys\\(m\\).filter\\(k => k.includes\\('Panel'\\) || k.includes\\('Handle'\\) || k.includes\\('Imperative'\\)\\)\\)\")"
     ]
   }
 }

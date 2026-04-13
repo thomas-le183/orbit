@@ -10,12 +10,12 @@
     "check": "biome check"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.4.5",
     "turbo": "^2.8.19",
-    "typescript": "5.9.2",
-    "@biomejs/biome": "2.4.5"
+    "typescript": "5.9.2"
   },
   "engines": {
     "node": ">=24"
   },
-  "packageManager": "pnpm@10.0.0"
+  "packageManager": "pnpm@10.33.0"
 }

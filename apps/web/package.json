@@ -13,8 +13,8 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@orbit/ui": "workspace:*",
 		"@orbit/shared": "workspace:*",
+		"@orbit/ui": "workspace:*",
 		"@tailwindcss/vite": "^4.1.18",
 		"@tanstack/react-devtools": "latest",
 		"@tanstack/react-form": "^1.28.6",
@@ -29,6 +29,7 @@
 		"next-themes": "^0.4.6",
 		"react": "^19.2.0",
 		"react-dom": "^19.2.0",
+		"react-resizable-panels": "^4.9.0",
 		"tailwindcss": "^4.1.18"
 	},
 	"devDependencies": {

@@ -10,7 +10,8 @@ import {
 	notFound,
 	Outlet,
 } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { PanelImperativeHandle } from "react-resizable-panels";
 import { AppNav } from "@/components/workspace/app-nav";
 import { AppSidebar } from "@/components/workspace/app-sidebar";
 import { TopNav } from "@/components/workspace/top-nav";
@@ -36,6 +37,8 @@ export const Route = createFileRoute("/_workspace/$orgSlug")({
 function OrgLayout() {
 	const { authState, targetOrg } = Route.useRouteContext();
 	const setActive = useSetActiveOrganization();
+	const sidebarRef = useRef<PanelImperativeHandle | null>(null);
+	const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
 	useEffect(() => {
 		if (authState.session?.activeOrganizationId !== targetOrg.id) {
@@ -43,11 +46,24 @@ function OrgLayout() {
 		}
 	}, [authState.session?.activeOrganizationId, targetOrg.id, setActive.mutate]);
 
+	function toggleSidebar() {
+		const panel = sidebarRef.current;
+		if (!panel) return;
+		if (panel.isCollapsed()) {
+			panel.expand();
+		} else {
+			panel.collapse();
+		}
+	}
+
 	return (
 		<div className="flex h-screen flex-col">
 			<TopNav />
 			<div className="flex flex-1 overflow-hidden bg-tab-inactive-background">
-				<AppNav />
+				<AppNav
+					isSidebarCollapsed={isSidebarCollapsed}
+					onToggleSidebar={toggleSidebar}
+				/>
 				<ResizablePanelGroup orientation="horizontal">
 					<ResizablePanel
 						id="sidebar"
@@ -57,6 +73,8 @@ function OrgLayout() {
 						collapsible
 						collapsedSize={0}
 						groupResizeBehavior="preserve-pixel-size"
+						panelRef={sidebarRef}
+						onResize={(size) => setIsSidebarCollapsed(size.inPixels === 0)}
 					>
 						<AppSidebar />
 					</ResizablePanel>

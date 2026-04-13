@@ -233,7 +233,7 @@ export function AppSidebar() {
 		<div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
 			{/* Header */}
 			<div className="flex py-3 shrink-0 items-center gap-1 px-3">
-				<span className="flex-1 font-mono text-[11px] font-semibold uppercase tracking-widest text-sidebar-foreground/60">
+				<span className="flex-1 font-mono text-[11px] font-thin uppercase tracking-widest text-sidebar-foreground/60">
 					{config.title}
 				</span>
 				{config.action && (
