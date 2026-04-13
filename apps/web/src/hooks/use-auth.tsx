@@ -200,6 +200,47 @@ export function useUpdateMemberRole() {
 	});
 }
 
+export function useOrgMembers(organizationId: string | undefined) {
+	return useQuery({
+		queryKey: ["auth", "org-full", organizationId],
+		queryFn: async () => {
+			if (!organizationId) throw new Error("organizationId is required");
+			const { data, error } = await authClient.organization.getFullOrganization(
+				{
+					query: { organizationId },
+				},
+			);
+			if (error) throw error;
+			return data;
+		},
+		enabled: !!organizationId,
+	});
+}
+
+export function useOrgRole(organizationId: string | undefined) {
+	const { data: session } = useSession();
+	const { data: org } = useOrgMembers(organizationId);
+	const currentUserId = session?.user?.id;
+	const member = org?.members?.find((m) => m.userId === currentUserId);
+	return member?.role ?? null;
+}
+
+export function useCancelInvitation() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async (invitationId: string) => {
+			const { data, error } = await authClient.organization.cancelInvitation({
+				invitationId,
+			});
+			if (error) throw error;
+			return data;
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["auth", "org-full"] });
+		},
+	});
+}
+
 // ─── Query options (usable in beforeLoad) ───────────────────
 
 export const sessionQueryOptions = {

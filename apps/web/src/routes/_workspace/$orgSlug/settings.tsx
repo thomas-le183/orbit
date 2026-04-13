@@ -1,19 +1,32 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { SettingsSidebar } from "@/components/workspace/settings-sidebar";
+import { useOrgRole } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_workspace/$orgSlug/settings")({
+	beforeLoad: ({ location, params }) => {
+		if (
+			location.pathname === `/${params.orgSlug}/settings` ||
+			location.pathname === `/${params.orgSlug}/settings/`
+		) {
+			throw redirect({ to: "/$orgSlug/settings/profile", params });
+		}
+	},
 	component: SettingsLayout,
 });
 
 function SettingsLayout() {
+	const { targetOrg } = Route.useRouteContext() as any;
+	const role = useOrgRole(targetOrg.id);
+	const isAdmin = role === "admin" || role === "owner";
+
 	return (
-		<div className="mx-auto max-w-2xl space-y-6">
-			<div>
-				<h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-				<p className="mt-1 text-sm text-muted-foreground">
-					Manage your account and workspace preferences.
-				</p>
+		<div className="-m-6 flex min-h-[calc(100%+3rem)]">
+			<SettingsSidebar isAdmin={isAdmin} />
+			<div className="flex-1 overflow-y-auto">
+				<div className="mx-auto max-w-180 px-12 py-10">
+					<Outlet />
+				</div>
 			</div>
-			<Outlet />
 		</div>
 	);
 }
