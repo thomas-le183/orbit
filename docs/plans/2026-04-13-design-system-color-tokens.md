@@ -2,146 +2,55 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Rename `--nav-chrome-*` tokens to `--nav-tab-*` with corrected color values, and add new `--list-*` interactive state tokens.
+**Goal:** Rename `--nav-chrome-*` → `--tab-*` with correct per-state bg+fg tokens, and add `--list-*` interactive state tokens.
 
-**Architecture:** Two-file change — `globals.css` gets the token renames/additions in `@theme inline`, `:root`, and `.dark`; `app-nav.tsx` gets its Tailwind class names updated to match. No component API changes, no sidebar touched.
+**Architecture:** Two-file change — `globals.css` gets the token renames/additions in `@theme inline`, `:root`, and `.dark`; `app-nav.tsx` gets its Tailwind class names updated to match. No component API changes, sidebar untouched.
 
-**Tech Stack:** Tailwind CSS v4 (custom properties via `@theme inline`), oklch color space, React + TanStack Router
-
----
-
-### Task 1: Rename nav-chrome → nav-tab in `@theme inline`
-
-**Files:**
-- Modify: `packages/ui/src/styles/globals.css:14-23`
-
-**Step 1: Replace the nav-chrome block in `@theme inline`**
-
-Replace lines 14–23 (the `/* Nav chrome */` block) with:
-
-```css
-/* Nav tab — tab bar / activity rail */
---color-nav-tab: var(--nav-tab);
---color-nav-tab-fg: var(--nav-tab-fg);
---color-nav-tab-hover: var(--nav-tab-hover);
---color-nav-tab-btn-hover: var(--nav-tab-btn-hover);
---color-nav-tab-btn-active: var(--nav-tab-btn-active);
-/* tab active state */
---color-nav-tab-active: var(--nav-tab-active);
---color-nav-tab-active-fg: var(--nav-tab-active-fg);
---color-nav-tab-active-border: var(--nav-tab-active-border);
-/* tab inactive / unfocused */
---color-nav-tab-unfocused-fg: var(--nav-tab-unfocused-fg);
-```
-
-**Step 2: Verify no `nav-chrome` references remain in `@theme inline`**
-
-Run: `grep -n "nav-chrome" packages/ui/src/styles/globals.css`
-Expected: matches only in `:root` and `.dark` (not in `@theme inline`)
+**Tech Stack:** Tailwind CSS v4 (`@theme inline` custom properties), oklch color space, React
 
 ---
 
-### Task 2: Rename nav-chrome → nav-tab in `:root`, fix values, add list tokens
+### Task 1: Replace nav-chrome block in `@theme inline`
 
 **Files:**
-- Modify: `packages/ui/src/styles/globals.css:92-152`
+- Modify: `packages/ui/src/styles/globals.css` (lines 14–23, the `/* Nav chrome */` block inside `@theme inline`)
 
-**Step 1: Replace the nav-chrome block in `:root`**
+**Step 1: Replace the entire nav-chrome block with the tab block**
 
-Replace the `/* Nav chrome */` comment block (lines ~92-101) with:
-
+Old block (lines ~14–23):
 ```css
-/* Nav tab ------------------------------------------------------------ */
---nav-tab: oklch(0.986 0.004 286);              /* #FAFAFD  tab.inactiveBackground */
---nav-tab-fg: oklch(0.489 0 0);                 /* #606060  tab.inactiveForeground (readable) */
---nav-tab-hover: oklch(0 0 0 / 6%);             /* subtle tab hover bg */
---nav-tab-btn-hover: oklch(0 0 0 / 6%);         /* icon button hover in bar */
---nav-tab-btn-active: oklch(0 0 0 / 18%);       /* icon button pressed */
---nav-tab-active: oklch(1 0 0);                 /* #FFFFFF  tab.activeBackground */
---nav-tab-active-fg: oklch(0.244 0 0);          /* #202020  tab.activeForeground */
---nav-tab-active-border: oklch(0.529 0.174 255); /* #0069CC  tab.activeBorderTop (blue) */
---nav-tab-unfocused-fg: oklch(0.792 0 0);       /* #BBBBBB  tab.unfocusedInactiveForeground */
+/* Nav chrome — tab bar */
+--color-nav-chrome: var(--nav-chrome);
+--color-nav-chrome-fg: var(--nav-chrome-fg);
+--color-nav-chrome-hover: var(--nav-chrome-hover);
+--color-nav-chrome-active: var(--nav-chrome-active);
+/* tab active / inactive */
+--color-nav-chrome-tab-active: var(--nav-chrome-tab-active);
+--color-nav-chrome-tab-active-fg: var(--nav-chrome-tab-active-fg);
+--color-nav-chrome-tab-active-border: var(--nav-chrome-tab-active-border);
+--color-nav-chrome-tab-inactive-fg: var(--nav-chrome-tab-inactive-fg);
 ```
 
-**Step 2: Add `--list-*` tokens at end of `:root` (before closing `}`, after the vscode-extras block)**
-
+New block:
 ```css
-/* List items --------------------------------------------------------- */
---list-hover: oklch(0 0 0 / 6%);                /* list.hoverBackground */
---list-active: oklch(0 0 0 / 10%);              /* list.focusBackground */
---list-active-fg: oklch(0.244 0 0);             /* list.focusForeground */
---list-selection: oklch(0.529 0.174 255 / 10%); /* list.activeSelectionBackground */
---list-selection-fg: oklch(0.244 0 0);          /* list.activeSelectionForeground */
---list-inactive-selection: oklch(0 0 0 / 6%);   /* list.inactiveSelectionBackground */
---list-inactive-selection-fg: oklch(0.489 0 0); /* list.inactiveSelectionForeground */
+/* Tab strip / activity rail */
+--color-tab: var(--tab);
+--color-tab-inactive: var(--tab-inactive);
+--color-tab-inactive-fg: var(--tab-inactive-fg);
+--color-tab-hover: var(--tab-hover);
+--color-tab-hover-fg: var(--tab-hover-fg);
+--color-tab-active: var(--tab-active);
+--color-tab-active-fg: var(--tab-active-fg);
+--color-tab-active-border: var(--tab-active-border);
+--color-tab-unfocused-fg: var(--tab-unfocused-fg);
 ```
 
-**Step 3: Verify `:root` has no remaining `nav-chrome` references**
-
-Run: `grep -n "nav-chrome" packages/ui/src/styles/globals.css`
-Expected: matches only in `.dark` block
-
----
-
-### Task 3: Rename nav-chrome → nav-tab in `.dark`, fix values, add list tokens
-
-**Files:**
-- Modify: `packages/ui/src/styles/globals.css:154-223`
-
-**Step 1: Replace the nav-chrome block in `.dark`**
-
-Replace the `/* Nav chrome */` comment block with:
-
-```css
-/* Nav tab ------------------------------------------------------------ */
---nav-tab: oklch(0.217 0.003 248);               /* #191A1B  tab.inactiveBackground */
---nav-tab-fg: oklch(0.640 0 0);                  /* #8C8C8C  tab.inactiveForeground (readable) */
---nav-tab-hover: oklch(1 0 0 / 9%);              /* subtle tab hover bg */
---nav-tab-btn-hover: oklch(1 0 0 / 9%);          /* icon button hover in bar */
---nav-tab-btn-active: oklch(1 0 0 / 22%);        /* icon button pressed */
---nav-tab-active: oklch(0.186 0.003 248);        /* #121314  tab.activeBackground */
---nav-tab-active-fg: oklch(0.805 0 0);           /* #bfbfbf  tab.activeForeground */
---nav-tab-active-border: oklch(0.630 0.104 231); /* #3994BC  tab.activeBorderTop */
---nav-tab-unfocused-fg: oklch(0.337 0 0);        /* #444444  tab.unfocusedInactiveForeground */
-```
-
-**Step 2: Add `--list-*` tokens at end of `.dark` (before closing `}`)**
-
-```css
-/* List items --------------------------------------------------------- */
---list-hover: oklch(1 0 0 / 5%);                 /* list.hoverBackground */
---list-active: oklch(1 0 0 / 8%);                /* list.focusBackground */
---list-active-fg: oklch(0.943 0 0);              /* #ededed  list.focusForeground */
---list-selection: oklch(0.630 0.104 231 / 15%);  /* list.activeSelectionBackground */
---list-selection-fg: oklch(0.943 0 0);           /* #ededed  list.activeSelectionForeground */
---list-inactive-selection: oklch(1 0 0 / 5%);    /* list.inactiveSelectionBackground */
---list-inactive-selection-fg: oklch(0.640 0 0);  /* #8C8C8C  list.inactiveSelectionForeground */
-```
-
-**Step 3: Verify no nav-chrome references remain anywhere**
-
-Run: `grep -n "nav-chrome" packages/ui/src/styles/globals.css`
-Expected: no matches
-
-**Step 4: Commit**
-
-```bash
-git add packages/ui/src/styles/globals.css
-git commit -m "feat(ui): rename nav-chrome→nav-tab tokens, fix inactive fg + active border colors, add list-item tokens"
-```
-
----
-
-### Task 4: Add `--color-list-*` entries to `@theme inline`
-
-**Files:**
-- Modify: `packages/ui/src/styles/globals.css` — inside `@theme inline` block
-
-**Step 1: Add list token references after the nav-tab block in `@theme inline`**
+**Step 2: Add list block to `@theme inline` (after the tab block)**
 
 ```css
 /* List items */
 --color-list-hover: var(--list-hover);
+--color-list-hover-fg: var(--list-hover-fg);
 --color-list-active: var(--list-active);
 --color-list-active-fg: var(--list-active-fg);
 --color-list-selection: var(--list-selection);
@@ -150,69 +59,182 @@ git commit -m "feat(ui): rename nav-chrome→nav-tab tokens, fix inactive fg + a
 --color-list-inactive-selection-fg: var(--list-inactive-selection-fg);
 ```
 
-**Step 2: Verify all list vars resolve**
+**Step 3: Verify no nav-chrome references remain in `@theme inline`**
 
-Run: `npm run check-types` from repo root
-Expected: no errors
+Run: `grep -n "nav-chrome" packages/ui/src/styles/globals.css`
+Expected: matches only in `:root` and `.dark` blocks, none inside `@theme inline`
 
 ---
 
-### Task 5: Update `app-nav.tsx` class names
+### Task 2: Replace nav-chrome variables in `:root`, fix values, add list tokens
 
 **Files:**
-- Modify: `apps/web/src/components/workspace/app-nav.tsx`
+- Modify: `packages/ui/src/styles/globals.css` (`:root` block, lines ~92–101)
 
-**Step 1: Update the container div class**
+**Step 1: Replace the nav-chrome variable block in `:root`**
 
-Current: `bg-nav-chrome`
-New: `bg-nav-tab`
+Remove:
+```css
+/* Nav chrome ---------------------------------------------------------- */
+--nav-chrome: oklch(0.986 0.004 286);
+--nav-chrome-fg: oklch(0.489 0 0);
+--nav-chrome-hover: oklch(0 0 0 / 6%);
+--nav-chrome-active: oklch(0 0 0 / 18%);
+/* tab active / inactive */
+--nav-chrome-tab-active: oklch(1 0 0);
+--nav-chrome-tab-active-fg: oklch(0.244 0 0);
+--nav-chrome-tab-active-border: oklch(0 0 0);
+--nav-chrome-tab-inactive-fg: oklch(0.792 0 0);
+```
 
-**Step 2: Update the inactive link class**
+Add:
+```css
+/* Tab strip / activity rail ------------------------------------------ */
+--tab: oklch(0.986 0.004 286);                   /* #FAFAFD  tab.inactiveBackground */
+--tab-inactive: transparent;
+--tab-inactive-fg: oklch(0.489 0 0);             /* #606060  tab.inactiveForeground */
+--tab-hover: oklch(0 0 0 / 6%);
+--tab-hover-fg: oklch(0.244 0 0);                /* #202020 */
+--tab-active: oklch(1 0 0);                      /* #FFFFFF  tab.activeBackground */
+--tab-active-fg: oklch(0.244 0 0);               /* #202020  tab.activeForeground */
+--tab-active-border: oklch(0.529 0.174 255);     /* #0069CC  tab.activeBorderTop */
+--tab-unfocused-fg: oklch(0.792 0 0);            /* #BBBBBB  tab.unfocusedInactiveForeground */
+```
 
-Current: `text-nav-chrome-fg/60` (opacity hack)
-New: `text-nav-tab-fg`
+**Step 2: Add list tokens at end of `:root` (after the `--vscode-*` block, before closing `}`)**
 
-**Step 3: Update the active indicator and active fg classes**
+```css
+/* List items --------------------------------------------------------- */
+--list-hover: oklch(0 0 0 / 6%);
+--list-hover-fg: oklch(0.244 0 0);               /* #202020 */
+--list-active: oklch(0 0 0 / 10%);
+--list-active-fg: oklch(0.244 0 0);              /* #202020 */
+--list-selection: oklch(0.529 0.174 255 / 10%);  /* #0069CC1A */
+--list-selection-fg: oklch(0.244 0 0);           /* #202020 */
+--list-inactive-selection: oklch(0 0 0 / 6%);
+--list-inactive-selection-fg: oklch(0.489 0 0);  /* #606060 */
+```
 
-Current: `[&.active]:text-nav-chrome-tab-active-fg`
-New: `[&.active]:text-nav-tab-active-fg`
+**Step 3: Confirm nav-chrome only remains in `.dark`**
 
-The active left-border pseudo-element uses `bg-primary` directly — that stays unchanged.
+Run: `grep -n "nav-chrome" packages/ui/src/styles/globals.css`
+Expected: matches only inside `.dark { }` block
 
-**Step 4: Update the settings link at the bottom (same class pattern)**
+---
 
-Apply the same substitutions to the settings `Link` className — it has the same `nav-chrome-*` references.
+### Task 3: Replace nav-chrome variables in `.dark`, fix values, add list tokens
 
-**Step 5: Verify no nav-chrome references remain in the file**
+**Files:**
+- Modify: `packages/ui/src/styles/globals.css` (`.dark` block, lines ~164–173)
 
-Run: `grep -n "nav-chrome" apps/web/src/components/workspace/app-nav.tsx`
+**Step 1: Replace the nav-chrome variable block in `.dark`**
+
+Remove:
+```css
+/* Nav chrome ---------------------------------------------------------- */
+--nav-chrome: oklch(0.217 0.003 248);
+--nav-chrome-fg: oklch(0.640 0 0);
+--nav-chrome-hover: oklch(1 0 0 / 9%);
+--nav-chrome-active: oklch(1 0 0 / 22%);
+/* tab active / inactive */
+--nav-chrome-tab-active: oklch(0.186 0.003 248);
+--nav-chrome-tab-active-fg: oklch(0.805 0 0);
+--nav-chrome-tab-active-border: oklch(0.630 0.104 231);
+--nav-chrome-tab-inactive-fg: oklch(0.337 0 0);
+```
+
+Add:
+```css
+/* Tab strip / activity rail ------------------------------------------ */
+--tab: oklch(0.217 0.003 248);                   /* #191A1B  tab.inactiveBackground */
+--tab-inactive: transparent;
+--tab-inactive-fg: oklch(0.640 0 0);             /* #8C8C8C  tab.inactiveForeground */
+--tab-hover: oklch(1 0 0 / 9%);
+--tab-hover-fg: oklch(0.805 0 0);                /* #bfbfbf */
+--tab-active: oklch(0.186 0.003 248);            /* #121314  tab.activeBackground */
+--tab-active-fg: oklch(0.805 0 0);               /* #bfbfbf  tab.activeForeground */
+--tab-active-border: oklch(0.630 0.104 231);     /* #3994BC  tab.activeBorderTop */
+--tab-unfocused-fg: oklch(0.337 0 0);            /* #444444  tab.unfocusedInactiveForeground */
+```
+
+**Step 2: Add list tokens at end of `.dark` (after the `--vscode-*` block, before closing `}`)**
+
+```css
+/* List items --------------------------------------------------------- */
+--list-hover: oklch(1 0 0 / 5%);
+--list-hover-fg: oklch(0.805 0 0);               /* #bfbfbf */
+--list-active: oklch(1 0 0 / 8%);
+--list-active-fg: oklch(0.943 0 0);              /* #ededed */
+--list-selection: oklch(0.630 0.104 231 / 15%);  /* #3994BC26 */
+--list-selection-fg: oklch(0.943 0 0);           /* #ededed */
+--list-inactive-selection: oklch(1 0 0 / 5%);
+--list-inactive-selection-fg: oklch(0.640 0 0);  /* #8C8C8C */
+```
+
+**Step 3: Confirm zero nav-chrome references remain**
+
+Run: `grep -n "nav-chrome" packages/ui/src/styles/globals.css`
 Expected: no matches
 
-**Step 6: Run lint**
-
-Run: `npm run check` from repo root
-Expected: no errors
-
-**Step 7: Commit**
+**Step 4: Commit**
 
 ```bash
-git add apps/web/src/components/workspace/app-nav.tsx
-git commit -m "feat(web): update app-nav to use nav-tab tokens, remove opacity hack on inactive fg"
+git add packages/ui/src/styles/globals.css
+git commit -m "feat(ui): rename nav-chrome→tab tokens, fix inactive fg + active border, add list-item tokens"
 ```
 
 ---
 
-### Task 6: Verify `app-sidebar.tsx` is untouched
+### Task 4: Update `app-nav.tsx` class names
 
 **Files:**
-- Read only: `apps/web/src/components/workspace/app-sidebar.tsx`
+- Modify: `apps/web/src/components/workspace/app-nav.tsx`
 
-**Step 1: Confirm no nav-chrome or nav-tab classes were accidentally added**
+**Step 1: Update the container div**
 
-Run: `grep -n "nav-chrome\|nav-tab" apps/web/src/components/workspace/app-sidebar.tsx`
+`bg-nav-chrome` → `bg-tab`
+
+**Step 2: Update inactive link state (both the module links and the settings link)**
+
+`text-nav-chrome-fg/60` → `text-tab-inactive-fg`
+
+(Remove the `/60` opacity hack — `--tab-inactive-fg` is already the correct readable value.)
+
+**Step 3: Update active fg class**
+
+`[&.active]:text-nav-chrome-tab-active-fg` → `[&.active]:text-tab-active-fg`
+
+The `hover:text-nav-chrome-fg` reference (if present) → `hover:text-tab-hover-fg`
+
+The active left-border pseudo-element uses `bg-primary` directly — leave unchanged.
+
+**Step 4: Confirm no nav-chrome references remain**
+
+Run: `grep -n "nav-chrome" apps/web/src/components/workspace/app-nav.tsx`
 Expected: no matches
 
-**Step 2: Final type-check**
+**Step 5: Lint**
+
+Run: `npm run check` from repo root
+Expected: no errors
+
+**Step 6: Commit**
+
+```bash
+git add apps/web/src/components/workspace/app-nav.tsx
+git commit -m "feat(web): update app-nav to tab tokens, drop opacity hack on inactive fg"
+```
+
+---
+
+### Task 5: Final verification
+
+**Step 1: Confirm sidebar is untouched**
+
+Run: `grep -n "nav-chrome\|--tab\|--list" apps/web/src/components/workspace/app-sidebar.tsx`
+Expected: no matches
+
+**Step 2: Type-check**
 
 Run: `npm run check-types` from repo root
 Expected: no errors
