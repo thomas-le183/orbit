@@ -18,6 +18,9 @@ coverage
 # Turbo
 .turbo
 
+# Brainstorming mockups
+.superpowers/
+
 # Vercel
 .vercel
 
