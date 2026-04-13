@@ -2,6 +2,7 @@ import {
 	Body,
 	Controller,
 	ForbiddenException,
+	Get,
 	Patch,
 	UseGuards,
 } from "@nestjs/common";
@@ -16,6 +17,14 @@ import { PresenceService } from "./presence.service";
 @Controller("presence")
 export class PresenceController {
 	constructor(private readonly presenceService: PresenceService) {}
+
+	@Get()
+	async getOrgPresence(@CurrentSession() session: Session) {
+		if (!session.activeOrganizationId) {
+			throw new ForbiddenException("No active organization");
+		}
+		return this.presenceService.getOrgPresence(session.activeOrganizationId);
+	}
 
 	@Patch()
 	async update(

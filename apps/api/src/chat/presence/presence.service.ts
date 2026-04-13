@@ -130,4 +130,10 @@ export class PresenceService {
 				},
 			});
 	}
+
+	async getOrgPresence(orgId: string) {
+		return this.db.query.userPresence.findMany({
+			where: eq(schema.userPresence.organizationId, orgId),
+		});
+	}
 }
