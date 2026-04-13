@@ -50,6 +50,13 @@ export function SettingsSidebar({ isAdmin }: { isAdmin: boolean }) {
 								General
 							</Link>
 							<Link
+								to="/$orgSlug/settings/members"
+								params={params}
+								className={itemClass}
+							>
+								Members
+							</Link>
+							<Link
 								to="/$orgSlug/settings/billing"
 								params={params}
 								className={itemClass}
