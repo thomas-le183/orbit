@@ -1,3 +1,5 @@
+"use client";
+
 import { cn } from "@orbit/ui/lib/utils";
 import type * as React from "react";
 
@@ -9,7 +11,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
 		>
 			<table
 				data-slot="table"
-				className={cn("w-full caption-bottom text-xs", className)}
+				className={cn("w-full caption-bottom text-sm", className)}
 				{...props}
 			/>
 		</div>
@@ -95,7 +97,7 @@ function TableCaption({
 	return (
 		<caption
 			data-slot="table-caption"
-			className={cn("mt-4 text-xs text-muted-foreground", className)}
+			className={cn("mt-4 text-sm text-muted-foreground", className)}
 			{...props}
 		/>
 	);
@@ -103,11 +105,11 @@ function TableCaption({
 
 export {
 	Table,
+	TableHeader,
 	TableBody,
-	TableCaption,
-	TableCell,
 	TableFooter,
 	TableHead,
-	TableHeader,
 	TableRow,
+	TableCell,
+	TableCaption,
 };

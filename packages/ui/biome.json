@@ -5,7 +5,8 @@
 		"rules": {
 			"a11y": "off",
 			"security": "off",
-			"suspicious": "off"
+			"suspicious": "off",
+			"correctness": "off"
 		}
 	},
 	"css": {

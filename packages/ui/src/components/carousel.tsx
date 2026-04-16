@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@orbit/ui/components/button";
 import { cn } from "@orbit/ui/lib/utils";
 import useEmblaCarousel, {
@@ -229,11 +231,11 @@ function CarouselNext({
 }
 
 export {
-	Carousel,
 	type CarouselApi,
+	Carousel,
 	CarouselContent,
 	CarouselItem,
-	CarouselNext,
 	CarouselPrevious,
+	CarouselNext,
 	useCarousel,
 };

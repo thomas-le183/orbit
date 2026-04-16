@@ -42,7 +42,8 @@
       "Bash(npm --prefix /Users/thinhle/Documents/Development/orbit run check-types)",
       "Bash(npm --prefix /Users/thinhle/Documents/Development/orbit run typecheck)",
       "Bash(pnpm run:*)",
-      "Bash(pnpm biome:*)"
+      "Bash(pnpm biome:*)",
+      "Bash(ls -la /home/leducthinh/projects/orbit/packages/ui/src/components/*.tsx)"
     ]
   }
 }
