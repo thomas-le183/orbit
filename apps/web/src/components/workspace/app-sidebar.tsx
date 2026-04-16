@@ -16,6 +16,7 @@ import {
 	MessageSquareIcon,
 	PlusIcon,
 	Settings2Icon,
+	SettingsIcon,
 	UserIcon,
 } from "lucide-react";
 
@@ -160,7 +161,7 @@ function getAiConfig(): ModuleConfig {
 
 function getSettingsConfig(orgSlug: string): ModuleConfig {
 	return {
-		icon: Settings2Icon,
+		icon: SettingsIcon,
 		title: "Settings",
 		sections: [
 			{

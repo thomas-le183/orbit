@@ -3,7 +3,7 @@ import { Link, useParams } from "@tanstack/react-router";
 import {
 	BotIcon,
 	ClockIcon,
-	ListTodoIcon,
+	HomeIcon,
 	MessageSquareIcon,
 	PanelLeftCloseIcon,
 	PanelLeftOpenIcon,
@@ -11,10 +11,15 @@ import {
 } from "lucide-react";
 
 const modules = [
-	{ to: "/$orgSlug/chat", icon: MessageSquareIcon, label: "Chat" },
-	{ to: "/$orgSlug/tasks", icon: ListTodoIcon, label: "Tasks" },
-	{ to: "/$orgSlug/time", icon: ClockIcon, label: "Time" },
-	{ to: "/$orgSlug/ai", icon: BotIcon, label: "AI" },
+	{ to: "/$orgSlug", icon: HomeIcon, label: "Home", exact: true },
+	{
+		to: "/$orgSlug/chat",
+		icon: MessageSquareIcon,
+		label: "Chat",
+		exact: false,
+	},
+	{ to: "/$orgSlug/time", icon: ClockIcon, label: "Time", exact: false },
+	{ to: "/$orgSlug/ai", icon: BotIcon, label: "AI", exact: false },
 ] as const;
 
 const navItemClass = cn(
@@ -37,12 +42,13 @@ export function AppNav({
 	return (
 		<div className="flex h-full w-11 shrink-0 flex-col items-center bg-tab-inactive-background py-2 border-r">
 			<nav className="flex flex-1 flex-col items-center gap-1 w-full">
-				{modules.map(({ to, icon: Icon, label }) => (
+				{modules.map(({ to, icon: Icon, label, exact }) => (
 					<Link
 						key={to}
 						to={to}
 						params={{ orgSlug }}
 						title={label}
+						activeOptions={{ exact }}
 						className={navItemClass}
 					>
 						<Icon size={16} />

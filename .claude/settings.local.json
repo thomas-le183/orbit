@@ -35,7 +35,14 @@
       "Read(//Users/thinhle/.claude/skills/**)",
       "Bash(npx biome:*)",
       "Bash(grep -v \"^$\")",
-      "Bash(node -e \"const m = require\\('/Users/thinhle/Documents/Development/orbit/node_modules/react-resizable-panels/dist/react-resizable-panels.cjs'\\); console.log\\(Object.keys\\(m\\).filter\\(k => k.includes\\('Panel'\\) || k.includes\\('Handle'\\) || k.includes\\('Imperative'\\)\\)\\)\")"
+      "Bash(node -e \"const m = require\\('/Users/thinhle/Documents/Development/orbit/node_modules/react-resizable-panels/dist/react-resizable-panels.cjs'\\); console.log\\(Object.keys\\(m\\).filter\\(k => k.includes\\('Panel'\\) || k.includes\\('Handle'\\) || k.includes\\('Imperative'\\)\\)\\)\")",
+      "Bash(curl -s http://localhost:50771)",
+      "WebSearch",
+      "Bash(git commit:*)",
+      "Bash(npm --prefix /Users/thinhle/Documents/Development/orbit run check-types)",
+      "Bash(npm --prefix /Users/thinhle/Documents/Development/orbit run typecheck)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm biome:*)"
     ]
   }
 }
