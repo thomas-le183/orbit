@@ -1,3 +1,4 @@
+import { buttonVariants } from "@orbit/ui/components/button";
 import { cn } from "@orbit/ui/lib/utils";
 import { Link, useParams } from "@tanstack/react-router";
 import {
@@ -23,12 +24,8 @@ const modules = [
 ] as const;
 
 const navItemClass = cn(
-	"relative flex h-auto w-full flex-col items-center justify-center gap-1 px-1 py-1.5",
-	"text-tab-inactive-foreground transition-colors",
-	"hover:text-tab-hover-foreground",
-	"[&.active]:text-tab-active-foreground",
-	"[&.active]:before:absolute [&.active]:before:left-0 [&.active]:before:top-1 [&.active]:before:bottom-1",
-	"[&.active]:before:w-0.5 [&.active]:before:rounded-r [&.active]:before:bg-tab-active-border-top",
+	buttonVariants({ variant: "ghost", size: "icon-sm" }),
+	"data-[status=active]:bg-secondary data-[status=active]:text-secondary-foreground",
 );
 
 export function AppNav({
@@ -40,7 +37,7 @@ export function AppNav({
 }) {
 	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
 	return (
-		<div className="flex h-full w-11 shrink-0 flex-col items-center bg-tab-inactive-background py-2 border-r">
+		<div className="flex h-full w-11 shrink-0 flex-col items-center py-2 border-r">
 			<nav className="flex flex-1 flex-col items-center gap-1 w-full">
 				{modules.map(({ to, icon: Icon, label, exact }) => (
 					<Link

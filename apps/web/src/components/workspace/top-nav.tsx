@@ -1,5 +1,3 @@
-import { getInitials } from "@orbit/shared";
-import { Avatar, AvatarFallback } from "@orbit/ui/components/avatar";
 import { Button } from "@orbit/ui/components/button";
 import {
 	DropdownMenu,
@@ -21,6 +19,8 @@ import {
 	SearchIcon,
 	SettingsIcon,
 } from "lucide-react";
+import { OrgAvatar } from "@/components/common/org-avatar";
+import { UserAvatar } from "@/components/common/user-avatar";
 import { useOrganizations, useSession, useSignOut } from "@/hooks/use-auth";
 
 export function TopNav() {
@@ -31,7 +31,6 @@ export function TopNav() {
 	const { data: organizations } = useOrganizations();
 	const activeOrganization = organizations?.find((o) => o.slug === orgSlug);
 	const user = session?.user;
-	const initials = user?.name ? getInitials(user.name) : "?";
 
 	function handleSignOut() {
 		signOut.mutate(undefined, {
@@ -40,19 +39,24 @@ export function TopNav() {
 	}
 
 	return (
-		<header className="flex h-11 shrink-0 items-center gap-4 border-b border-border bg-tab-inactive-background px-4">
+		<header className="flex h-11 shrink-0 items-center gap-4 border-b border-border px-4">
 			{/* Workspace selector */}
 			<DropdownMenu>
 				<DropdownMenuTrigger
 					render={
 						<Button
 							variant="ghost"
-							className="gap-2 font-semibold text-sm text-tab-inactive-foreground hover:bg-tab-hover-background"
+							size={"sm"}
+							className="gap-2 font-semibold text-sm"
 						/>
 					}
 				>
+					<OrgAvatar
+						name={activeOrganization?.name}
+						logo={activeOrganization?.logo}
+					/>
 					{activeOrganization?.name ?? orgSlug}
-					<ChevronsUpDownIcon className="size-3.5 text-tab-inactive-foreground/50" />
+					<ChevronsUpDownIcon className="size-3.5" />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="start" className="w-56">
 					{organizations?.map((org) => (
@@ -65,6 +69,7 @@ export function TopNav() {
 								})
 							}
 						>
+							<OrgAvatar size="sm" name={org.name} logo={org.logo} />
 							<span className="flex-1 truncate">{org.name}</span>
 							{org.slug === orgSlug && (
 								<CheckIcon className="size-4 text-foreground" />
@@ -84,7 +89,8 @@ export function TopNav() {
 			{/* Global search trigger */}
 			<Button
 				variant="outline"
-				className="mx-auto w-full max-w-md justify-start gap-2 border-tab-inactive-foreground/15 bg-tab-hover-background text-tab-inactive-foreground hover:bg-muted"
+				size={"sm"}
+				className="mx-auto w-full max-w-md justify-start gap-2 hover:bg-muted border-none"
 				onClick={() => {
 					// TODO: open command palette
 				}}
@@ -104,16 +110,12 @@ export function TopNav() {
 			{/* User menu */}
 			<DropdownMenu>
 				<DropdownMenuTrigger>
-					<Avatar>
-						<AvatarFallback>{initials}</AvatarFallback>
-					</Avatar>
+					<UserAvatar name={user?.name} image={user?.image} />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent side="top" align="end" className="w-56">
 					<DropdownMenuGroup>
 						<DropdownMenuLabel className="flex items-center gap-2 p-2 font-normal">
-							<Avatar>
-								<AvatarFallback>{initials}</AvatarFallback>
-							</Avatar>
+							<UserAvatar name={user?.name} image={user?.image} />
 							<div className="flex min-w-0 flex-col">
 								<span className="truncate text-sm font-medium">
 									{user?.name}

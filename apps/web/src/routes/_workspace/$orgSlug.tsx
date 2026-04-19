@@ -59,7 +59,7 @@ function OrgLayout() {
 	return (
 		<div className="flex h-screen flex-col">
 			<TopNav />
-			<div className="flex flex-1 overflow-hidden bg-tab-inactive-background">
+			<div className="flex flex-1 overflow-hidden">
 				<AppNav
 					isSidebarCollapsed={isSidebarCollapsed}
 					onToggleSidebar={toggleSidebar}

@@ -17,6 +17,7 @@ import {
 import { cn } from "@orbit/ui/lib/utils";
 import { MoreHorizontalIcon } from "lucide-react";
 import { useState } from "react";
+import { UserAvatar } from "@/components/common/user-avatar";
 import {
 	useCancelInvitation,
 	useRemoveMember,
@@ -58,29 +59,6 @@ function RolePill({ role }: { role: string }) {
 		>
 			{role}
 		</span>
-	);
-}
-
-function MemberAvatar({
-	name,
-	image,
-}: {
-	name: string;
-	image?: string | null;
-}) {
-	if (image) {
-		return (
-			<img
-				src={image}
-				alt={name}
-				className="h-7 w-7 rounded-full object-cover"
-			/>
-		);
-	}
-	return (
-		<div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
-			{name[0]?.toUpperCase()}
-		</div>
 	);
 }
 
@@ -172,7 +150,7 @@ export function MembersTable({
 								<TableRow key={m.id}>
 									<TableCell>
 										<div className="flex items-center gap-2.5">
-											<MemberAvatar name={m.user.name} image={m.user.image} />
+											<UserAvatar size="sm" name={m.user.name} image={m.user.image} />
 											<div>
 												<p className="text-sm font-medium leading-tight">
 													{m.user.name}

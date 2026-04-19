@@ -3,23 +3,14 @@ import {
 	SidebarContent,
 	SidebarFooter,
 	SidebarGroup,
-	SidebarGroupContent,
 	SidebarGroupLabel,
 	SidebarHeader,
-	SidebarMenu,
-	SidebarMenuAction,
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarProvider,
 } from "@orbit/ui/components/sidebar";
 
-import { cn } from "@orbit/ui/lib/utils";
-import {
-	Link,
-	useNavigate,
-	useParams,
-	useRouterState,
-} from "@tanstack/react-router";
+import { useNavigate, useParams, useRouterState } from "@tanstack/react-router";
 import { resolveModule, type SidebarItem } from "./sidebar-configs";
 
 // ── Component ──────────────────────────────────────────────────────────────
