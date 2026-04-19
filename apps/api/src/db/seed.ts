@@ -1,6 +1,8 @@
 import { config } from "dotenv";
+import { expand } from "dotenv-expand";
 
-config();
+expand(config());
+expand(config({ path: "../../.env" }));
 
 import { drizzle } from "drizzle-orm/node-postgres";
 import type { Db } from "./db.module";

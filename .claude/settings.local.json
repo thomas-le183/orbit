@@ -43,7 +43,8 @@
       "Bash(npm --prefix /Users/thinhle/Documents/Development/orbit run typecheck)",
       "Bash(pnpm run:*)",
       "Bash(pnpm biome:*)",
-      "Bash(ls -la /home/leducthinh/projects/orbit/packages/ui/src/components/*.tsx)"
+      "Bash(ls -la /home/leducthinh/projects/orbit/packages/ui/src/components/*.tsx)",
+      "Bash(docker volume *)"
     ]
   }
 }

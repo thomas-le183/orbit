@@ -15,18 +15,18 @@ Turborepo monorepo with a React frontend app, a NestJS backend API, and a shared
 Run all commands from the **repo root** unless noted.
 
 ```bash
-npm run dev          # start all apps in watch mode (Turbo)
-npm run build        # build all apps/packages
-npm run check        # biome check (lint + format)
-npm run lint         # biome lint only
-npm run format       # biome format only
-npm run check-types  # tsc type-check across all packages
+pnpm dev          # start all apps in watch mode (Turbo)
+pnpm build        # build all apps/packages
+pnpm check        # biome check (lint + format)
+pnpm lint         # biome lint only
+pnpm format       # biome format only
+pnpm typecheck    # tsc type-check across all packages
 ```
 
 Run tests inside `apps/web`:
 
 ```bash
-cd apps/web && npm run test   # vitest run (single pass)
+cd apps/web && pnpm test   # vitest run (single pass)
 ```
 
 ## Architecture
@@ -45,11 +45,11 @@ cd apps/web && npm run test   # vitest run (single pass)
 
 ## Package manager
 
-npm with workspaces (`npm@11`, Node `>=24`). Do not use `yarn` or `pnpm`.
+pnpm with workspaces (`pnpm@10`, Node `>=24`). Do not use `yarn` or `npm`.
 
 ## Do's and don'ts
 
-- **Do** run `npm run check` to catch lint/format issues before suggesting a commit.
+- **Do** run `pnpm check` to catch lint/format issues before suggesting a commit.
 - **Do** use the `cn()` utility for conditional Tailwind class merging.
 - **Do** add new shadcn-style components to `packages/ui`, not `apps/web`, if they are reusable.
 - **Do** use `@tanstack/react-form` for all form state management. Do not use `react-hook-form` or `formik`.

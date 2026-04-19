@@ -10,7 +10,11 @@ import { StorageModule } from "./storage/storage.module";
 
 @Module({
 	imports: [
-		ConfigModule.forRoot({ isGlobal: true, expandVariables: true }),
+		ConfigModule.forRoot({
+			isGlobal: true,
+			expandVariables: true,
+			envFilePath: [".env", "../../.env"],
+		}),
 		DbModule,
 		StorageModule,
 		AuthModule,

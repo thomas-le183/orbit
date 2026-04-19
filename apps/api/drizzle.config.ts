@@ -1,7 +1,9 @@
 import { config } from "dotenv";
+import { expand } from "dotenv-expand";
 import { defineConfig } from "drizzle-kit";
 
-config();
+expand(config());
+expand(config({ path: "../../.env" }));
 
 export default defineConfig({
 	out: "./src/db/migrations",
