@@ -51,3 +51,6 @@ yarn-error.log*
 *.pem
 *.local
 todos.json
+
+# Claude Code
+.claude/settings.local.json

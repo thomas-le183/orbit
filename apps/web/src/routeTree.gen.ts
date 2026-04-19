@@ -21,9 +21,21 @@ import { Route as PublicForgotPasswordRouteImport } from './routes/_public/forgo
 import { Route as WorkspaceOrgSlugIndexRouteImport } from './routes/_workspace/$orgSlug/index'
 import { Route as WorkspaceOrgSlugWikiRouteImport } from './routes/_workspace/$orgSlug/wiki'
 import { Route as WorkspaceOrgSlugTimeRouteImport } from './routes/_workspace/$orgSlug/time'
+import { Route as WorkspaceOrgSlugTasksRouteImport } from './routes/_workspace/$orgSlug/tasks'
+import { Route as WorkspaceOrgSlugStarredRouteImport } from './routes/_workspace/$orgSlug/starred'
 import { Route as WorkspaceOrgSlugSettingsRouteImport } from './routes/_workspace/$orgSlug/settings'
+import { Route as WorkspaceOrgSlugRecentRouteImport } from './routes/_workspace/$orgSlug/recent'
+import { Route as WorkspaceOrgSlugInboxRouteImport } from './routes/_workspace/$orgSlug/inbox'
 import { Route as WorkspaceOrgSlugChatRouteImport } from './routes/_workspace/$orgSlug/chat'
 import { Route as WorkspaceOrgSlugAiRouteImport } from './routes/_workspace/$orgSlug/ai'
+import { Route as WorkspaceOrgSlugActivityRouteImport } from './routes/_workspace/$orgSlug/activity'
+import { Route as WorkspaceOrgSlugTimeIndexRouteImport } from './routes/_workspace/$orgSlug/time/index'
+import { Route as WorkspaceOrgSlugTasksIndexRouteImport } from './routes/_workspace/$orgSlug/tasks/index'
+import { Route as WorkspaceOrgSlugTimeWeekRouteImport } from './routes/_workspace/$orgSlug/time/week'
+import { Route as WorkspaceOrgSlugTimeMonthRouteImport } from './routes/_workspace/$orgSlug/time/month'
+import { Route as WorkspaceOrgSlugTasksBoardRouteImport } from './routes/_workspace/$orgSlug/tasks/board'
+import { Route as WorkspaceOrgSlugTasksBacklogRouteImport } from './routes/_workspace/$orgSlug/tasks/backlog'
+import { Route as WorkspaceOrgSlugTasksAssignedRouteImport } from './routes/_workspace/$orgSlug/tasks/assigned'
 import { Route as WorkspaceOrgSlugSettingsWorkspaceRouteImport } from './routes/_workspace/$orgSlug/settings/workspace'
 import { Route as WorkspaceOrgSlugSettingsProfileRouteImport } from './routes/_workspace/$orgSlug/settings/profile'
 import { Route as WorkspaceOrgSlugSettingsNotificationsRouteImport } from './routes/_workspace/$orgSlug/settings/notifications'
@@ -89,12 +101,32 @@ const WorkspaceOrgSlugTimeRoute = WorkspaceOrgSlugTimeRouteImport.update({
   path: '/time',
   getParentRoute: () => WorkspaceOrgSlugRoute,
 } as any)
+const WorkspaceOrgSlugTasksRoute = WorkspaceOrgSlugTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => WorkspaceOrgSlugRoute,
+} as any)
+const WorkspaceOrgSlugStarredRoute = WorkspaceOrgSlugStarredRouteImport.update({
+  id: '/starred',
+  path: '/starred',
+  getParentRoute: () => WorkspaceOrgSlugRoute,
+} as any)
 const WorkspaceOrgSlugSettingsRoute =
   WorkspaceOrgSlugSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
     getParentRoute: () => WorkspaceOrgSlugRoute,
   } as any)
+const WorkspaceOrgSlugRecentRoute = WorkspaceOrgSlugRecentRouteImport.update({
+  id: '/recent',
+  path: '/recent',
+  getParentRoute: () => WorkspaceOrgSlugRoute,
+} as any)
+const WorkspaceOrgSlugInboxRoute = WorkspaceOrgSlugInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => WorkspaceOrgSlugRoute,
+} as any)
 const WorkspaceOrgSlugChatRoute = WorkspaceOrgSlugChatRouteImport.update({
   id: '/chat',
   path: '/chat',
@@ -105,6 +137,54 @@ const WorkspaceOrgSlugAiRoute = WorkspaceOrgSlugAiRouteImport.update({
   path: '/ai',
   getParentRoute: () => WorkspaceOrgSlugRoute,
 } as any)
+const WorkspaceOrgSlugActivityRoute =
+  WorkspaceOrgSlugActivityRouteImport.update({
+    id: '/activity',
+    path: '/activity',
+    getParentRoute: () => WorkspaceOrgSlugRoute,
+  } as any)
+const WorkspaceOrgSlugTimeIndexRoute =
+  WorkspaceOrgSlugTimeIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => WorkspaceOrgSlugTimeRoute,
+  } as any)
+const WorkspaceOrgSlugTasksIndexRoute =
+  WorkspaceOrgSlugTasksIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => WorkspaceOrgSlugTasksRoute,
+  } as any)
+const WorkspaceOrgSlugTimeWeekRoute =
+  WorkspaceOrgSlugTimeWeekRouteImport.update({
+    id: '/week',
+    path: '/week',
+    getParentRoute: () => WorkspaceOrgSlugTimeRoute,
+  } as any)
+const WorkspaceOrgSlugTimeMonthRoute =
+  WorkspaceOrgSlugTimeMonthRouteImport.update({
+    id: '/month',
+    path: '/month',
+    getParentRoute: () => WorkspaceOrgSlugTimeRoute,
+  } as any)
+const WorkspaceOrgSlugTasksBoardRoute =
+  WorkspaceOrgSlugTasksBoardRouteImport.update({
+    id: '/board',
+    path: '/board',
+    getParentRoute: () => WorkspaceOrgSlugTasksRoute,
+  } as any)
+const WorkspaceOrgSlugTasksBacklogRoute =
+  WorkspaceOrgSlugTasksBacklogRouteImport.update({
+    id: '/backlog',
+    path: '/backlog',
+    getParentRoute: () => WorkspaceOrgSlugTasksRoute,
+  } as any)
+const WorkspaceOrgSlugTasksAssignedRoute =
+  WorkspaceOrgSlugTasksAssignedRouteImport.update({
+    id: '/assigned',
+    path: '/assigned',
+    getParentRoute: () => WorkspaceOrgSlugTasksRoute,
+  } as any)
 const WorkspaceOrgSlugSettingsWorkspaceRoute =
   WorkspaceOrgSlugSettingsWorkspaceRouteImport.update({
     id: '/workspace',
@@ -150,10 +230,15 @@ export interface FileRoutesByFullPath {
   '/login': typeof PublicLoginRoute
   '/signup': typeof PublicSignupRoute
   '/$orgSlug': typeof WorkspaceOrgSlugRouteWithChildren
+  '/$orgSlug/activity': typeof WorkspaceOrgSlugActivityRoute
   '/$orgSlug/ai': typeof WorkspaceOrgSlugAiRoute
   '/$orgSlug/chat': typeof WorkspaceOrgSlugChatRoute
+  '/$orgSlug/inbox': typeof WorkspaceOrgSlugInboxRoute
+  '/$orgSlug/recent': typeof WorkspaceOrgSlugRecentRoute
   '/$orgSlug/settings': typeof WorkspaceOrgSlugSettingsRouteWithChildren
-  '/$orgSlug/time': typeof WorkspaceOrgSlugTimeRoute
+  '/$orgSlug/starred': typeof WorkspaceOrgSlugStarredRoute
+  '/$orgSlug/tasks': typeof WorkspaceOrgSlugTasksRouteWithChildren
+  '/$orgSlug/time': typeof WorkspaceOrgSlugTimeRouteWithChildren
   '/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
   '/$orgSlug/': typeof WorkspaceOrgSlugIndexRoute
   '/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
@@ -162,6 +247,13 @@ export interface FileRoutesByFullPath {
   '/$orgSlug/settings/notifications': typeof WorkspaceOrgSlugSettingsNotificationsRoute
   '/$orgSlug/settings/profile': typeof WorkspaceOrgSlugSettingsProfileRoute
   '/$orgSlug/settings/workspace': typeof WorkspaceOrgSlugSettingsWorkspaceRoute
+  '/$orgSlug/tasks/assigned': typeof WorkspaceOrgSlugTasksAssignedRoute
+  '/$orgSlug/tasks/backlog': typeof WorkspaceOrgSlugTasksBacklogRoute
+  '/$orgSlug/tasks/board': typeof WorkspaceOrgSlugTasksBoardRoute
+  '/$orgSlug/time/month': typeof WorkspaceOrgSlugTimeMonthRoute
+  '/$orgSlug/time/week': typeof WorkspaceOrgSlugTimeWeekRoute
+  '/$orgSlug/tasks/': typeof WorkspaceOrgSlugTasksIndexRoute
+  '/$orgSlug/time/': typeof WorkspaceOrgSlugTimeIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -170,10 +262,13 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
   '/signup': typeof PublicSignupRoute
+  '/$orgSlug/activity': typeof WorkspaceOrgSlugActivityRoute
   '/$orgSlug/ai': typeof WorkspaceOrgSlugAiRoute
   '/$orgSlug/chat': typeof WorkspaceOrgSlugChatRoute
+  '/$orgSlug/inbox': typeof WorkspaceOrgSlugInboxRoute
+  '/$orgSlug/recent': typeof WorkspaceOrgSlugRecentRoute
   '/$orgSlug/settings': typeof WorkspaceOrgSlugSettingsRouteWithChildren
-  '/$orgSlug/time': typeof WorkspaceOrgSlugTimeRoute
+  '/$orgSlug/starred': typeof WorkspaceOrgSlugStarredRoute
   '/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
   '/$orgSlug': typeof WorkspaceOrgSlugIndexRoute
   '/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
@@ -182,6 +277,13 @@ export interface FileRoutesByTo {
   '/$orgSlug/settings/notifications': typeof WorkspaceOrgSlugSettingsNotificationsRoute
   '/$orgSlug/settings/profile': typeof WorkspaceOrgSlugSettingsProfileRoute
   '/$orgSlug/settings/workspace': typeof WorkspaceOrgSlugSettingsWorkspaceRoute
+  '/$orgSlug/tasks/assigned': typeof WorkspaceOrgSlugTasksAssignedRoute
+  '/$orgSlug/tasks/backlog': typeof WorkspaceOrgSlugTasksBacklogRoute
+  '/$orgSlug/tasks/board': typeof WorkspaceOrgSlugTasksBoardRoute
+  '/$orgSlug/time/month': typeof WorkspaceOrgSlugTimeMonthRoute
+  '/$orgSlug/time/week': typeof WorkspaceOrgSlugTimeWeekRoute
+  '/$orgSlug/tasks': typeof WorkspaceOrgSlugTasksIndexRoute
+  '/$orgSlug/time': typeof WorkspaceOrgSlugTimeIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -194,10 +296,15 @@ export interface FileRoutesById {
   '/_public/login': typeof PublicLoginRoute
   '/_public/signup': typeof PublicSignupRoute
   '/_workspace/$orgSlug': typeof WorkspaceOrgSlugRouteWithChildren
+  '/_workspace/$orgSlug/activity': typeof WorkspaceOrgSlugActivityRoute
   '/_workspace/$orgSlug/ai': typeof WorkspaceOrgSlugAiRoute
   '/_workspace/$orgSlug/chat': typeof WorkspaceOrgSlugChatRoute
+  '/_workspace/$orgSlug/inbox': typeof WorkspaceOrgSlugInboxRoute
+  '/_workspace/$orgSlug/recent': typeof WorkspaceOrgSlugRecentRoute
   '/_workspace/$orgSlug/settings': typeof WorkspaceOrgSlugSettingsRouteWithChildren
-  '/_workspace/$orgSlug/time': typeof WorkspaceOrgSlugTimeRoute
+  '/_workspace/$orgSlug/starred': typeof WorkspaceOrgSlugStarredRoute
+  '/_workspace/$orgSlug/tasks': typeof WorkspaceOrgSlugTasksRouteWithChildren
+  '/_workspace/$orgSlug/time': typeof WorkspaceOrgSlugTimeRouteWithChildren
   '/_workspace/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
   '/_workspace/$orgSlug/': typeof WorkspaceOrgSlugIndexRoute
   '/_workspace/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
@@ -206,6 +313,13 @@ export interface FileRoutesById {
   '/_workspace/$orgSlug/settings/notifications': typeof WorkspaceOrgSlugSettingsNotificationsRoute
   '/_workspace/$orgSlug/settings/profile': typeof WorkspaceOrgSlugSettingsProfileRoute
   '/_workspace/$orgSlug/settings/workspace': typeof WorkspaceOrgSlugSettingsWorkspaceRoute
+  '/_workspace/$orgSlug/tasks/assigned': typeof WorkspaceOrgSlugTasksAssignedRoute
+  '/_workspace/$orgSlug/tasks/backlog': typeof WorkspaceOrgSlugTasksBacklogRoute
+  '/_workspace/$orgSlug/tasks/board': typeof WorkspaceOrgSlugTasksBoardRoute
+  '/_workspace/$orgSlug/time/month': typeof WorkspaceOrgSlugTimeMonthRoute
+  '/_workspace/$orgSlug/time/week': typeof WorkspaceOrgSlugTimeWeekRoute
+  '/_workspace/$orgSlug/tasks/': typeof WorkspaceOrgSlugTasksIndexRoute
+  '/_workspace/$orgSlug/time/': typeof WorkspaceOrgSlugTimeIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -217,9 +331,14 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/$orgSlug'
+    | '/$orgSlug/activity'
     | '/$orgSlug/ai'
     | '/$orgSlug/chat'
+    | '/$orgSlug/inbox'
+    | '/$orgSlug/recent'
     | '/$orgSlug/settings'
+    | '/$orgSlug/starred'
+    | '/$orgSlug/tasks'
     | '/$orgSlug/time'
     | '/$orgSlug/wiki'
     | '/$orgSlug/'
@@ -229,6 +348,13 @@ export interface FileRouteTypes {
     | '/$orgSlug/settings/notifications'
     | '/$orgSlug/settings/profile'
     | '/$orgSlug/settings/workspace'
+    | '/$orgSlug/tasks/assigned'
+    | '/$orgSlug/tasks/backlog'
+    | '/$orgSlug/tasks/board'
+    | '/$orgSlug/time/month'
+    | '/$orgSlug/time/week'
+    | '/$orgSlug/tasks/'
+    | '/$orgSlug/time/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -237,10 +363,13 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/signup'
+    | '/$orgSlug/activity'
     | '/$orgSlug/ai'
     | '/$orgSlug/chat'
+    | '/$orgSlug/inbox'
+    | '/$orgSlug/recent'
     | '/$orgSlug/settings'
-    | '/$orgSlug/time'
+    | '/$orgSlug/starred'
     | '/$orgSlug/wiki'
     | '/$orgSlug'
     | '/$orgSlug/settings/billing'
@@ -249,6 +378,13 @@ export interface FileRouteTypes {
     | '/$orgSlug/settings/notifications'
     | '/$orgSlug/settings/profile'
     | '/$orgSlug/settings/workspace'
+    | '/$orgSlug/tasks/assigned'
+    | '/$orgSlug/tasks/backlog'
+    | '/$orgSlug/tasks/board'
+    | '/$orgSlug/time/month'
+    | '/$orgSlug/time/week'
+    | '/$orgSlug/tasks'
+    | '/$orgSlug/time'
   id:
     | '__root__'
     | '/'
@@ -260,9 +396,14 @@ export interface FileRouteTypes {
     | '/_public/login'
     | '/_public/signup'
     | '/_workspace/$orgSlug'
+    | '/_workspace/$orgSlug/activity'
     | '/_workspace/$orgSlug/ai'
     | '/_workspace/$orgSlug/chat'
+    | '/_workspace/$orgSlug/inbox'
+    | '/_workspace/$orgSlug/recent'
     | '/_workspace/$orgSlug/settings'
+    | '/_workspace/$orgSlug/starred'
+    | '/_workspace/$orgSlug/tasks'
     | '/_workspace/$orgSlug/time'
     | '/_workspace/$orgSlug/wiki'
     | '/_workspace/$orgSlug/'
@@ -272,6 +413,13 @@ export interface FileRouteTypes {
     | '/_workspace/$orgSlug/settings/notifications'
     | '/_workspace/$orgSlug/settings/profile'
     | '/_workspace/$orgSlug/settings/workspace'
+    | '/_workspace/$orgSlug/tasks/assigned'
+    | '/_workspace/$orgSlug/tasks/backlog'
+    | '/_workspace/$orgSlug/tasks/board'
+    | '/_workspace/$orgSlug/time/month'
+    | '/_workspace/$orgSlug/time/week'
+    | '/_workspace/$orgSlug/tasks/'
+    | '/_workspace/$orgSlug/time/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -368,11 +516,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceOrgSlugTimeRouteImport
       parentRoute: typeof WorkspaceOrgSlugRoute
     }
+    '/_workspace/$orgSlug/tasks': {
+      id: '/_workspace/$orgSlug/tasks'
+      path: '/tasks'
+      fullPath: '/$orgSlug/tasks'
+      preLoaderRoute: typeof WorkspaceOrgSlugTasksRouteImport
+      parentRoute: typeof WorkspaceOrgSlugRoute
+    }
+    '/_workspace/$orgSlug/starred': {
+      id: '/_workspace/$orgSlug/starred'
+      path: '/starred'
+      fullPath: '/$orgSlug/starred'
+      preLoaderRoute: typeof WorkspaceOrgSlugStarredRouteImport
+      parentRoute: typeof WorkspaceOrgSlugRoute
+    }
     '/_workspace/$orgSlug/settings': {
       id: '/_workspace/$orgSlug/settings'
       path: '/settings'
       fullPath: '/$orgSlug/settings'
       preLoaderRoute: typeof WorkspaceOrgSlugSettingsRouteImport
+      parentRoute: typeof WorkspaceOrgSlugRoute
+    }
+    '/_workspace/$orgSlug/recent': {
+      id: '/_workspace/$orgSlug/recent'
+      path: '/recent'
+      fullPath: '/$orgSlug/recent'
+      preLoaderRoute: typeof WorkspaceOrgSlugRecentRouteImport
+      parentRoute: typeof WorkspaceOrgSlugRoute
+    }
+    '/_workspace/$orgSlug/inbox': {
+      id: '/_workspace/$orgSlug/inbox'
+      path: '/inbox'
+      fullPath: '/$orgSlug/inbox'
+      preLoaderRoute: typeof WorkspaceOrgSlugInboxRouteImport
       parentRoute: typeof WorkspaceOrgSlugRoute
     }
     '/_workspace/$orgSlug/chat': {
@@ -388,6 +564,62 @@ declare module '@tanstack/react-router' {
       fullPath: '/$orgSlug/ai'
       preLoaderRoute: typeof WorkspaceOrgSlugAiRouteImport
       parentRoute: typeof WorkspaceOrgSlugRoute
+    }
+    '/_workspace/$orgSlug/activity': {
+      id: '/_workspace/$orgSlug/activity'
+      path: '/activity'
+      fullPath: '/$orgSlug/activity'
+      preLoaderRoute: typeof WorkspaceOrgSlugActivityRouteImport
+      parentRoute: typeof WorkspaceOrgSlugRoute
+    }
+    '/_workspace/$orgSlug/time/': {
+      id: '/_workspace/$orgSlug/time/'
+      path: '/'
+      fullPath: '/$orgSlug/time/'
+      preLoaderRoute: typeof WorkspaceOrgSlugTimeIndexRouteImport
+      parentRoute: typeof WorkspaceOrgSlugTimeRoute
+    }
+    '/_workspace/$orgSlug/tasks/': {
+      id: '/_workspace/$orgSlug/tasks/'
+      path: '/'
+      fullPath: '/$orgSlug/tasks/'
+      preLoaderRoute: typeof WorkspaceOrgSlugTasksIndexRouteImport
+      parentRoute: typeof WorkspaceOrgSlugTasksRoute
+    }
+    '/_workspace/$orgSlug/time/week': {
+      id: '/_workspace/$orgSlug/time/week'
+      path: '/week'
+      fullPath: '/$orgSlug/time/week'
+      preLoaderRoute: typeof WorkspaceOrgSlugTimeWeekRouteImport
+      parentRoute: typeof WorkspaceOrgSlugTimeRoute
+    }
+    '/_workspace/$orgSlug/time/month': {
+      id: '/_workspace/$orgSlug/time/month'
+      path: '/month'
+      fullPath: '/$orgSlug/time/month'
+      preLoaderRoute: typeof WorkspaceOrgSlugTimeMonthRouteImport
+      parentRoute: typeof WorkspaceOrgSlugTimeRoute
+    }
+    '/_workspace/$orgSlug/tasks/board': {
+      id: '/_workspace/$orgSlug/tasks/board'
+      path: '/board'
+      fullPath: '/$orgSlug/tasks/board'
+      preLoaderRoute: typeof WorkspaceOrgSlugTasksBoardRouteImport
+      parentRoute: typeof WorkspaceOrgSlugTasksRoute
+    }
+    '/_workspace/$orgSlug/tasks/backlog': {
+      id: '/_workspace/$orgSlug/tasks/backlog'
+      path: '/backlog'
+      fullPath: '/$orgSlug/tasks/backlog'
+      preLoaderRoute: typeof WorkspaceOrgSlugTasksBacklogRouteImport
+      parentRoute: typeof WorkspaceOrgSlugTasksRoute
+    }
+    '/_workspace/$orgSlug/tasks/assigned': {
+      id: '/_workspace/$orgSlug/tasks/assigned'
+      path: '/assigned'
+      fullPath: '/$orgSlug/tasks/assigned'
+      preLoaderRoute: typeof WorkspaceOrgSlugTasksAssignedRouteImport
+      parentRoute: typeof WorkspaceOrgSlugTasksRoute
     }
     '/_workspace/$orgSlug/settings/workspace': {
       id: '/_workspace/$orgSlug/settings/workspace'
@@ -475,20 +707,64 @@ const WorkspaceOrgSlugSettingsRouteWithChildren =
     WorkspaceOrgSlugSettingsRouteChildren,
   )
 
+interface WorkspaceOrgSlugTasksRouteChildren {
+  WorkspaceOrgSlugTasksAssignedRoute: typeof WorkspaceOrgSlugTasksAssignedRoute
+  WorkspaceOrgSlugTasksBacklogRoute: typeof WorkspaceOrgSlugTasksBacklogRoute
+  WorkspaceOrgSlugTasksBoardRoute: typeof WorkspaceOrgSlugTasksBoardRoute
+  WorkspaceOrgSlugTasksIndexRoute: typeof WorkspaceOrgSlugTasksIndexRoute
+}
+
+const WorkspaceOrgSlugTasksRouteChildren: WorkspaceOrgSlugTasksRouteChildren = {
+  WorkspaceOrgSlugTasksAssignedRoute: WorkspaceOrgSlugTasksAssignedRoute,
+  WorkspaceOrgSlugTasksBacklogRoute: WorkspaceOrgSlugTasksBacklogRoute,
+  WorkspaceOrgSlugTasksBoardRoute: WorkspaceOrgSlugTasksBoardRoute,
+  WorkspaceOrgSlugTasksIndexRoute: WorkspaceOrgSlugTasksIndexRoute,
+}
+
+const WorkspaceOrgSlugTasksRouteWithChildren =
+  WorkspaceOrgSlugTasksRoute._addFileChildren(
+    WorkspaceOrgSlugTasksRouteChildren,
+  )
+
+interface WorkspaceOrgSlugTimeRouteChildren {
+  WorkspaceOrgSlugTimeMonthRoute: typeof WorkspaceOrgSlugTimeMonthRoute
+  WorkspaceOrgSlugTimeWeekRoute: typeof WorkspaceOrgSlugTimeWeekRoute
+  WorkspaceOrgSlugTimeIndexRoute: typeof WorkspaceOrgSlugTimeIndexRoute
+}
+
+const WorkspaceOrgSlugTimeRouteChildren: WorkspaceOrgSlugTimeRouteChildren = {
+  WorkspaceOrgSlugTimeMonthRoute: WorkspaceOrgSlugTimeMonthRoute,
+  WorkspaceOrgSlugTimeWeekRoute: WorkspaceOrgSlugTimeWeekRoute,
+  WorkspaceOrgSlugTimeIndexRoute: WorkspaceOrgSlugTimeIndexRoute,
+}
+
+const WorkspaceOrgSlugTimeRouteWithChildren =
+  WorkspaceOrgSlugTimeRoute._addFileChildren(WorkspaceOrgSlugTimeRouteChildren)
+
 interface WorkspaceOrgSlugRouteChildren {
+  WorkspaceOrgSlugActivityRoute: typeof WorkspaceOrgSlugActivityRoute
   WorkspaceOrgSlugAiRoute: typeof WorkspaceOrgSlugAiRoute
   WorkspaceOrgSlugChatRoute: typeof WorkspaceOrgSlugChatRoute
+  WorkspaceOrgSlugInboxRoute: typeof WorkspaceOrgSlugInboxRoute
+  WorkspaceOrgSlugRecentRoute: typeof WorkspaceOrgSlugRecentRoute
   WorkspaceOrgSlugSettingsRoute: typeof WorkspaceOrgSlugSettingsRouteWithChildren
-  WorkspaceOrgSlugTimeRoute: typeof WorkspaceOrgSlugTimeRoute
+  WorkspaceOrgSlugStarredRoute: typeof WorkspaceOrgSlugStarredRoute
+  WorkspaceOrgSlugTasksRoute: typeof WorkspaceOrgSlugTasksRouteWithChildren
+  WorkspaceOrgSlugTimeRoute: typeof WorkspaceOrgSlugTimeRouteWithChildren
   WorkspaceOrgSlugWikiRoute: typeof WorkspaceOrgSlugWikiRoute
   WorkspaceOrgSlugIndexRoute: typeof WorkspaceOrgSlugIndexRoute
 }
 
 const WorkspaceOrgSlugRouteChildren: WorkspaceOrgSlugRouteChildren = {
+  WorkspaceOrgSlugActivityRoute: WorkspaceOrgSlugActivityRoute,
   WorkspaceOrgSlugAiRoute: WorkspaceOrgSlugAiRoute,
   WorkspaceOrgSlugChatRoute: WorkspaceOrgSlugChatRoute,
+  WorkspaceOrgSlugInboxRoute: WorkspaceOrgSlugInboxRoute,
+  WorkspaceOrgSlugRecentRoute: WorkspaceOrgSlugRecentRoute,
   WorkspaceOrgSlugSettingsRoute: WorkspaceOrgSlugSettingsRouteWithChildren,
-  WorkspaceOrgSlugTimeRoute: WorkspaceOrgSlugTimeRoute,
+  WorkspaceOrgSlugStarredRoute: WorkspaceOrgSlugStarredRoute,
+  WorkspaceOrgSlugTasksRoute: WorkspaceOrgSlugTasksRouteWithChildren,
+  WorkspaceOrgSlugTimeRoute: WorkspaceOrgSlugTimeRouteWithChildren,
   WorkspaceOrgSlugWikiRoute: WorkspaceOrgSlugWikiRoute,
   WorkspaceOrgSlugIndexRoute: WorkspaceOrgSlugIndexRoute,
 }

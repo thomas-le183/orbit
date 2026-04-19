@@ -2,26 +2,11 @@ import { buttonVariants } from "@orbit/ui/components/button";
 import { cn } from "@orbit/ui/lib/utils";
 import { Link, useParams } from "@tanstack/react-router";
 import {
-	BotIcon,
-	ClockIcon,
-	HomeIcon,
-	MessageSquareIcon,
 	PanelLeftCloseIcon,
 	PanelLeftOpenIcon,
 	SettingsIcon,
 } from "lucide-react";
-
-const modules = [
-	{ to: "/$orgSlug", icon: HomeIcon, label: "Home", exact: true },
-	{
-		to: "/$orgSlug/chat",
-		icon: MessageSquareIcon,
-		label: "Chat",
-		exact: false,
-	},
-	{ to: "/$orgSlug/time", icon: ClockIcon, label: "Time", exact: false },
-	{ to: "/$orgSlug/ai", icon: BotIcon, label: "AI", exact: false },
-] as const;
+import { modules } from "@/config/navigation";
 
 const navItemClass = cn(
 	buttonVariants({ variant: "ghost", size: "icon-sm" }),

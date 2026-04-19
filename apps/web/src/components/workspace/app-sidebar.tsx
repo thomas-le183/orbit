@@ -10,8 +10,14 @@ import {
 	SidebarProvider,
 } from "@orbit/ui/components/sidebar";
 
-import { useNavigate, useParams, useRouterState } from "@tanstack/react-router";
-import { resolveModule, type SidebarItem } from "./sidebar-configs";
+import {
+	useMatchRoute,
+	useNavigate,
+	useParams,
+	useRouterState,
+} from "@tanstack/react-router";
+
+import { resolveModule, type SidebarItem } from "@/config/navigation";
 
 // ── Component ──────────────────────────────────────────────────────────────
 
@@ -68,17 +74,23 @@ export function AppSidebar() {
 
 function SidebarNavItem({
 	item,
-	orgSlug: _orgSlug,
+	orgSlug,
 }: {
 	item: SidebarItem;
 	orgSlug: string;
 }) {
 	const Icon = item.icon;
 	const navigate = useNavigate();
+	const matchRoute = useMatchRoute();
+
+	const moduleHome = `/${orgSlug}`;
+	const isActive = item.to
+		? !!matchRoute({ to: item.to, fuzzy: item.to !== moduleHome })
+		: false;
 
 	return (
-		<SidebarMenuItem onClick={() => navigate({ to: item.to })}>
-			<SidebarMenuButton>
+		<SidebarMenuItem onClick={() => item.to && navigate({ to: item.to })}>
+			<SidebarMenuButton size={"sm"} isActive={isActive}>
 				<Icon className="size-3.5 shrink-0" />
 				<span className="flex-1 truncate">{item.label}</span>
 			</SidebarMenuButton>

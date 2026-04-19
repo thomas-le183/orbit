@@ -27,7 +27,7 @@ export function OrgAvatar({
 			{logo && (
 				<AvatarImage src={logo} alt={name ?? ""} className="rounded-xs" />
 			)}
-			<AvatarFallback className="rounded-xs bg-amber-500">
+			<AvatarFallback className="rounded-xs bg-indigo-800 text-white">
 				{name ? getInitials(name) : "?"}
 			</AvatarFallback>
 		</Avatar>

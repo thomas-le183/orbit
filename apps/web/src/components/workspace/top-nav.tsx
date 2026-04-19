@@ -8,7 +8,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@orbit/ui/components/dropdown-menu";
-import { Kbd, KbdGroup } from "@orbit/ui/components/kbd";
+import { Kbd } from "@orbit/ui/components/kbd";
 import { ModeToggle } from "@orbit/ui/components/mode-toggle";
 import { useParams, useRouter } from "@tanstack/react-router";
 import {
@@ -19,8 +19,10 @@ import {
 	SearchIcon,
 	SettingsIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { OrgAvatar } from "@/components/common/org-avatar";
 import { UserAvatar } from "@/components/common/user-avatar";
+import { CommandMenu } from "@/components/workspace/command-menu";
 import { useOrganizations, useSession, useSignOut } from "@/hooks/use-auth";
 
 export function TopNav() {
@@ -31,6 +33,7 @@ export function TopNav() {
 	const { data: organizations } = useOrganizations();
 	const activeOrganization = organizations?.find((o) => o.slug === orgSlug);
 	const user = session?.user;
+	const [commandOpen, setCommandOpen] = useState(false);
 
 	function handleSignOut() {
 		signOut.mutate(undefined, {
@@ -39,19 +42,12 @@ export function TopNav() {
 	}
 
 	return (
-		<header className="flex h-11 shrink-0 items-center gap-4 border-b border-border px-4">
+		<header className="flex h-11 shrink-0 items-center justify-between gap-4 border-b border-border px-4">
 			{/* Workspace selector */}
 			<DropdownMenu>
-				<DropdownMenuTrigger
-					render={
-						<Button
-							variant="ghost"
-							size={"sm"}
-							className="gap-2 font-semibold text-sm"
-						/>
-					}
-				>
+				<DropdownMenuTrigger render={<Button variant="ghost" size={"sm"} />}>
 					<OrgAvatar
+						size="sm"
 						name={activeOrganization?.name}
 						logo={activeOrganization?.logo}
 					/>
@@ -90,61 +86,58 @@ export function TopNav() {
 			<Button
 				variant="outline"
 				size={"sm"}
-				className="mx-auto w-full max-w-md justify-start gap-2 hover:bg-muted border-none"
-				onClick={() => {
-					// TODO: open command palette
-				}}
+				className="w-full max-w-md hover:bg-muted"
+				onClick={() => setCommandOpen(true)}
 			>
 				<SearchIcon className="size-4" />
-				<span className="flex-1 text-left">Search...</span>
-				<KbdGroup>
-					<Kbd>Ctrl</Kbd>
-					<span>+</span>
-					<Kbd>K</Kbd>
-				</KbdGroup>
+				<span className="flex-1 text-left text-xs">Search...</span>
+				<Kbd>Ctrl + K</Kbd>
 			</Button>
+			<CommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
 
-			{/* Theme picker */}
-			<ModeToggle />
+			<div className="flex gap-2 items-center">
+				{/* Theme picker */}
+				<ModeToggle />
 
-			{/* User menu */}
-			<DropdownMenu>
-				<DropdownMenuTrigger>
-					<UserAvatar name={user?.name} image={user?.image} />
-				</DropdownMenuTrigger>
-				<DropdownMenuContent side="top" align="end" className="w-56">
-					<DropdownMenuGroup>
-						<DropdownMenuLabel className="flex items-center gap-2 p-2 font-normal">
-							<UserAvatar name={user?.name} image={user?.image} />
-							<div className="flex min-w-0 flex-col">
-								<span className="truncate text-sm font-medium">
-									{user?.name}
-								</span>
-								<span className="truncate text-xs text-muted-foreground">
-									{user?.email}
-								</span>
-							</div>
-						</DropdownMenuLabel>
-					</DropdownMenuGroup>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem
-						onClick={() =>
-							router.navigate({
-								to: "/$orgSlug/settings",
-								params: { orgSlug },
-								search: {},
-							})
-						}
-					>
-						<SettingsIcon />
-						Settings
-					</DropdownMenuItem>
-					<DropdownMenuItem variant="destructive" onClick={handleSignOut}>
-						<LogOutIcon />
-						Sign out
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenu>
+				{/* User menu */}
+				<DropdownMenu>
+					<DropdownMenuTrigger>
+						<UserAvatar name={user?.name} image={user?.image} />
+					</DropdownMenuTrigger>
+					<DropdownMenuContent side="top" align="end" className="w-56">
+						<DropdownMenuGroup>
+							<DropdownMenuLabel className="flex items-center gap-2 p-2 font-normal">
+								<UserAvatar name={user?.name} image={user?.image} />
+								<div className="flex min-w-0 flex-col">
+									<span className="truncate text-sm font-medium">
+										{user?.name}
+									</span>
+									<span className="truncate text-xs text-muted-foreground">
+										{user?.email}
+									</span>
+								</div>
+							</DropdownMenuLabel>
+						</DropdownMenuGroup>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem
+							onClick={() =>
+								router.navigate({
+									to: "/$orgSlug/settings",
+									params: { orgSlug },
+									search: {},
+								})
+							}
+						>
+							<SettingsIcon />
+							Settings
+						</DropdownMenuItem>
+						<DropdownMenuItem variant="destructive" onClick={handleSignOut}>
+							<LogOutIcon />
+							Sign out
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
+			</div>
 		</header>
 	);
 }

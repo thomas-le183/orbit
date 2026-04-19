@@ -22,6 +22,33 @@ import {
 	UsersIcon,
 } from "lucide-react";
 
+// ── Top-level modules (used by AppNav) ─────────────────────────────────────
+
+export interface NavModule {
+	to: string;
+	icon: React.ElementType;
+	label: string;
+	exact: boolean;
+}
+
+export const modules: NavModule[] = [
+	{ to: "/$orgSlug", icon: HomeIcon, label: "Home", exact: true },
+	{
+		to: "/$orgSlug/chat",
+		icon: MessageSquareIcon,
+		label: "Chat",
+		exact: false,
+	},
+	{
+		to: "/$orgSlug/tasks",
+		icon: CheckSquareIcon,
+		label: "Tasks",
+		exact: false,
+	},
+	{ to: "/$orgSlug/time", icon: ClockIcon, label: "Time", exact: false },
+	{ to: "/$orgSlug/ai", icon: BotIcon, label: "AI", exact: false },
+];
+
 // ── Types ──────────────────────────────────────────────────────────────────
 
 export interface SidebarItem {
@@ -44,7 +71,7 @@ export interface ModuleConfig {
 	sections: SidebarSection[];
 }
 
-// ── Module configs (hardcoded — real data per module is a future spec) ─────
+// ── Module configs ─────────────────────────────────────────────────────────
 
 function getHomeConfig(orgSlug: string): ModuleConfig {
 	return {
@@ -59,15 +86,24 @@ function getHomeConfig(orgSlug: string): ModuleConfig {
 						label: "Dashboard",
 						to: `/${orgSlug}`,
 					},
-					{ icon: InboxIcon, label: "Inbox", badge: 3 },
-					{ icon: ActivityIcon, label: "Activity" },
+					{
+						icon: InboxIcon,
+						label: "Inbox",
+						to: `/${orgSlug}/inbox`,
+						badge: 3,
+					},
+					{
+						icon: ActivityIcon,
+						label: "Activity",
+						to: `/${orgSlug}/activity`,
+					},
 				],
 			},
 			{
 				label: "Quick access",
 				items: [
-					{ icon: StarIcon, label: "Starred" },
-					{ icon: ClockIcon, label: "Recent" },
+					{ icon: StarIcon, label: "Starred", to: `/${orgSlug}/starred` },
+					{ icon: ClockIcon, label: "Recent", to: `/${orgSlug}/recent` },
 				],
 			},
 		],
@@ -100,7 +136,7 @@ function getChatConfig(): ModuleConfig {
 	};
 }
 
-function getTasksConfig(): ModuleConfig {
+function getTasksConfig(orgSlug: string): ModuleConfig {
 	return {
 		icon: CheckSquareIcon,
 		title: "Tasks",
@@ -109,8 +145,13 @@ function getTasksConfig(): ModuleConfig {
 			{
 				label: "My Work",
 				items: [
-					{ icon: InboxIcon, label: "My tasks" },
-					{ icon: UserIcon, label: "Assigned to me", badge: 5 },
+					{ icon: InboxIcon, label: "My tasks", to: `/${orgSlug}/tasks` },
+					{
+						icon: UserIcon,
+						label: "Assigned to me",
+						to: `/${orgSlug}/tasks/assigned`,
+						badge: 5,
+					},
 				],
 			},
 			{
@@ -124,15 +165,19 @@ function getTasksConfig(): ModuleConfig {
 			{
 				label: "Views",
 				items: [
-					{ icon: KanbanIcon, label: "Board" },
-					{ icon: LayoutListIcon, label: "Backlog" },
+					{ icon: KanbanIcon, label: "Board", to: `/${orgSlug}/tasks/board` },
+					{
+						icon: LayoutListIcon,
+						label: "Backlog",
+						to: `/${orgSlug}/tasks/backlog`,
+					},
 				],
 			},
 		],
 	};
 }
 
-function getTimeConfig(): ModuleConfig {
+function getTimeConfig(orgSlug: string): ModuleConfig {
 	return {
 		icon: ClockIcon,
 		title: "Time",
@@ -140,9 +185,17 @@ function getTimeConfig(): ModuleConfig {
 			{
 				label: "Tracking",
 				items: [
-					{ icon: ClockIcon, label: "Today" },
-					{ icon: CalendarIcon, label: "This week" },
-					{ icon: CalendarIcon, label: "This month" },
+					{ icon: ClockIcon, label: "Today", to: `/${orgSlug}/time` },
+					{
+						icon: CalendarIcon,
+						label: "This week",
+						to: `/${orgSlug}/time/week`,
+					},
+					{
+						icon: CalendarIcon,
+						label: "This month",
+						to: `/${orgSlug}/time/month`,
+					},
 				],
 			},
 			{
@@ -244,12 +297,17 @@ export function resolveModule(
 	switch (segment) {
 		case "":
 			return getHomeConfig(orgSlug);
+		case "inbox":
+		case "activity":
+		case "starred":
+		case "recent":
+			return getHomeConfig(orgSlug);
 		case "chat":
 			return getChatConfig();
 		case "tasks":
-			return getTasksConfig();
+			return getTasksConfig(orgSlug);
 		case "time":
-			return getTimeConfig();
+			return getTimeConfig(orgSlug);
 		case "ai":
 			return getAiConfig();
 		case "settings":
