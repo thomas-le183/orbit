@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { GeneralSettings } from "@/components/workspace/general-settings";
+import { GeneralSettings } from "@/components/workspace/settings/general-settings";
 import { useOrganizations, useOrgRole } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_workspace/$orgSlug/settings/general")({

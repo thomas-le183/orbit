@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BillingSettings } from "@/components/workspace/billing-settings";
+import { BillingSettings } from "@/components/workspace/settings/billing-settings";
 
 export const Route = createFileRoute("/_workspace/$orgSlug/settings/billing")({
 	component: BillingSettingsPage,

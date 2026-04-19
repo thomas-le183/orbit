@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { InviteMemberModal } from "@/components/workspace/invite-member-modal";
-import { MembersTable } from "@/components/workspace/members-table";
+import { InviteMemberModal } from "@/components/workspace/settings/invite-member-modal";
+import { MembersTable } from "@/components/workspace/settings/members-table";
 import { useOrgMembers, useSession } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_workspace/$orgSlug/settings/members")({
