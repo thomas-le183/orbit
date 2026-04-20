@@ -1,67 +1,53 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, renderHook } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { useSaveIndicator } from "./use-save-indicator";
 
 describe("useSaveIndicator", () => {
-	beforeEach(() => {
-		vi.clearAllTimers();
+	afterEach(() => {
+		vi.useRealTimers();
 	});
 
 	it("starts false", () => {
-		vi.useFakeTimers();
-
-		// Test the hook logic by simulating its behavior
-		const saved = false;
-
-		expect(saved).toBe(false);
-
-		vi.useRealTimers();
+		const { result } = renderHook(() => useSaveIndicator());
+		expect(result.current.saved).toBe(false);
 	});
 
 	it("flips to true on trigger then back to false after default 1500ms", () => {
 		vi.useFakeTimers();
+		const { result } = renderHook(() => useSaveIndicator());
 
-		let saved = false;
-		let timerRef: NodeJS.Timeout | null = null;
+		act(() => result.current.trigger());
+		expect(result.current.saved).toBe(true);
 
-		const trigger = (durationMs = 1500) => {
-			saved = true;
-			if (timerRef) clearTimeout(timerRef);
-			timerRef = setTimeout(() => {
-				saved = false;
-			}, durationMs);
-		};
-
-		trigger();
-		expect(saved).toBe(true);
-
-		vi.advanceTimersByTime(1500);
-		expect(saved).toBe(false);
-
-		vi.useRealTimers();
+		act(() => vi.advanceTimersByTime(1500));
+		expect(result.current.saved).toBe(false);
 	});
 
 	it("respects custom duration", () => {
 		vi.useFakeTimers();
+		const { result } = renderHook(() => useSaveIndicator(500));
 
-		let saved = false;
-		let timerRef: NodeJS.Timeout | null = null;
+		act(() => result.current.trigger());
+		act(() => vi.advanceTimersByTime(499));
+		expect(result.current.saved).toBe(true);
 
-		const trigger = (durationMs = 1500) => {
-			saved = true;
-			if (timerRef) clearTimeout(timerRef);
-			timerRef = setTimeout(() => {
-				saved = false;
-			}, durationMs);
-		};
+		act(() => vi.advanceTimersByTime(1));
+		expect(result.current.saved).toBe(false);
+	});
 
-		trigger(500);
-		expect(saved).toBe(true);
+	it("resets the timer when triggered again", () => {
+		vi.useFakeTimers();
+		const { result } = renderHook(() => useSaveIndicator(1000));
 
-		vi.advanceTimersByTime(499);
-		expect(saved).toBe(true);
+		act(() => result.current.trigger());
+		act(() => vi.advanceTimersByTime(800));
+		expect(result.current.saved).toBe(true);
 
-		vi.advanceTimersByTime(1);
-		expect(saved).toBe(false);
+		act(() => result.current.trigger());
+		act(() => vi.advanceTimersByTime(800));
+		expect(result.current.saved).toBe(true);
 
-		vi.useRealTimers();
+		act(() => vi.advanceTimersByTime(200));
+		expect(result.current.saved).toBe(false);
 	});
 });
