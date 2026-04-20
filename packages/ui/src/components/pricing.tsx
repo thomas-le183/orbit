@@ -29,12 +29,14 @@ interface PricingProps {
 export function Pricing({ plans }: PricingProps) {
 	return (
 		<section>
-			<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+			<div className="grid gap-6 pt-4 md:grid-cols-2 lg:grid-cols-4">
 				{plans.map((plan) => (
 					<Card
 						key={plan.id}
 						className={
-							plan.highlighted ? "relative ring-2 ring-primary" : "relative"
+							plan.highlighted
+								? "relative overflow-visible ring-2 ring-primary"
+								: "relative"
 						}
 					>
 						{plan.badge && (
