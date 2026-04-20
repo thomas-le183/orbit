@@ -14,9 +14,7 @@ const config = defineConfig({
 		viteReact(),
 	],
 	test: {
-		environment: "node",
-		// jsdom disabled due to ESM/jsdom compatibility issues with Tailwind CSS v4
-		// React hooks can still be tested with manual state tracking
+		environment: "happy-dom",
 	},
 });
 
