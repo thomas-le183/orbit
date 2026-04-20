@@ -8,15 +8,15 @@ export const Route = createFileRoute("/_workspace/$orgSlug/settings/members")({
 });
 
 function MembersPage() {
-	const { targetOrg } = Route.useRouteContext() as { targetOrg: { id: string } };
+	const { targetOrg } = Route.useRouteContext() as {
+		targetOrg: { id: string };
+	};
 	const { data: org, isLoading } = useOrgMembers(targetOrg.id);
 	const { data: session } = useSession();
 
 	if (isLoading || !org || !session) return null;
 
-	const currentMember = org.members?.find(
-		(m) => m.userId === session.user.id,
-	);
+	const currentMember = org.members?.find((m) => m.userId === session.user.id);
 	const currentRole = currentMember?.role ?? "member";
 
 	return (

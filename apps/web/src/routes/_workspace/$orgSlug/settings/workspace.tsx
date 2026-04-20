@@ -9,7 +9,9 @@ export const Route = createFileRoute("/_workspace/$orgSlug/settings/workspace")(
 );
 
 function WorkspacePage() {
-	const { targetOrg } = Route.useRouteContext() as { targetOrg: { id: string } };
+	const { targetOrg } = Route.useRouteContext() as {
+		targetOrg: { id: string };
+	};
 	const { data: orgs } = useOrganizations();
 	const org = orgs?.find((o) => o.id === targetOrg.id);
 	const role = useOrgRole(targetOrg.id);

@@ -23,9 +23,7 @@ export function SettingsRow({
 		>
 			<div className="min-w-0 flex-1">
 				<p className="text-sm font-medium">{label}</p>
-				{hint && (
-					<p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
-				)}
+				{hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
 			</div>
 			<div className="relative w-[280px] shrink-0">
 				{children}

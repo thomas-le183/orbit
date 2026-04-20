@@ -45,70 +45,70 @@ export function CommandMenu({
 		<CommandDialog open={open} onOpenChange={onOpenChange}>
 			<Command>
 				<CommandInput placeholder="Type a command or search..." />
-			<CommandList>
-				<CommandEmpty>No results found.</CommandEmpty>
+				<CommandList>
+					<CommandEmpty>No results found.</CommandEmpty>
 
-				{organizations && organizations.length > 0 && (
-					<CommandGroup heading="Workspaces">
-						{organizations.map((org) => (
+					{organizations && organizations.length > 0 && (
+						<CommandGroup heading="Workspaces">
+							{organizations.map((org) => (
+								<CommandItem
+									key={org.id}
+									value={`workspace ${org.name}`}
+									onSelect={() =>
+										run(() =>
+											router.navigate({
+												to: "/$orgSlug",
+												params: { orgSlug: org.slug },
+											}),
+										)
+									}
+								>
+									<OrgAvatar size="sm" name={org.name} logo={org.logo} />
+									<span>{org.name}</span>
+								</CommandItem>
+							))}
 							<CommandItem
-								key={org.id}
-								value={`workspace ${org.name}`}
+								value="create workspace"
 								onSelect={() =>
-									run(() =>
-										router.navigate({
-											to: "/$orgSlug",
-											params: { orgSlug: org.slug },
-										}),
-									)
+									run(() => router.navigate({ to: "/create-workspace" }))
 								}
 							>
-								<OrgAvatar size="sm" name={org.name} logo={org.logo} />
-								<span>{org.name}</span>
+								<PlusIcon />
+								<span>Create workspace</span>
 							</CommandItem>
-						))}
+						</CommandGroup>
+					)}
+
+					<CommandGroup heading="Settings">
 						<CommandItem
-							value="create workspace"
+							value="settings"
 							onSelect={() =>
-								run(() => router.navigate({ to: "/create-workspace" }))
+								run(() =>
+									router.navigate({
+										to: "/$orgSlug/settings",
+										params: { orgSlug },
+										search: {},
+									}),
+								)
 							}
 						>
-							<PlusIcon />
-							<span>Create workspace</span>
+							<SettingsIcon />
+							<span>Open settings</span>
+						</CommandItem>
+						<CommandItem
+							value="sign out"
+							onSelect={() =>
+								run(() =>
+									signOut.mutate(undefined, {
+										onSuccess: () => router.navigate({ to: "/" }),
+									}),
+								)
+							}
+						>
+							<LogOutIcon />
+							<span>Sign out</span>
 						</CommandItem>
 					</CommandGroup>
-				)}
-
-				<CommandGroup heading="Settings">
-					<CommandItem
-						value="settings"
-						onSelect={() =>
-							run(() =>
-								router.navigate({
-									to: "/$orgSlug/settings",
-									params: { orgSlug },
-									search: {},
-								}),
-							)
-						}
-					>
-						<SettingsIcon />
-						<span>Open settings</span>
-					</CommandItem>
-					<CommandItem
-						value="sign out"
-						onSelect={() =>
-							run(() =>
-								signOut.mutate(undefined, {
-									onSuccess: () => router.navigate({ to: "/" }),
-								}),
-							)
-						}
-					>
-						<LogOutIcon />
-						<span>Sign out</span>
-					</CommandItem>
-				</CommandGroup>
 				</CommandList>
 			</Command>
 		</CommandDialog>

@@ -259,8 +259,7 @@ export function MembersTable({
 						<TableBody>
 							{invitations.map((inv) => {
 								const daysLeft = Math.ceil(
-									(new Date(inv.expiresAt).getTime() - Date.now()) /
-										86_400_000,
+									(new Date(inv.expiresAt).getTime() - Date.now()) / 86_400_000,
 								);
 								return (
 									<TableRow key={inv.id}>
