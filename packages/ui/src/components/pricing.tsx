@@ -72,7 +72,7 @@ export function Pricing({ plans }: PricingProps) {
 							</Button>
 						</CardHeader>
 
-						<CardContent className="space-y-4">
+						<CardContent className="flex flex-1 flex-col space-y-4">
 							<hr className="border-dashed" />
 
 							<ul className="list-outside space-y-3 text-sm">
