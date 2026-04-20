@@ -40,7 +40,6 @@ import { Route as WorkspaceOrgSlugSettingsWorkspaceRouteImport } from './routes/
 import { Route as WorkspaceOrgSlugSettingsProfileRouteImport } from './routes/_workspace/$orgSlug/settings/profile'
 import { Route as WorkspaceOrgSlugSettingsNotificationsRouteImport } from './routes/_workspace/$orgSlug/settings/notifications'
 import { Route as WorkspaceOrgSlugSettingsMembersRouteImport } from './routes/_workspace/$orgSlug/settings/members'
-import { Route as WorkspaceOrgSlugSettingsGeneralRouteImport } from './routes/_workspace/$orgSlug/settings/general'
 import { Route as WorkspaceOrgSlugSettingsBillingRouteImport } from './routes/_workspace/$orgSlug/settings/billing'
 
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -209,12 +208,6 @@ const WorkspaceOrgSlugSettingsMembersRoute =
     path: '/members',
     getParentRoute: () => WorkspaceOrgSlugSettingsRoute,
   } as any)
-const WorkspaceOrgSlugSettingsGeneralRoute =
-  WorkspaceOrgSlugSettingsGeneralRouteImport.update({
-    id: '/general',
-    path: '/general',
-    getParentRoute: () => WorkspaceOrgSlugSettingsRoute,
-  } as any)
 const WorkspaceOrgSlugSettingsBillingRoute =
   WorkspaceOrgSlugSettingsBillingRouteImport.update({
     id: '/billing',
@@ -242,7 +235,6 @@ export interface FileRoutesByFullPath {
   '/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
   '/$orgSlug/': typeof WorkspaceOrgSlugIndexRoute
   '/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
-  '/$orgSlug/settings/general': typeof WorkspaceOrgSlugSettingsGeneralRoute
   '/$orgSlug/settings/members': typeof WorkspaceOrgSlugSettingsMembersRoute
   '/$orgSlug/settings/notifications': typeof WorkspaceOrgSlugSettingsNotificationsRoute
   '/$orgSlug/settings/profile': typeof WorkspaceOrgSlugSettingsProfileRoute
@@ -272,7 +264,6 @@ export interface FileRoutesByTo {
   '/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
   '/$orgSlug': typeof WorkspaceOrgSlugIndexRoute
   '/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
-  '/$orgSlug/settings/general': typeof WorkspaceOrgSlugSettingsGeneralRoute
   '/$orgSlug/settings/members': typeof WorkspaceOrgSlugSettingsMembersRoute
   '/$orgSlug/settings/notifications': typeof WorkspaceOrgSlugSettingsNotificationsRoute
   '/$orgSlug/settings/profile': typeof WorkspaceOrgSlugSettingsProfileRoute
@@ -308,7 +299,6 @@ export interface FileRoutesById {
   '/_workspace/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
   '/_workspace/$orgSlug/': typeof WorkspaceOrgSlugIndexRoute
   '/_workspace/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
-  '/_workspace/$orgSlug/settings/general': typeof WorkspaceOrgSlugSettingsGeneralRoute
   '/_workspace/$orgSlug/settings/members': typeof WorkspaceOrgSlugSettingsMembersRoute
   '/_workspace/$orgSlug/settings/notifications': typeof WorkspaceOrgSlugSettingsNotificationsRoute
   '/_workspace/$orgSlug/settings/profile': typeof WorkspaceOrgSlugSettingsProfileRoute
@@ -343,7 +333,6 @@ export interface FileRouteTypes {
     | '/$orgSlug/wiki'
     | '/$orgSlug/'
     | '/$orgSlug/settings/billing'
-    | '/$orgSlug/settings/general'
     | '/$orgSlug/settings/members'
     | '/$orgSlug/settings/notifications'
     | '/$orgSlug/settings/profile'
@@ -373,7 +362,6 @@ export interface FileRouteTypes {
     | '/$orgSlug/wiki'
     | '/$orgSlug'
     | '/$orgSlug/settings/billing'
-    | '/$orgSlug/settings/general'
     | '/$orgSlug/settings/members'
     | '/$orgSlug/settings/notifications'
     | '/$orgSlug/settings/profile'
@@ -408,7 +396,6 @@ export interface FileRouteTypes {
     | '/_workspace/$orgSlug/wiki'
     | '/_workspace/$orgSlug/'
     | '/_workspace/$orgSlug/settings/billing'
-    | '/_workspace/$orgSlug/settings/general'
     | '/_workspace/$orgSlug/settings/members'
     | '/_workspace/$orgSlug/settings/notifications'
     | '/_workspace/$orgSlug/settings/profile'
@@ -649,13 +636,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceOrgSlugSettingsMembersRouteImport
       parentRoute: typeof WorkspaceOrgSlugSettingsRoute
     }
-    '/_workspace/$orgSlug/settings/general': {
-      id: '/_workspace/$orgSlug/settings/general'
-      path: '/general'
-      fullPath: '/$orgSlug/settings/general'
-      preLoaderRoute: typeof WorkspaceOrgSlugSettingsGeneralRouteImport
-      parentRoute: typeof WorkspaceOrgSlugSettingsRoute
-    }
     '/_workspace/$orgSlug/settings/billing': {
       id: '/_workspace/$orgSlug/settings/billing'
       path: '/billing'
@@ -683,7 +663,6 @@ const PublicRouteWithChildren =
 
 interface WorkspaceOrgSlugSettingsRouteChildren {
   WorkspaceOrgSlugSettingsBillingRoute: typeof WorkspaceOrgSlugSettingsBillingRoute
-  WorkspaceOrgSlugSettingsGeneralRoute: typeof WorkspaceOrgSlugSettingsGeneralRoute
   WorkspaceOrgSlugSettingsMembersRoute: typeof WorkspaceOrgSlugSettingsMembersRoute
   WorkspaceOrgSlugSettingsNotificationsRoute: typeof WorkspaceOrgSlugSettingsNotificationsRoute
   WorkspaceOrgSlugSettingsProfileRoute: typeof WorkspaceOrgSlugSettingsProfileRoute
@@ -693,7 +672,6 @@ interface WorkspaceOrgSlugSettingsRouteChildren {
 const WorkspaceOrgSlugSettingsRouteChildren: WorkspaceOrgSlugSettingsRouteChildren =
   {
     WorkspaceOrgSlugSettingsBillingRoute: WorkspaceOrgSlugSettingsBillingRoute,
-    WorkspaceOrgSlugSettingsGeneralRoute: WorkspaceOrgSlugSettingsGeneralRoute,
     WorkspaceOrgSlugSettingsMembersRoute: WorkspaceOrgSlugSettingsMembersRoute,
     WorkspaceOrgSlugSettingsNotificationsRoute:
       WorkspaceOrgSlugSettingsNotificationsRoute,
