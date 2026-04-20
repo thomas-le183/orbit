@@ -1,14 +1,17 @@
-# Orbit — Claude Instructions
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project overview
 
-Turborepo monorepo with a React frontend app, a NestJS backend API, and a shared UI library.
+Turborepo monorepo with a React frontend, NestJS backend API, and two shared packages.
 
 | Path | Description |
-|---|---|
+| --- | --- |
 | `apps/web` | React 19 + Vite + TanStack Router frontend |
-| `apps/api` | NestJS backend API |
-| `packages/ui` | Shared component library (`@orbit/ui`) |
+| `apps/api` | NestJS backend API (port 8000) |
+| `packages/ui` | Shared shadcn-style component library (`@orbit/ui`) |
+| `packages/shared` | Shared types, Zod schemas, and utilities (`@orbit/shared`) |
 
 ## Dev commands
 
@@ -23,37 +26,85 @@ pnpm format       # biome format only
 pnpm typecheck    # tsc type-check across all packages
 ```
 
-Run tests inside `apps/web`:
+Run tests inside `apps/web` (Vitest):
 
 ```bash
-cd apps/web && pnpm test   # vitest run (single pass)
+cd apps/web && pnpm test             # single pass
+cd apps/web && pnpm test -- --watch  # watch mode
+```
+
+Run tests inside `apps/api` (Jest):
+
+```bash
+cd apps/api && pnpm test
+```
+
+Database commands (run from `apps/api`):
+
+```bash
+pnpm db:generate   # generate Drizzle migration from schema changes
+pnpm db:migrate    # apply pending migrations
+pnpm db:push       # push schema directly (dev only)
+pnpm db:seed:dev   # seed development data
 ```
 
 ## Architecture
 
-- **Routing**: TanStack Router with file-based routing. Route tree is auto-generated at `apps/web/src/routeTree.gen.ts` — **never edit this file manually**.
-- **UI components**: Shared components live in `packages/ui/src/components`. Consumed as `@orbit/ui/components/<Name>`.
-- **Styling**: Tailwind CSS v4. Use `tailwind-merge` + `clsx` (or `cn` from `@orbit/ui/lib/utils`) to compose class names.
-- **Theming**: Dark/light mode via `next-themes`.
-- **ORM**: Drizzle ORM for all database access in `apps/api`. Schema files live in `apps/api/src/db/schema`. Migrations are managed with `drizzle-kit`.
-- **Auth**: `better-auth` handles authentication and authorization. Auth config lives in `apps/api/src/auth`. Use `better-auth` client helpers on the frontend — do not roll custom auth logic.
+### Frontend–backend communication
+
+The frontend (`apps/web`) talks to the API exclusively via **Axios** (`apps/web/src/lib/api.ts`) with `withCredentials: true` so session cookies are sent automatically. All server state is managed by **TanStack Query** (React Query). Query keys follow the pattern in `apps/web/src/hooks/use-auth.tsx` — colocate related keys in a `*Keys` object.
+
+### Authentication flow
+
+`better-auth` owns the entire auth surface:
+
+- **Backend config**: `apps/api/src/auth/auth.module.ts` — Drizzle adapter, org plugin with teams
+- **Frontend client**: `apps/web/src/lib/auth-client.ts` — imported from `better-auth/react` with the organization plugin
+- **Auth hooks**: `apps/web/src/hooks/use-auth.tsx` — all auth queries/mutations live here; call these instead of the raw client
+- **Route guards**: TanStack Router `beforeLoad` hooks use `loadAuthState()` and `resolveAuthenticatedLanding()` (from `use-auth.tsx`) to redirect unauthenticated users or users with incomplete onboarding
+- **API guard**: `apps/api/src/common/guards/auth.guard.ts` validates sessions; use `@CurrentUser()` / `@CurrentSession()` decorators in controllers
+
+### Routing structure
+
+`apps/web/src/routes/` uses file-based routing via the TanStack Router Vite plugin:
+
+- `_public.tsx` layout — unauthenticated pages (login, signup, forgot-password)
+- `_workspace.tsx` layout — protected pages gated by `beforeLoad` auth checks; all routes under it receive `$orgSlug` as a path param
+- `__root.tsx` — top-level providers (QueryClient, ThemeProvider, Sonner toasts)
+
+Route tree is auto-generated at `apps/web/src/routeTree.gen.ts` — **never edit this file manually**.
+
+### Shared packages
+
+- **`@orbit/ui`**: shadcn-style components. Import as `@orbit/ui/components/<Name>`. Add reusable components here, not in `apps/web`.
+- **`@orbit/shared`**: shared Zod schemas, TypeScript types, and the `cn()` utility. Both `packages/ui` and `apps/web` depend on this.
+
+### Backend module structure (NestJS)
+
+Feature modules live in `apps/api/src/<feature>/` and follow the NestJS convention of `*.module.ts`, `*.controller.ts`, `*.service.ts`. Root module is `app.module.ts`. All DB access goes through the Drizzle instance injected via the `DB` symbol from `apps/api/src/db/db.module.ts`.
+
+### Database schema
+
+Schema files: `apps/api/src/db/schema/` — `auth.ts` (better-auth tables + org/team/member/invitation) and `chat.ts` (channels, conversations, messages, reactions, presence). Drizzle relations are defined in those files for type-safe `.query.*` calls.
+
+### Real-time
+
+Socket.io WebSocketGateway at `apps/api/src/chat/chat.gateway.ts` handles presence, typing indicators, and live message delivery. Auth is validated on connection using the session cookie.
+
+### Infrastructure (Docker Compose)
+
+Local dev depends on PostgreSQL (port 5433), Redis (6379), RabbitMQ (5672), and RustFS/S3-compatible storage (9000). Start with `docker compose -f docker-compose-local.yml up -d`.
 
 ## Code conventions
 
-- **TypeScript**: Standard conventions — `camelCase` for variables/functions, `PascalCase` for types/components/classes. Avoid `any`.
-- **Hooks**: Custom hooks go in `packages/ui/src/hooks` (shared) or `apps/web/src/hooks` (app-specific).
+- **TypeScript**: `camelCase` for variables/functions, `PascalCase` for types/components/classes. Avoid `any`.
+- **Styling**: Tailwind CSS v4. Always use `cn()` (from `@orbit/shared`) for conditional class merging.
+- **Forms**: `@tanstack/react-form` only — never `react-hook-form` or `formik`.
+- **Hooks**: shared hooks → `packages/ui/src/hooks`; app-specific hooks → `apps/web/src/hooks`.
+- **Don't** edit `apps/web/src/styles.css` with Biome-aware tools — it is excluded from Biome.
+- **Don't** write raw SQL or use any ORM other than Drizzle in `apps/api`.
+- **Don't** implement custom auth middleware or session logic — use `better-auth` APIs.
 
 ## Package manager
 
 pnpm with workspaces (`pnpm@10`, Node `>=24`). Do not use `yarn` or `npm`.
-
-## Do's and don'ts
-
-- **Do** run `pnpm check` to catch lint/format issues before suggesting a commit.
-- **Do** use the `cn()` utility for conditional Tailwind class merging.
-- **Do** add new shadcn-style components to `packages/ui`, not `apps/web`, if they are reusable.
-- **Do** use `@tanstack/react-form` for all form state management. Do not use `react-hook-form` or `formik`.
-- **Don't** edit `apps/web/src/routeTree.gen.ts` — it is auto-generated by TanStack Router.
-- **Don't** edit `apps/web/src/styles.css` via Biome-aware tools (it is excluded from Biome).
-- **Don't** write raw SQL or use any ORM other than Drizzle in `apps/api`.
-- **Don't** implement custom auth middleware or session logic — use `better-auth` APIs instead.

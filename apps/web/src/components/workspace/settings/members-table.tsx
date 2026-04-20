@@ -16,6 +16,7 @@ import {
 } from "@orbit/ui/components/table";
 import { cn } from "@orbit/ui/lib/utils";
 import { MoreHorizontalIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { UserAvatar } from "@/components/common/user-avatar";
 import {
@@ -24,6 +25,8 @@ import {
 	useUpdateMemberRole,
 } from "@/hooks/use-auth";
 import { formatLastSeen, useOrgPresence } from "@/hooks/use-presence";
+import { SettingsPage } from "./settings-page";
+import { SettingsSection } from "./settings-section";
 
 type Member = {
 	id: string;
@@ -68,12 +71,14 @@ export function MembersTable({
 	organizationId,
 	currentUserId,
 	currentRole,
+	inviteSlot,
 }: {
 	members: Member[];
 	invitations: Invitation[];
 	organizationId: string;
 	currentUserId: string;
 	currentRole: string;
+	inviteSlot?: ReactNode;
 }) {
 	const removeMember = useRemoveMember();
 	const updateRole = useUpdateMemberRole();
@@ -96,9 +101,13 @@ export function MembersTable({
 	const canManage = currentRole === "admin" || currentRole === "owner";
 
 	return (
-		<div>
+		<SettingsPage
+			title="Members"
+			subtitle="Manage who has access to this workspace."
+			action={inviteSlot}
+		>
 			{/* Toolbar */}
-			<div className="mb-4 flex items-center gap-2">
+			<div className="flex items-center gap-2">
 				<input
 					type="text"
 					placeholder="Filter by name or email…"
@@ -122,16 +131,7 @@ export function MembersTable({
 				</span>
 			</div>
 
-			{/* Active members */}
-			<div className="mb-5 rounded-lg border bg-card">
-				<div className="flex items-center justify-between border-b px-4 py-2.5">
-					<span className="text-xs font-medium text-muted-foreground">
-						Active members
-					</span>
-					<span className="text-xs text-muted-foreground">
-						{filtered.length}
-					</span>
-				</div>
+			<SettingsSection heading="Active members">
 				<Table>
 					<TableHeader>
 						<TableRow>
@@ -150,7 +150,11 @@ export function MembersTable({
 								<TableRow key={m.id}>
 									<TableCell>
 										<div className="flex items-center gap-2.5">
-											<UserAvatar size="sm" name={m.user.name} image={m.user.image} />
+											<UserAvatar
+												size="sm"
+												name={m.user.name}
+												image={m.user.image}
+											/>
 											<div>
 												<p className="text-sm font-medium leading-tight">
 													{m.user.name}
@@ -239,19 +243,10 @@ export function MembersTable({
 						})}
 					</TableBody>
 				</Table>
-			</div>
+			</SettingsSection>
 
-			{/* Pending invitations */}
 			{invitations.length > 0 && (
-				<div className="rounded-lg border bg-card">
-					<div className="flex items-center justify-between border-b px-4 py-2.5">
-						<span className="text-xs font-medium text-muted-foreground">
-							Pending invitations
-						</span>
-						<span className="text-xs text-muted-foreground">
-							{invitations.length}
-						</span>
-					</div>
+				<SettingsSection heading="Pending invitations">
 					<Table>
 						<TableHeader>
 							<TableRow>
@@ -321,8 +316,8 @@ export function MembersTable({
 							})}
 						</TableBody>
 					</Table>
-				</div>
+				</SettingsSection>
 			)}
-		</div>
+		</SettingsPage>
 	);
 }

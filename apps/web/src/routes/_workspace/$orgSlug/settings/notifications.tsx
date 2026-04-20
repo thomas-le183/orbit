@@ -1,17 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SettingsPage } from "@/components/workspace/settings/settings-page";
 
 export const Route = createFileRoute(
 	"/_workspace/$orgSlug/settings/notifications",
 )({
-	component: NotificationsSettings,
+	component: NotificationsPage,
 });
 
-function NotificationsSettings() {
+function NotificationsPage() {
 	return (
-		<div className="rounded-xl border p-5">
-			<p className="text-sm text-muted-foreground">
-				Notification preferences coming soon.
-			</p>
-		</div>
+		<SettingsPage
+			title="Notifications"
+			subtitle="Control how Orbit reaches out to you."
+		>
+			<div className="rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">
+				Coming soon.
+			</div>
+		</SettingsPage>
 	);
 }

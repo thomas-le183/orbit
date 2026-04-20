@@ -72,7 +72,7 @@ export function useUpdateUser() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: authKeys.session });
     },
-  });
+  });2
 }
 ```
 

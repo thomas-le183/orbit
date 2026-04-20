@@ -97,6 +97,34 @@ export function useSetActiveOrganization() {
 	});
 }
 
+export function useUpdateUser() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async (input: { name?: string; image?: string | null }) => {
+			const { data, error } = await authClient.updateUser(input);
+			if (error) throw error;
+			return data;
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: authKeys.session });
+		},
+	});
+}
+
+export function useDeleteAccount() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async () => {
+			const { data, error } = await authClient.deleteUser();
+			if (error) throw error;
+			return data;
+		},
+		onSuccess: () => {
+			qc.clear();
+		},
+	});
+}
+
 export function useCreateOrganization() {
 	const qc = useQueryClient();
 	return useMutation({
