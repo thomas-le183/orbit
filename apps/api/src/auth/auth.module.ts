@@ -27,6 +27,9 @@ import { AuthController } from "./auth.controller";
 						cookiePrefix: "orbit",
 					},
 					emailAndPassword: { enabled: true },
+					user: {
+						deleteUser: { enabled: true },
+					},
 					plugins: [
 						organization({
 							allowUserToCreateOrganization: true,
