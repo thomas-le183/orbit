@@ -3,6 +3,7 @@ import {
 	Card,
 	CardContent,
 	CardDescription,
+	CardFooter,
 	CardHeader,
 	CardTitle,
 } from "@orbit/ui/components/card";
@@ -57,19 +58,13 @@ export function Pricing({ plans }: PricingProps) {
 									</span>
 								)}
 							</span>
+							{plan.period && (
+								<p className="text-xs text-muted-foreground">per seat</p>
+							)}
 
-							<CardDescription className="text-sm">
+							<CardDescription className="mt-1 text-sm">
 								{plan.description}
 							</CardDescription>
-
-							<Button
-								className="mt-4 w-full"
-								variant={plan.highlighted ? "default" : "outline"}
-								disabled={plan.ctaDisabled}
-								onClick={plan.onCta}
-							>
-								{plan.cta}
-							</Button>
 						</CardHeader>
 
 						<CardContent className="flex flex-1 flex-col space-y-4">
@@ -84,6 +79,17 @@ export function Pricing({ plans }: PricingProps) {
 								))}
 							</ul>
 						</CardContent>
+
+						<CardFooter>
+							<Button
+								className="w-full"
+								variant={plan.highlighted ? "default" : "outline"}
+								disabled={plan.ctaDisabled}
+								onClick={plan.onCta}
+							>
+								{plan.cta}
+							</Button>
+						</CardFooter>
 					</Card>
 				))}
 			</div>
