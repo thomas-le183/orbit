@@ -13,6 +13,11 @@ const config = defineConfig({
 		tanstackRouter({ target: "react", autoCodeSplitting: true }),
 		viteReact(),
 	],
+	test: {
+		environment: "node",
+		// jsdom disabled due to ESM/jsdom compatibility issues with Tailwind CSS v4
+		// React hooks can still be tested with manual state tracking
+	},
 });
 
 export default config;
