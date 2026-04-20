@@ -14,11 +14,9 @@ export const Route = createFileRoute("/_workspace/$orgSlug/settings")({
 
 function SettingsLayout() {
 	return (
-		<div className="-m-6 flex min-h-[calc(100%+3rem)]">
-			<div className="flex-1 overflow-y-auto">
-				<div className="mx-auto p-4">
-					<Outlet />
-				</div>
+		<div className="flex-1 overflow-y-auto">
+			<div className="mx-auto p-4">
+				<Outlet />
 			</div>
 		</div>
 	);

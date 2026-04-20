@@ -57,65 +57,79 @@ export interface PortalResponse {
 export const TIER_METADATA: Record<SubscriptionTier, TierMetadata> = {
 	[SUBSCRIPTION_TIERS.FREE]: {
 		id: "free",
-		label: "Hobby", // Friendly name for developers/testers
-		description: "Great for testing and side projects.",
-		memberLimit: 5,
+		label: "Hobby",
+		description: "Great for individual developers and side projects.",
+		memberLimit: -1,
 		monthlyPriceUsd: 0,
 		flags: {
 			hasAdvancedAnalytics: false,
 			hasCustomBranding: false,
 			hasSSO: false,
 		},
-		features: ["Up to 5 team members", "Basic workspace", "Community support"],
+		features: [
+			"Unlimited members",
+			"Up to 3 projects",
+			"Basic workspace",
+			"1 GB storage",
+			"Community support",
+		],
 	},
 	[SUBSCRIPTION_TIERS.TEAM]: {
 		id: "team",
-		label: "Startup", // Fits smaller organizations
-		description: "Perfect for early-stage companies and small agencies.",
-		memberLimit: 25,
+		label: "Startup",
+		description: "Perfect for early-stage companies and small growing teams.",
+		memberLimit: -1,
 		monthlyPriceUsd: 19,
 		flags: {
-			hasAdvancedAnalytics: true, // They get basic charts
+			hasAdvancedAnalytics: true,
 			hasCustomBranding: false,
 			hasSSO: false,
 		},
 		features: [
-			"Up to 25 team members",
+			"Unlimited members",
+			"Up to 20 projects",
 			"Advanced analytics",
+			"20 GB storage",
 			"Priority email support",
 		],
 	},
 	[SUBSCRIPTION_TIERS.PRO]: {
 		id: "pro",
-		label: "Business", // Heavier tier for established teams
-		description: "For scaling companies with advanced workflow needs.",
-		memberLimit: 100,
+		label: "Business",
+		description: "For scaling companies that need advanced workflows.",
+		memberLimit: -1,
 		monthlyPriceUsd: 59,
 		flags: {
 			hasAdvancedAnalytics: true,
-			hasCustomBranding: true, // They can upload their own logo/theme
+			hasCustomBranding: true,
 			hasSSO: false,
 		},
 		features: [
-			"Up to 100 team members",
+			"Unlimited members",
+			"Unlimited projects",
 			"Custom white-label branding",
+			"100 GB storage",
 			"Shared team templates",
+			"API access",
 		],
 	},
 	[SUBSCRIPTION_TIERS.ENTERPRISE]: {
 		id: "enterprise",
-		label: "Enterprise", // Classic big-corp tier
-		description: "Maximum security, custom control, and limitless scale.",
+		label: "Enterprise",
+		description:
+			"Dedicated support, custom contracts, and unlimited scale for large organizations.",
 		memberLimit: -1,
 		monthlyPriceUsd: 199,
 		flags: {
 			hasAdvancedAnalytics: true,
 			hasCustomBranding: true,
-			hasSSO: true, // Only whales get SAML/SSO
+			hasSSO: true,
 		},
 		features: [
-			"Unlimited team members",
+			"Everything in Business",
 			"SAML & Single Sign-On (SSO)",
+			"Unlimited storage",
+			"Custom integrations",
 			"Dedicated account manager",
 			"99.9% uptime SLA",
 		],
