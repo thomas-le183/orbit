@@ -22,6 +22,7 @@ export {
 	type SubscriptionResponse,
 	type SubscriptionTier,
 	TIER_METADATA,
+	type TierFlags,
 	type TierMetadata,
 } from "./types/billing.js";
 

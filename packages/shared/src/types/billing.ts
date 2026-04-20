@@ -24,6 +24,8 @@ export interface TierMetadata {
 	features: readonly string[];
 }
 
+export type TierFlags = TierMetadata["flags"];
+
 // ---------- API response types ----------
 
 export interface SubscriptionResponse {
