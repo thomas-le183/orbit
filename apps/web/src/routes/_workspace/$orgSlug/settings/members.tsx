@@ -8,38 +8,27 @@ export const Route = createFileRoute("/_workspace/$orgSlug/settings/members")({
 });
 
 function MembersPage() {
-	const { targetOrg } = Route.useRouteContext() as any;
+	const { targetOrg } = Route.useRouteContext() as { targetOrg: { id: string } };
 	const { data: org, isLoading } = useOrgMembers(targetOrg.id);
 	const { data: session } = useSession();
 
 	if (isLoading || !org || !session) return null;
 
 	const currentMember = org.members?.find(
-		(m: any) => m.userId === session.user.id,
+		(m) => m.userId === session.user.id,
 	);
 	const currentRole = currentMember?.role ?? "member";
 
 	return (
-		<div>
-			<div className="mb-6 flex items-start justify-between">
-				<div>
-					<h1 className="text-xl font-semibold">Members</h1>
-					<p className="mt-1 text-sm text-muted-foreground">
-						Manage who has access to this workspace.
-					</p>
-				</div>
-				<InviteMemberModal organizationId={targetOrg.id} />
-			</div>
-
-			<MembersTable
-				members={org.members ?? []}
-				invitations={(org.invitations ?? []).filter(
-					(i: any) => i.status === "pending",
-				)}
-				organizationId={targetOrg.id}
-				currentUserId={session.user.id}
-				currentRole={currentRole}
-			/>
-		</div>
+		<MembersTable
+			members={org.members ?? []}
+			invitations={(org.invitations ?? []).filter(
+				(i) => i.status === "pending",
+			)}
+			organizationId={targetOrg.id}
+			currentUserId={session.user.id}
+			currentRole={currentRole}
+			inviteSlot={<InviteMemberModal organizationId={targetOrg.id} />}
+		/>
 	);
 }
