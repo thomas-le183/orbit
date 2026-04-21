@@ -56,7 +56,7 @@ function RolePill({ role }: { role: string }) {
 	return (
 		<span
 			className={cn(
-				"inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium capitalize",
+				"inline-flex items-center rounded border px-2 py-0.5 text-xs capitalize",
 				rolePillClass[role] ?? rolePillClass.member,
 			)}
 		>
@@ -135,10 +135,11 @@ export function MembersTable({
 				<Table>
 					<TableHeader>
 						<TableRow>
-							<TableHead>Member</TableHead>
-							<TableHead className="w-[100px]">Role</TableHead>
-							<TableHead className="w-[110px]">Joined</TableHead>
-							<TableHead className="w-[130px]">Last seen</TableHead>
+							<TableHead>Name</TableHead>
+							<TableHead>Email</TableHead>
+							<TableHead className="w-25">Role</TableHead>
+							<TableHead className="w-27.5">Joined</TableHead>
+							<TableHead className="w-32.5">Last seen</TableHead>
 							<TableHead className="w-9" />
 						</TableRow>
 					</TableHeader>
@@ -155,20 +156,18 @@ export function MembersTable({
 												name={m.user.name}
 												image={m.user.image}
 											/>
-											<div>
-												<p className="text-sm font-medium leading-tight">
-													{m.user.name}
-													{isYou && (
-														<span className="ml-1.5 rounded bg-muted px-1 py-px text-[9px] text-muted-foreground">
-															you
-														</span>
-													)}
-												</p>
-												<p className="text-xs text-muted-foreground">
-													{m.user.email}
-												</p>
-											</div>
+											<p>
+												{m.user.name}
+												{isYou && (
+													<span className="ml-1.5 rounded bg-muted px-1 py-px text-[9px] text-muted-foreground">
+														you
+													</span>
+												)}
+											</p>
 										</div>
+									</TableCell>
+									<TableCell className="text-muted-foreground">
+										{m.user.email}
 									</TableCell>
 									<TableCell>
 										<RolePill role={m.role} />
@@ -185,7 +184,7 @@ export function MembersTable({
 											className={cn(
 												"text-xs",
 												presence?.status === "online"
-													? "font-medium text-green-500"
+													? "text-green-500"
 													: "text-muted-foreground",
 											)}
 										>
@@ -251,8 +250,8 @@ export function MembersTable({
 						<TableHeader>
 							<TableRow>
 								<TableHead>Email</TableHead>
-								<TableHead className="w-[100px]">Role</TableHead>
-								<TableHead className="w-[130px]">Expires</TableHead>
+								<TableHead className="w-25">Role</TableHead>
+								<TableHead className="w-32.5">Expires</TableHead>
 								<TableHead className="w-9" />
 							</TableRow>
 						</TableHeader>
@@ -281,7 +280,7 @@ export function MembersTable({
 												className={cn(
 													"text-xs",
 													daysLeft <= 3
-														? "font-medium text-amber-500"
+														? "text-amber-500"
 														: "text-muted-foreground",
 												)}
 											>

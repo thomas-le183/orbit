@@ -81,7 +81,7 @@ export function CurrentPlanCard() {
 					<span className="text-muted-foreground">
 						{data.subscription.cancelAtPeriodEnd ? "Cancels on" : "Renews on"}
 					</span>
-					<span className="font-medium">{periodEnd}</span>
+					<span>{periodEnd}</span>
 				</div>
 			)}
 
@@ -89,7 +89,7 @@ export function CurrentPlanCard() {
 			<div className="flex items-center gap-2 text-sm">
 				<Users className="size-4 text-muted-foreground shrink-0" />
 				<span className="text-muted-foreground">Total members</span>
-				<span className="font-medium">{current}</span>
+				<span>{current}</span>
 			</div>
 
 			{/* Feature flags */}

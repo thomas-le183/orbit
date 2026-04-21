@@ -106,15 +106,11 @@ export function TopNav() {
 					</DropdownMenuTrigger>
 					<DropdownMenuContent side="top" align="end" className="w-56">
 						<DropdownMenuGroup>
-							<DropdownMenuLabel className="flex items-center gap-2 p-2 font-normal">
+							<DropdownMenuLabel className="flex items-center gap-2 p-2">
 								<UserAvatar name={user?.name} image={user?.image} />
-								<div className="flex min-w-0 flex-col">
-									<span className="truncate text-sm font-medium">
-										{user?.name}
-									</span>
-									<span className="truncate text-xs text-muted-foreground">
-										{user?.email}
-									</span>
+								<div className="flex min-w-0 flex-col text-foreground">
+									<span className="truncate">{user?.name}</span>
+									<span className="truncate text-xs">{user?.email}</span>
 								</div>
 							</DropdownMenuLabel>
 						</DropdownMenuGroup>

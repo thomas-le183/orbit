@@ -22,14 +22,14 @@ export function SettingsRow({
 			)}
 		>
 			<div className="min-w-0 flex-1">
-				<p className="text-sm font-medium">{label}</p>
+				<p>{label}</p>
 				{hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
 			</div>
-			<div className="relative w-[280px] shrink-0">
+			<div className="relative w-70 shrink-0">
 				{children}
 				{saved && (
 					<span
-						className="pointer-events-none absolute -bottom-4 right-0 text-[10px] font-medium text-green-500"
+						className="pointer-events-none absolute -bottom-4 right-0 text-xs text-green-500"
 						aria-live="polite"
 					>
 						Saved ✓

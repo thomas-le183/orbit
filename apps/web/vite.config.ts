@@ -17,6 +17,9 @@ const config = defineConfig({
 		environment: "happy-dom",
 		globals: true,
 	},
+	server: {
+		allowedHosts: true,
+	},
 });
 
 export default config;

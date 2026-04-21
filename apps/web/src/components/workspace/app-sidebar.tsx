@@ -90,7 +90,7 @@ function SidebarNavItem({
 
 	return (
 		<SidebarMenuItem onClick={() => item.to && navigate({ to: item.to })}>
-			<SidebarMenuButton size={"sm"} isActive={isActive}>
+			<SidebarMenuButton isActive={isActive}>
 				<Icon className="size-3.5 shrink-0" />
 				<span className="flex-1 truncate">{item.label}</span>
 			</SidebarMenuButton>

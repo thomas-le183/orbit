@@ -15,10 +15,8 @@ export function SettingsSection({
 			{heading && (
 				<h2
 					className={cn(
-						"mb-2 text-xs font-semibold uppercase tracking-wide",
-						tone === "destructive"
-							? "text-destructive"
-							: "text-muted-foreground",
+						"mb-2 capitalize",
+						tone === "destructive" ? "text-destructive" : "text-foreground",
 					)}
 				>
 					{heading}

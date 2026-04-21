@@ -3,17 +3,29 @@ import {
 	Dialog,
 	DialogClose,
 	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
 	DialogTrigger,
 } from "@orbit/ui/components/dialog";
 import { Field, FieldLabel } from "@orbit/ui/components/field";
 import { Input } from "@orbit/ui/components/input";
-import { cn } from "@orbit/ui/lib/utils";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@orbit/ui/components/select";
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import { useInviteMember } from "@/hooks/use-auth";
 
-const ROLES = ["member", "admin"] as const;
-type InviteRole = (typeof ROLES)[number];
+const ROLES = [
+	{ value: "member", label: "Member", description: "Can view and participate" },
+	{ value: "admin", label: "Admin", description: "Full access to settings" },
+] as const;
+type InviteRole = (typeof ROLES)[number]["value"];
 
 export function InviteMemberModal({
 	organizationId,
@@ -39,8 +51,10 @@ export function InviteMemberModal({
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger render={<Button size="sm">Invite members</Button>} />
-			<DialogContent className="w-full max-w-md p-6" showCloseButton={false}>
-				<h2 className="mb-4 text-base font-semibold">Invite a member</h2>
+			<DialogContent className="w-full max-w-md">
+				<DialogHeader>
+					<DialogTitle>Invite a member</DialogTitle>
+				</DialogHeader>
 				<form
 					onSubmit={(e) => {
 						e.preventDefault();
@@ -67,28 +81,39 @@ export function InviteMemberModal({
 						{(field) => (
 							<Field>
 								<FieldLabel>Role</FieldLabel>
-								<div className="flex gap-2">
-									{ROLES.map((r) => (
-										<button
-											key={r}
-											type="button"
-											onClick={() => field.handleChange(r)}
-											className={cn(
-												"rounded-md border px-3 py-1.5 text-sm capitalize transition-colors",
-												field.state.value === r
-													? "border-primary bg-primary/10 text-primary"
-													: "border-border text-muted-foreground hover:border-primary/50",
-											)}
-										>
-											{r}
-										</button>
-									))}
-								</div>
+								<Select
+									value={field.state.value}
+									onValueChange={(v) => field.handleChange(v as InviteRole)}
+								>
+									<SelectTrigger>
+										<SelectValue>
+											{(() => {
+												const role = ROLES.find(r => r.value === field.state.value);
+												return role ? (
+													<>
+														{role.label} —{" "}
+														<span className="text-muted-foreground">{role.description}</span>
+													</>
+												) : null;
+											})()}
+										</SelectValue>
+									</SelectTrigger>
+									<SelectContent alignItemWithTrigger={false}>
+										{ROLES.map((r) => (
+											<SelectItem key={r.value} value={r.value}>
+												{r.label} —{" "}
+												<span className="text-muted-foreground!">
+													{r.description}
+												</span>
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
 							</Field>
 						)}
 					</form.Field>
 
-					<div className="flex justify-end gap-2 pt-2">
+					<DialogFooter>
 						<DialogClose
 							render={
 								<Button type="button" variant="outline" size="sm">
@@ -99,7 +124,7 @@ export function InviteMemberModal({
 						<Button type="submit" size="sm" disabled={invite.isPending}>
 							{invite.isPending ? "Sending…" : "Send invite"}
 						</Button>
-					</div>
+					</DialogFooter>
 				</form>
 			</DialogContent>
 		</Dialog>

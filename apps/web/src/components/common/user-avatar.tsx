@@ -1,4 +1,4 @@
-import { getInitials } from "@orbit/shared";
+import { cn, getInitials } from "@orbit/shared";
 import {
 	Avatar,
 	AvatarFallback,
@@ -21,7 +21,14 @@ export function UserAvatar({
 	return (
 		<Avatar size={size} className={className}>
 			{image && <AvatarImage src={image} alt={name ?? ""} />}
-			<AvatarFallback>{name ? getInitials(name) : "?"}</AvatarFallback>
+			<AvatarFallback
+				className={cn(
+					"bg-background text-[10px]! border-dashed! border",
+					className,
+				)}
+			>
+				{name ? getInitials(name) : "?"}
+			</AvatarFallback>
 		</Avatar>
 	);
 }
