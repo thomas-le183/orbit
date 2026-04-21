@@ -1,0 +1,139 @@
+:root {
+	/* ---------- Custom gray scale (light) ---------- */
+	--gray-1: color(display-p3 1 1 1);
+	--gray-2: color(display-p3 0.988 0.988 0.988);
+	--gray-3: color(display-p3 0.976 0.976 0.976);
+	--gray-4: color(display-p3 0.945 0.945 0.945);
+	--gray-5: color(display-p3 0.922 0.922 0.922);
+	--gray-6: color(display-p3 0.839 0.839 0.839);
+	--gray-7: color(display-p3 0.8 0.8 0.8);
+	--gray-8: color(display-p3 0.702 0.702 0.702);
+	--gray-9: color(display-p3 0.6 0.6 0.6);
+	--gray-10: color(display-p3 0.514 0.514 0.514);
+	--gray-11: color(display-p3 0.4 0.4 0.4);
+	--gray-12: color(display-p3 0.2 0.2 0.2);
+
+	/* ---------- Custom gray alpha scale (light) ---------- */
+	--gray-a-1: color(display-p3 0 0 0 / 0.02);
+	--gray-a-2: color(display-p3 0 0 0 / 0.039);
+	--gray-a-3: color(display-p3 0 0 0 / 0.047);
+	--gray-a-4: color(display-p3 0 0 0 / 0.071);
+	--gray-a-5: color(display-p3 0 0 0 / 0.078);
+	--gray-a-6: color(display-p3 0 0 0 / 0.114);
+	--gray-a-7: color(display-p3 0 0 0 / 0.161);
+	--gray-a-8: color(display-p3 0 0 0 / 0.22);
+	--gray-a-9: color(display-p3 0 0 0 / 0.361);
+	--gray-a-10: color(display-p3 0 0 0 / 0.478);
+	--gray-a-11: color(display-p3 0 0 0 / 0.722);
+	--gray-a-12: color(display-p3 0 0 0 / 0.91);
+
+	/* ---------- Custom 4-layer background system (independent) ---------- */
+	--background-primary: var(--gray-1);
+	--background-secondary: var(--gray-2);
+	--background-tertiary: var(--gray-4);
+	--background-quaternary: var(--gray-5);
+
+	--border-light: var(--gray-4);
+	--border-medium: var(--gray-5);
+	--border-strong: var(--gray-6);
+
+	--foreground-primary: var(--gray-12);
+	--foreground-secondary: var(--gray-11);
+	--foreground-tertiary: var(--gray-9);
+	--foreground-light: var(--gray-8);
+
+	/* ---------- shadcn tokens (Linear light theme) ---------- */
+	--background: oklch(0.985 0.001 264);
+	--foreground: var(--foreground-primary);
+	--card: var(--background-secondary);
+	--card-foreground: var(--foreground-primary);
+	--popover: var(--background-secondary);
+	--popover-foreground: var(--foreground-primary);
+	--primary: oklch(0.505 0.158 272);
+	--primary-foreground: oklch(0.98 0 0);
+	--secondary: oklch(0.949 0.001 264);
+	--secondary-foreground: oklch(0.22 0.002 272);
+	--muted: var(--gray-a-2);
+	--muted-foreground: var(--foreground-tertiary);
+	--accent: oklch(0.949 0.001 264);
+	--accent-foreground: oklch(0.22 0.002 272);
+	--destructive: oklch(0.595 0.218 27);
+	--border: var(--border-light);
+	--input: var(--gray-a-1);
+	--ring: oklch(0.555 0.148 272);
+	--chart-1: oklch(0.505 0.158 272);
+	--chart-2: oklch(0.6 0.15 200);
+	--chart-3: oklch(0.55 0.18 150);
+	--chart-4: oklch(0.7 0.15 60);
+	--chart-5: oklch(0.65 0.2 20);
+	--radius: 0.375rem;
+	--sidebar: var(--color-background-tertiary);
+	--sidebar-foreground: var(--foreground-secondary);
+	--sidebar-primary: var(--primary);
+	--sidebar-primary-foreground: var(--foreground-primary);
+	--sidebar-accent: var(--gray-a-2);
+	--sidebar-accent-foreground: var(--color-foreground-primary);
+	--sidebar-border: var(--border-light);
+	--sidebar-ring: var(--primary);
+
+	/* ---------- Semantic status colors ---------- */
+	--error: oklch(0.595 0.218 27);
+	--error-foreground: oklch(0.98 0 0);
+	--warning: oklch(0.76 0.165 70);
+	--warning-foreground: oklch(0.2 0.02 70);
+	--info: oklch(0.62 0.15 240);
+	--info-foreground: oklch(0.98 0 0);
+	--success: oklch(0.62 0.14 150);
+	--success-foreground: oklch(0.98 0 0);
+}
+
+.dark {
+	/* ---------- Custom gray scale (dark) ---------- */
+	--gray-1: color(display-p3 0.09 0.09 0.09);
+	--gray-2: color(display-p3 0.106 0.106 0.106);
+	--gray-3: color(display-p3 0.098 0.098 0.098);
+	--gray-4: color(display-p3 0.114 0.114 0.114);
+	--gray-5: color(display-p3 0.133 0.133 0.133);
+	--gray-6: color(display-p3 0.282 0.282 0.282);
+	--gray-7: color(display-p3 0.298 0.298 0.298);
+	--gray-8: color(display-p3 0.4 0.4 0.4);
+	--gray-9: color(display-p3 0.506 0.506 0.506);
+	--gray-10: color(display-p3 0.482 0.482 0.482);
+	--gray-11: color(display-p3 0.702 0.702 0.702);
+	--gray-12: color(display-p3 0.922 0.922 0.922);
+
+	/* ---------- Custom gray alpha scale (dark) ---------- */
+	--gray-a-1: color(display-p3 1 1 1 / 0.031);
+	--gray-a-2: color(display-p3 1 1 1 / 0.059);
+	--gray-a-3: color(display-p3 1 1 1 / 0.047);
+	--gray-a-4: color(display-p3 1 1 1 / 0.071);
+	--gray-a-5: color(display-p3 1 1 1 / 0.102);
+	--gray-a-6: color(display-p3 1 1 1 / 0.114);
+	--gray-a-7: color(display-p3 1 1 1 / 0.141);
+	--gray-a-8: color(display-p3 1 1 1 / 0.22);
+	--gray-a-9: color(display-p3 1 1 1 / 0.427);
+	--gray-a-10: color(display-p3 1 1 1 / 0.478);
+	--gray-a-11: color(display-p3 1 1 1 / 0.565);
+	--gray-a-12: color(display-p3 1 1 1 / 0.91);
+
+	/* ---------- shadcn tokens (dark) ---------- */
+	--background: oklch(0.09 0.004 264);
+	--foreground: oklch(0.93 0.004 264);
+	--primary: oklch(0.55 0.18 272);
+	--primary-foreground: oklch(0.98 0 0);
+	--secondary: oklch(0.18 0.004 264);
+	--secondary-foreground: oklch(0.93 0.004 264);
+	--accent: oklch(0.18 0.004 264);
+	--accent-foreground: oklch(0.93 0.004 264);
+	--destructive: oklch(0.65 0.22 27);
+
+	/* ---------- Semantic status colors ---------- */
+	--error: oklch(0.65 0.22 27);
+	--error-foreground: oklch(0.98 0 0);
+	--warning: oklch(0.78 0.16 70);
+	--warning-foreground: oklch(0.15 0.02 70);
+	--info: oklch(0.68 0.15 240);
+	--info-foreground: oklch(0.98 0 0);
+	--success: oklch(0.68 0.14 150);
+	--success-foreground: oklch(0.12 0.02 150);
+}

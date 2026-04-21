@@ -7,14 +7,20 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@orbit/ui/components/dialog";
+import {
+	Field,
+	FieldContent,
+	FieldDescription,
+	FieldGroup,
+	FieldLabel,
+	FieldSet,
+} from "@orbit/ui/components/field";
 import { Input } from "@orbit/ui/components/input";
 import { useRouter } from "@tanstack/react-router";
-import { useState } from "react";
-import { OrgAvatar } from "@/components/common/org-avatar";
+import { ImageIcon, Trash2Icon, UploadIcon } from "lucide-react";
+import { useId, useRef, useState } from "react";
 import { useDeleteOrganization, useUpdateOrganization } from "@/hooks/use-auth";
 import { SettingsPage } from "./settings-page";
-import { SettingsRow } from "./settings-row";
-import { SettingsSection } from "./settings-section";
 import { useSaveIndicator } from "./use-save-indicator";
 
 interface GeneralSettingsProps {
@@ -31,6 +37,10 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 	const logoSave = useSaveIndicator();
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const [deleteConfirm, setDeleteConfirm] = useState("");
+	const fileInputRef = useRef<HTMLInputElement>(null);
+	const logoId = useId();
+	const nameId = useId();
+	const slugId = useId();
 
 	function saveIf(
 		field: "name" | "slug" | "logo",
@@ -57,70 +67,150 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 			title="Workspace"
 			subtitle="Manage your workspace name, URL, and logo."
 		>
-			<SettingsSection>
-				<SettingsRow
-					label="Logo"
-					hint="Paste an image URL. Upload is coming later."
-					saved={logoSave.saved}
-				>
-					<div className="flex items-center gap-2">
-						<OrgAvatar name={org.name} logo={org.logo} size="sm" />
-						<Input
-							defaultValue={org.logo ?? ""}
-							placeholder="https://…"
-							onBlur={(e) => saveIf("logo", e.target.value, org.logo, logoSave)}
-						/>
+			<FieldGroup>
+				<Field>
+					<FieldLabel>Logo</FieldLabel>
+					<div className="flex items-center gap-4">
+						<button
+							type="button"
+							onClick={() => fileInputRef.current?.click()}
+							className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+							aria-label="Upload logo"
+						>
+							{org.logo ? (
+								<img
+									src={org.logo}
+									alt={org.name}
+									className="size-full object-cover"
+								/>
+							) : (
+								<ImageIcon className="size-6 text-muted-foreground" />
+							)}
+						</button>
+						<div className="flex flex-col gap-2">
+							<div className="flex items-center gap-2">
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => fileInputRef.current?.click()}
+								>
+									<UploadIcon />
+									Upload
+								</Button>
+								<Button
+									variant="outline"
+									size="sm"
+									disabled={!org.logo}
+									onClick={() => saveIf("logo", "", org.logo, logoSave)}
+								>
+									<Trash2Icon />
+									Remove
+								</Button>
+								<input
+									ref={fileInputRef}
+									id={logoId}
+									type="file"
+									accept="image/png,image/jpeg,image/gif"
+									className="hidden"
+									onChange={(e) => {
+										const file = e.target.files?.[0];
+										if (!file) return;
+										const reader = new FileReader();
+										reader.onload = () =>
+											saveIf(
+												"logo",
+												String(reader.result ?? ""),
+												org.logo,
+												logoSave,
+											);
+										reader.readAsDataURL(file);
+										e.target.value = "";
+									}}
+								/>
+							</div>
+							<FieldDescription>
+								We support your square PNGs, JPEGs and GIFs under 10MB
+							</FieldDescription>
+							{logoSave.saved && (
+								<FieldDescription className="text-green-500">
+									Saved ✓
+								</FieldDescription>
+							)}
+						</div>
 					</div>
-				</SettingsRow>
-				<SettingsRow
-					label="Workspace name"
-					hint="Displayed across the app."
-					saved={nameSave.saved}
-				>
+				</Field>
+
+				<Field>
+					<FieldContent>
+						<FieldLabel htmlFor={nameId}>Workspace name</FieldLabel>
+						<FieldDescription>Displayed across the app.</FieldDescription>
+						{nameSave.saved && (
+							<FieldDescription className="text-green-500">
+								Saved ✓
+							</FieldDescription>
+						)}
+					</FieldContent>
 					<Input
+						id={nameId}
+						className="w-70 shrink-0"
 						defaultValue={org.name}
 						onBlur={(e) => saveIf("name", e.target.value, org.name, nameSave)}
 					/>
-				</SettingsRow>
-				<SettingsRow
-					label="URL slug"
-					hint="Changing invalidates existing links."
-					saved={slugSave.saved}
-					last
-				>
-					<div className="flex">
+				</Field>
+
+				<Field>
+					<FieldContent>
+						<FieldLabel htmlFor={slugId}>URL slug</FieldLabel>
+						<FieldDescription>
+							Changing invalidates existing links.
+						</FieldDescription>
+						{slugSave.saved && (
+							<FieldDescription className="text-green-500">
+								Saved ✓
+							</FieldDescription>
+						)}
+					</FieldContent>
+					<div className="flex w-70 shrink-0">
 						<span className="flex h-9 items-center rounded-l-md border border-r-0 bg-muted px-3 text-xs text-muted-foreground">
 							orbit.app/
 						</span>
 						<Input
+							id={slugId}
 							className="rounded-l-none"
 							defaultValue={org.slug}
 							onBlur={(e) => saveIf("slug", e.target.value, org.slug, slugSave)}
 						/>
 					</div>
-				</SettingsRow>
-			</SettingsSection>
+				</Field>
+			</FieldGroup>
 
 			{isOwner && (
-				<SettingsSection heading="Danger zone" tone="destructive">
-					<SettingsRow
-						label="Transfer ownership"
-						hint="Assign Owner to another member. You become Admin."
-					>
-						<Button variant="outline" disabled>
-							Transfer
-						</Button>
-					</SettingsRow>
-					<SettingsRow
-						label="Delete workspace"
-						hint="Permanently delete this workspace and all its data."
-						last
-					>
-						<Button variant="destructive" onClick={() => setDeleteOpen(true)}>
-							Delete workspace
-						</Button>
-					</SettingsRow>
-				</SettingsSection>
+				<FieldSet className="mt-8">
+					<FieldGroup>
+						<Field>
+							<FieldContent>
+								<FieldLabel>Transfer ownership</FieldLabel>
+								<FieldDescription>
+									Assign Owner to another member. You become Admin.
+								</FieldDescription>
+							</FieldContent>
+							<Button variant="outline" disabled>
+								Transfer
+							</Button>
+						</Field>
+						<Field>
+							<FieldContent>
+								<FieldLabel>Delete workspace</FieldLabel>
+								<FieldDescription>
+									Permanently delete this workspace and all its data.
+								</FieldDescription>
+							</FieldContent>
+							<Button variant="destructive" onClick={() => setDeleteOpen(true)}>
+								Delete workspace
+							</Button>
+						</Field>
+					</FieldGroup>
+				</FieldSet>
 			)}
 
 			<Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>

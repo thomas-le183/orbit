@@ -1,13 +1,18 @@
-import { Badge } from "@orbit/ui/components/badge";
 import { Button } from "@orbit/ui/components/button";
+import {
+	Field,
+	FieldContent,
+	FieldDescription,
+	FieldGroup,
+	FieldLabel,
+	FieldSet,
+} from "@orbit/ui/components/field";
 import { Input } from "@orbit/ui/components/input";
-import { useState } from "react";
-import { UserAvatar } from "@/components/common/user-avatar";
+import { ImageIcon, Trash2Icon, UploadIcon } from "lucide-react";
+import { useId, useRef, useState } from "react";
 import { useSession, useUpdateUser } from "@/hooks/use-auth";
 import { DeleteAccountDialog } from "./delete-account-dialog";
 import { SettingsPage } from "./settings-page";
-import { SettingsRow } from "./settings-row";
-import { SettingsSection } from "./settings-section";
 import { useSaveIndicator } from "./use-save-indicator";
 
 export function ProfileSettings() {
@@ -16,6 +21,10 @@ export function ProfileSettings() {
 	const nameSave = useSaveIndicator();
 	const avatarSave = useSaveIndicator();
 	const [deleteOpen, setDeleteOpen] = useState(false);
+	const fileInputRef = useRef<HTMLInputElement>(null);
+	const avatarId = useId();
+	const nameId = useId();
+	const emailId = useId();
 
 	const user = session?.user;
 	if (!user) return null;
@@ -43,50 +52,115 @@ export function ProfileSettings() {
 			title="Profile"
 			subtitle="Personal info visible across Orbit."
 		>
-			<SettingsSection>
-				<SettingsRow
-					label="Avatar"
-					hint="Paste an image URL. Upload is coming later."
-					saved={avatarSave.saved}
-				>
-					<div className="flex items-center gap-2">
-						<UserAvatar name={user.name} image={user.image} size="sm" />
-						<Input
-							defaultValue={user.image ?? ""}
-							placeholder="https://…"
-							onBlur={(e) => saveAvatar(e.target.value)}
-						/>
+			<FieldGroup>
+				<Field>
+					<FieldLabel>Picture</FieldLabel>
+					<div className="flex items-center gap-4">
+						<button
+							type="button"
+							onClick={() => fileInputRef.current?.click()}
+							className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+							aria-label="Upload picture"
+						>
+							{user.image ? (
+								<img
+									src={user.image}
+									alt={user.name ?? ""}
+									className="size-full object-cover"
+								/>
+							) : (
+								<ImageIcon className="size-6 text-muted-foreground" />
+							)}
+						</button>
+						<div className="flex flex-col gap-2">
+							<div className="flex items-center gap-2">
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => fileInputRef.current?.click()}
+								>
+									<UploadIcon />
+									Upload
+								</Button>
+								<Button
+									variant="outline"
+									size="sm"
+									disabled={!user.image}
+									onClick={() => saveAvatar("")}
+								>
+									<Trash2Icon />
+									Remove
+								</Button>
+								<input
+									ref={fileInputRef}
+									id={avatarId}
+									type="file"
+									accept="image/png,image/jpeg,image/gif"
+									className="hidden"
+									onChange={(e) => {
+										const file = e.target.files?.[0];
+										if (!file) return;
+										const reader = new FileReader();
+										reader.onload = () =>
+											saveAvatar(String(reader.result ?? ""));
+										reader.readAsDataURL(file);
+										e.target.value = "";
+									}}
+								/>
+							</div>
+							<FieldDescription>
+								We support your square PNGs, JPEGs and GIFs under 10MB
+							</FieldDescription>
+							{avatarSave.saved && (
+								<FieldDescription className="text-green-500">
+									Saved ✓
+								</FieldDescription>
+							)}
+						</div>
 					</div>
-				</SettingsRow>
-				<SettingsRow
-					label="Full name"
-					hint="Shown everywhere you appear."
-					saved={nameSave.saved}
-				>
+				</Field>
+
+				<Field>
+					<FieldContent>
+						<FieldLabel htmlFor={nameId}>Name</FieldLabel>
+						<FieldDescription>Shown everywhere you appear.</FieldDescription>
+					</FieldContent>
 					<Input
+						id={nameId}
+						className="w-70 shrink-0"
 						defaultValue={user.name ?? ""}
 						onBlur={(e) => saveName(e.target.value)}
 					/>
-				</SettingsRow>
-				<SettingsRow label="Email" hint="Contact your admin to change." last>
-					<div className="flex items-center gap-2">
-						<Input defaultValue={user.email} disabled />
-						<Badge variant="secondary">Verified</Badge>
-					</div>
-				</SettingsRow>
-			</SettingsSection>
+				</Field>
 
-			<SettingsSection heading="Danger zone" tone="destructive">
-				<SettingsRow
-					label="Delete account"
-					hint="Permanently delete your account and data."
-					last
-				>
-					<Button variant="destructive" onClick={() => setDeleteOpen(true)}>
-						Delete account
-					</Button>
-				</SettingsRow>
-			</SettingsSection>
+				<Field>
+					<FieldContent>
+						<FieldLabel htmlFor={emailId}>Email</FieldLabel>
+						<FieldDescription>
+							The email associated to your account
+						</FieldDescription>
+					</FieldContent>
+					<div className="flex w-70 shrink-0 items-center gap-2">
+						<Input id={emailId} defaultValue={user.email} disabled />
+					</div>
+				</Field>
+			</FieldGroup>
+
+			<FieldSet className="mt-8">
+				<FieldGroup>
+					<Field>
+						<FieldContent>
+							<FieldLabel>Danger zone</FieldLabel>
+							<FieldDescription>
+								Permanently delete your account and data.
+							</FieldDescription>
+						</FieldContent>
+						<Button variant="destructive" onClick={() => setDeleteOpen(true)}>
+							Delete account
+						</Button>
+					</Field>
+				</FieldGroup>
+			</FieldSet>
 
 			<DeleteAccountDialog
 				open={deleteOpen}

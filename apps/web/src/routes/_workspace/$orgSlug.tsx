@@ -1,20 +1,16 @@
 import { Button } from "@orbit/ui/components/button";
-import {
-	ResizableHandle,
-	ResizablePanel,
-	ResizablePanelGroup,
-} from "@orbit/ui/components/resizable";
+import { SidebarInset, SidebarProvider } from "@orbit/ui/components/sidebar";
 import {
 	createFileRoute,
 	Link,
 	notFound,
 	Outlet,
+	useParams,
+	useRouterState,
 } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import type { PanelImperativeHandle } from "react-resizable-panels";
-import { AppNav } from "@/components/workspace/app-nav";
+import { useEffect } from "react";
 import { AppSidebar } from "@/components/workspace/app-sidebar";
-import { TopNav } from "@/components/workspace/top-nav";
+import { resolveModule } from "@/config/navigation";
 import { useOrganizations, useSetActiveOrganization } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_workspace/$orgSlug")({
@@ -37,8 +33,6 @@ export const Route = createFileRoute("/_workspace/$orgSlug")({
 function OrgLayout() {
 	const { authState, targetOrg } = Route.useRouteContext();
 	const setActive = useSetActiveOrganization();
-	const sidebarRef = useRef<PanelImperativeHandle | null>(null);
-	const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
 	useEffect(() => {
 		if (authState.session?.activeOrganizationId !== targetOrg.id) {
@@ -46,49 +40,28 @@ function OrgLayout() {
 		}
 	}, [authState.session?.activeOrganizationId, targetOrg.id, setActive.mutate]);
 
-	function toggleSidebar() {
-		const panel = sidebarRef.current;
-		if (!panel) return;
-		if (panel.isCollapsed()) {
-			panel.expand();
-		} else {
-			panel.collapse();
-		}
-	}
+	return (
+		<SidebarProvider>
+			<AppSidebar />
+			<SidebarInset className="bg-background-tertiary">
+				<PageHeader />
+				<main className="flex-1 overflow-auto p-6 bg-background-primary rounded-xl border border-border-medium">
+					<Outlet />
+				</main>
+			</SidebarInset>
+		</SidebarProvider>
+	);
+}
+
+function PageHeader() {
+	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
+	const pathname = useRouterState({ select: (s) => s.location.pathname });
+	const config = resolveModule(pathname, orgSlug);
 
 	return (
-		<div className="flex h-screen flex-col">
-			<TopNav />
-			<div className="flex flex-1 overflow-hidden">
-				<AppNav
-					isSidebarCollapsed={isSidebarCollapsed}
-					onToggleSidebar={toggleSidebar}
-				/>
-				<ResizablePanelGroup orientation="horizontal">
-					<ResizablePanel
-						id="sidebar"
-						defaultSize="15%"
-						minSize="180px"
-						maxSize="280px"
-						collapsible
-						collapsedSize={0}
-						groupResizeBehavior="preserve-pixel-size"
-						panelRef={sidebarRef}
-						onResize={(size) => setIsSidebarCollapsed(size.inPixels === 0)}
-					>
-						<AppSidebar />
-					</ResizablePanel>
-
-					<ResizableHandle />
-
-					<ResizablePanel id="main" defaultSize="85%" className="bg-background">
-						<main className="h-full overflow-auto p-6">
-							<Outlet />
-						</main>
-					</ResizablePanel>
-				</ResizablePanelGroup>
-			</div>
-		</div>
+		<header className="flex h-12 shrink-0 items-center gap-2 px-4">
+			<h1 className="text-sm font-medium">{config?.title}</h1>
+		</header>
 	);
 }
 

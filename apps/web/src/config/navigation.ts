@@ -33,20 +33,6 @@ export interface NavModule {
 
 export const modules: NavModule[] = [
 	{ to: "/$orgSlug", icon: HomeIcon, label: "Home", exact: true },
-	{
-		to: "/$orgSlug/chat",
-		icon: MessageSquareIcon,
-		label: "Chat",
-		exact: false,
-	},
-	{
-		to: "/$orgSlug/tasks",
-		icon: CheckSquareIcon,
-		label: "Tasks",
-		exact: false,
-	},
-	{ to: "/$orgSlug/time", icon: ClockIcon, label: "Time", exact: false },
-	{ to: "/$orgSlug/ai", icon: BotIcon, label: "AI", exact: false },
 ];
 
 // ── Types ──────────────────────────────────────────────────────────────────
