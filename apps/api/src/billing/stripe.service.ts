@@ -1,11 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
-import Stripe from "stripe";
+import { Stripe } from "stripe";
 
 @Injectable()
 export class StripeService {
-	readonly stripe: InstanceType<typeof Stripe>;
+	readonly stripe: Stripe;
 
 	constructor(private readonly config: ConfigService) {
 		const key = config.getOrThrow<string>("STRIPE_SECRET_KEY");

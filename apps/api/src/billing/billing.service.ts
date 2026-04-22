@@ -134,22 +134,17 @@ export class BillingService {
 	}
 
 	mapPriceIdToTier(priceId: string): SubscriptionTier {
-		const teamPriceId = this.config.get<string>("STRIPE_TEAM_PRICE_ID");
 		const proPriceId = this.config.get<string>("STRIPE_PRO_PRICE_ID");
 		const enterprisePriceId = this.config.get<string>(
 			"STRIPE_ENTERPRISE_PRICE_ID",
 		);
 
-		if (priceId === teamPriceId) return "team";
 		if (priceId === proPriceId) return "pro";
 		if (priceId === enterprisePriceId) return "enterprise";
 		return "free";
 	}
 
 	getPriceIdForTier(tier: SubscriptionTier): string | null {
-		if (tier === "team") {
-			return this.config.getOrThrow<string>("STRIPE_TEAM_PRICE_ID");
-		}
 		if (tier === "pro") {
 			return this.config.getOrThrow<string>("STRIPE_PRO_PRICE_ID");
 		}
