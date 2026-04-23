@@ -1,3 +1,4 @@
+import { Toaster } from "@orbit/ui/components/sonner";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -17,6 +18,7 @@ function RootComponent() {
 		<QueryClientProvider client={queryClient}>
 			<ThemeProvider attribute="class" defaultTheme="system" enableSystem>
 				<Outlet />
+				<Toaster />
 				<TanStackDevtools
 					config={{ position: "bottom-right" }}
 					plugins={[

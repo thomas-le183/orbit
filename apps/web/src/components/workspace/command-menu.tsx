@@ -7,10 +7,10 @@ import {
 	CommandItem,
 	CommandList,
 } from "@orbit/ui/components/command";
+import { OrgLogo } from "@orbit/ui/custom/org-logo";
 import { useParams, useRouter } from "@tanstack/react-router";
 import { LogOutIcon, PlusIcon, SettingsIcon } from "lucide-react";
 import { useEffect } from "react";
-import { OrgAvatar } from "@/components/common/org-avatar";
 import { useOrganizations, useSignOut } from "@/hooks/use-auth";
 
 export function CommandMenu({
@@ -63,7 +63,12 @@ export function CommandMenu({
 										)
 									}
 								>
-									<OrgAvatar size="sm" name={org.name} logo={org.logo} />
+									<OrgLogo
+										size="sm"
+										colorSeed={org.id}
+										placeholder={org.name}
+										avatarUrl={org.logo}
+									/>
 									<span>{org.name}</span>
 								</CommandItem>
 							))}

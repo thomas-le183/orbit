@@ -22,6 +22,8 @@ import {
 	SidebarMenuItem,
 	SidebarTrigger,
 } from "@orbit/ui/components/sidebar";
+import { OrgLogo } from "@orbit/ui/custom/org-logo";
+import { UserAvatar } from "@orbit/ui/custom/user-avatar";
 import {
 	useMatchRoute,
 	useNavigate,
@@ -42,8 +44,6 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
-import { OrgAvatar } from "@/components/common/org-avatar";
-import { UserAvatar } from "@/components/common/user-avatar";
 import { CommandMenu } from "@/components/workspace/command-menu";
 import { resolveModule, type SidebarItem } from "@/config/navigation";
 import { useOrganizations, useSession, useSignOut } from "@/hooks/use-auth";
@@ -139,17 +139,17 @@ function WorkspaceSwitcher({ orgSlug }: { orgSlug: string }) {
 					<DropdownMenuTrigger
 						render={
 							<SidebarMenuButton
-								size="lg"
 								tooltip={activeOrganization?.name ?? orgSlug}
 							/>
 						}
 					>
-						<OrgAvatar
+						<OrgLogo
 							size="sm"
-							name={activeOrganization?.name}
-							logo={activeOrganization?.logo}
+							colorSeed={activeOrganization?.id}
+							placeholder={activeOrganization?.name}
+							avatarUrl={activeOrganization?.logo}
 						/>
-						<span className="flex-1 truncate font-medium">
+						<span className="flex-1 truncate font-medium text-foreground-primary">
 							{activeOrganization?.name ?? orgSlug}
 						</span>
 						<ChevronsUpDownIcon className="size-3.5 shrink-0" />
@@ -165,7 +165,12 @@ function WorkspaceSwitcher({ orgSlug }: { orgSlug: string }) {
 									})
 								}
 							>
-								<OrgAvatar size="sm" name={org.name} logo={org.logo} />
+								<OrgLogo
+									size="sm"
+									colorSeed={org.id}
+									placeholder={org.name}
+									avatarUrl={org.logo}
+								/>
 								<span className="flex-1 truncate">{org.name}</span>
 								{org.slug === orgSlug && <CheckIcon className="size-4" />}
 							</DropdownMenuItem>
@@ -205,7 +210,11 @@ function UserMenu() {
 					<SidebarMenuButton size="lg" tooltip={user?.name ?? "Account"} />
 				}
 			>
-				<UserAvatar name={user?.name} image={user?.image} />
+				<UserAvatar
+					colorSeed={user?.id}
+					placeholder={user?.name}
+					avatarUrl={user?.image}
+				/>
 				<div className="flex min-w-0 flex-1 flex-col text-left">
 					<span className="truncate text-sm">{user?.name}</span>
 					<span className="truncate text-xs text-muted-foreground">
@@ -217,7 +226,11 @@ function UserMenu() {
 			<DropdownMenuContent side="top" align="end" className="w-56">
 				<DropdownMenuGroup>
 					<DropdownMenuLabel className="flex items-center gap-2 p-2">
-						<UserAvatar name={user?.name} image={user?.image} />
+						<UserAvatar
+							colorSeed={user?.id}
+							placeholder={user?.name}
+							avatarUrl={user?.image}
+						/>
 						<div className="flex min-w-0 flex-col">
 							<span className="truncate">{user?.name}</span>
 							<span className="truncate text-xs">{user?.email}</span>

@@ -14,11 +14,11 @@ import {
 	TableHeader,
 	TableRow,
 } from "@orbit/ui/components/table";
+import { UserAvatar } from "@orbit/ui/custom/user-avatar";
 import { cn } from "@orbit/ui/lib/utils";
 import { MoreHorizontalIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { UserAvatar } from "@/components/common/user-avatar";
 import {
 	useCancelInvitation,
 	useRemoveMember,
@@ -153,8 +153,9 @@ export function MembersTable({
 										<div className="flex items-center gap-2.5">
 											<UserAvatar
 												size="sm"
-												name={m.user.name}
-												image={m.user.image}
+												colorSeed={m.user.id}
+												placeholder={m.user.name}
+												avatarUrl={m.user.image}
 											/>
 											<p>
 												{m.user.name}

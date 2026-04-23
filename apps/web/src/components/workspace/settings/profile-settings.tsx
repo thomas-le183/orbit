@@ -10,16 +10,14 @@ import {
 import { Input } from "@orbit/ui/components/input";
 import { ImageIcon, Trash2Icon, UploadIcon } from "lucide-react";
 import { useId, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useSession, useUpdateUser } from "@/hooks/use-auth";
 import { DeleteAccountDialog } from "./delete-account-dialog";
 import { SettingsPage } from "./settings-page";
-import { useSaveIndicator } from "./use-save-indicator";
 
 export function ProfileSettings() {
 	const { data: session } = useSession();
 	const update = useUpdateUser();
-	const nameSave = useSaveIndicator();
-	const avatarSave = useSaveIndicator();
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const avatarId = useId();
@@ -33,7 +31,10 @@ export function ProfileSettings() {
 		if (!user) return;
 		const next = value.trim();
 		if (next === (user.name ?? "").trim()) return;
-		update.mutate({ name: next }, { onSuccess: nameSave.trigger });
+		update.mutate(
+			{ name: next },
+			{ onSuccess: () => toast.success("Name updated") },
+		);
 	}
 
 	function saveAvatar(value: string) {
@@ -43,7 +44,10 @@ export function ProfileSettings() {
 		if (next === prev) return;
 		update.mutate(
 			{ image: next === "" ? null : next },
-			{ onSuccess: avatarSave.trigger },
+			{
+				onSuccess: () =>
+					toast.success(next === "" ? "Picture removed" : "Picture updated"),
+			},
 		);
 	}
 
@@ -111,11 +115,6 @@ export function ProfileSettings() {
 							<FieldDescription>
 								We support your square PNGs, JPEGs and GIFs under 10MB
 							</FieldDescription>
-							{avatarSave.saved && (
-								<FieldDescription className="text-green-500">
-									Saved ✓
-								</FieldDescription>
-							)}
 						</div>
 					</div>
 				</Field>

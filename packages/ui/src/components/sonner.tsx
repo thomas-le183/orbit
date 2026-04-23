@@ -1,5 +1,3 @@
-"use client";
-
 import {
 	CircleCheckIcon,
 	InfoIcon,
@@ -35,6 +33,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
 			toastOptions={{
 				classNames: {
 					toast: "cn-toast",
+					success: "[&_[data-icon]]:text-grass-foreground",
+					error: "[&_[data-icon]]:text-red-foreground",
+					warning: "[&_[data-icon]]:text-amber-foreground",
+					info: "[&_[data-icon]]:text-blue-foreground",
 				},
 			}}
 			{...props}
