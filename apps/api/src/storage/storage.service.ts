@@ -32,12 +32,14 @@ export class StorageService {
 	async generatePresignedUploadUrl(
 		key: string,
 		mimeType: string,
+		fileSize: number,
 		expiresIn = 900,
 	): Promise<string> {
 		const command = new PutObjectCommand({
 			Bucket: this.bucket,
 			Key: key,
 			ContentType: mimeType,
+			ContentLength: fileSize,
 		});
 		return getSignedUrl(this.client, command, { expiresIn });
 	}

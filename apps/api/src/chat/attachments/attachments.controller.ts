@@ -17,6 +17,7 @@ export class AttachmentsController {
 		const uploadUrl = await this.storageService.generatePresignedUploadUrl(
 			storageKey,
 			body.mimeType,
+			body.fileSize,
 		);
 		return { uploadUrl, storageKey };
 	}
