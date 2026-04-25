@@ -287,9 +287,25 @@ export class MessagesService {
 				),
 			});
 			if (!p) throw new ForbiddenException("Not a participant");
+			return;
 		}
-		// Channel access check is lenient here (public channels are open);
-		// private channel enforcement happens at room:join in the gateway.
+
+		if (msg.channelId) {
+			const channel = await this.db.query.channel.findFirst({
+				where: eq(schema.channel.id, msg.channelId),
+			});
+			if (!channel) throw new NotFoundException("Channel not found");
+
+			if (channel.isPrivate) {
+				const membership = await this.db.query.channelMember.findFirst({
+					where: and(
+						eq(schema.channelMember.channelId, msg.channelId),
+						eq(schema.channelMember.userId, userId),
+					),
+				});
+				if (!membership) throw new ForbiddenException("Not a member of this channel");
+			}
+		}
 	}
 
 	async getFullMessage(messageId: string) {
