@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	Controller,
 	Headers,
 	HttpCode,
@@ -20,7 +21,7 @@ interface SubscriptionPayload {
 	id: string;
 	customer: string | { id: string };
 	status: string;
-	items: { data: Array<{ price: { id: string } }> };
+	items: { data: Array<{ price: { id: string; lookup_key: string | null } }> };
 	current_period_start: number;
 	current_period_end: number;
 	cancel_at_period_end: boolean;
@@ -51,7 +52,7 @@ export class StripeWebhookController {
 			event = this.stripeService.constructWebhookEvent(rawBody, signature);
 		} catch (err) {
 			this.logger.warn(`Webhook signature verification failed: ${err}`);
-			return { received: false };
+			throw new BadRequestException("Invalid webhook signature");
 		}
 
 		switch (event.type) {
@@ -79,6 +80,12 @@ export class StripeWebhookController {
 				);
 				break;
 
+			case "invoice.paid":
+				await this.handleInvoicePaid(
+					event.data.object as unknown as InvoicePayload,
+				);
+				break;
+
 			default:
 				this.logger.log(`Unhandled event type: ${event.type}`);
 		}
@@ -98,23 +105,23 @@ export class StripeWebhookController {
 		const sub =
 			await this.stripeService.stripe.subscriptions.retrieve(subscriptionId);
 		const rawSub = sub as unknown as SubscriptionPayload;
-		const priceId = rawSub.items.data[0]?.price.id;
-		if (!priceId) return;
+		const priceItem = rawSub.items.data[0]?.price;
+		if (!priceItem) return;
 
-		const tier = this.billingService.mapPriceIdToTier(priceId);
+		const plan = this.billingService.mapLookupKeyToPlan(priceItem.lookup_key ?? "");
 
 		await this.billingService.upsertSubscription({
 			organizationId,
 			stripeSubscriptionId: sub.id,
-			stripePriceId: priceId,
-			subscriptionTier: tier,
+			stripePriceId: priceItem.id,
+			subscriptionPlan: plan,
 			status: sub.status,
 			currentPeriodStart: new Date(rawSub.current_period_start * 1000),
 			currentPeriodEnd: new Date(rawSub.current_period_end * 1000),
 			cancelAtPeriodEnd: sub.cancel_at_period_end,
 		});
 
-		this.logger.log(`Checkout completed: org=${organizationId} plan=${tier}`);
+		this.logger.log(`Checkout completed: org=${organizationId} plan=${plan}`);
 	}
 
 	private async handleSubscriptionUpdated(sub: SubscriptionPayload) {
@@ -128,16 +135,16 @@ export class StripeWebhookController {
 			return;
 		}
 
-		const priceId = sub.items.data[0]?.price.id;
-		if (!priceId) return;
+		const priceItem = sub.items.data[0]?.price;
+		if (!priceItem) return;
 
-		const tier = this.billingService.mapPriceIdToTier(priceId);
+		const plan = this.billingService.mapLookupKeyToPlan(priceItem.lookup_key ?? "");
 
 		await this.billingService.upsertSubscription({
 			organizationId: billing.organizationId,
 			stripeSubscriptionId: sub.id,
-			stripePriceId: priceId,
-			subscriptionTier: tier,
+			stripePriceId: priceItem.id,
+			subscriptionPlan: plan,
 			status: sub.status,
 			currentPeriodStart: new Date(sub.current_period_start * 1000),
 			currentPeriodEnd: new Date(sub.current_period_end * 1000),
@@ -145,7 +152,7 @@ export class StripeWebhookController {
 		});
 
 		this.logger.log(
-			`Subscription updated: org=${billing.organizationId} plan=${tier} status=${sub.status}`,
+			`Subscription updated: org=${billing.organizationId} plan=${plan} status=${sub.status}`,
 		);
 	}
 
@@ -161,6 +168,18 @@ export class StripeWebhookController {
 				: invoice.subscription?.id;
 
 		if (!subId) return;
+		await this.billingService.updateSubscriptionStatus(subId, "past_due");
 		this.logger.warn(`Payment failed for subscription: ${subId}`);
+	}
+
+	private async handleInvoicePaid(invoice: InvoicePayload) {
+		const subId =
+			typeof invoice.subscription === "string"
+				? invoice.subscription
+				: invoice.subscription?.id;
+
+		if (!subId) return;
+		await this.billingService.updateSubscriptionStatus(subId, "active");
+		this.logger.log(`Invoice paid, subscription restored: ${subId}`);
 	}
 }

@@ -1,15 +1,15 @@
-export const SUBSCRIPTION_TIERS = {
+export const SUBSCRIPTION_PLANS = {
 	FREE: "free",
-	TEAM: "team",
-	PRO: "pro",
+	BASIC: "basic",
+	BUSINESS: "business",
 	ENTERPRISE: "enterprise",
 } as const;
 
-export type SubscriptionTier =
-	(typeof SUBSCRIPTION_TIERS)[keyof typeof SUBSCRIPTION_TIERS];
+export type SubscriptionPlan =
+	(typeof SUBSCRIPTION_PLANS)[keyof typeof SUBSCRIPTION_PLANS];
 
-export interface TierMetadata {
-	id: SubscriptionTier;
+export interface PlanMetadata {
+	id: SubscriptionPlan;
 	label: string;
 	description: string;
 	memberLimit: number; // -1 = unlimited
@@ -24,13 +24,13 @@ export interface TierMetadata {
 	features: readonly string[];
 }
 
-export type TierFlags = TierMetadata["flags"];
+export type PlanFlags = PlanMetadata["flags"];
 
 // ---------- API response types ----------
 
 export interface SubscriptionResponse {
-	tier: SubscriptionTier;
-	tierLabel: string;
+	plan: SubscriptionPlan;
+	planLabel: string;
 	usage: {
 		members: {
 			current: number;
@@ -44,6 +44,21 @@ export interface SubscriptionResponse {
 	} | null;
 }
 
+export interface PlanPrice {
+	monthly: number | null;
+	yearly: number | null;
+}
+
+export interface PlanResponse {
+	id: SubscriptionPlan;
+	label: string;
+	description: string;
+	price: PlanPrice;
+	features: readonly string[];
+	flags: PlanMetadata["flags"];
+	isEnterprise: boolean;
+}
+
 export interface CheckoutResponse {
 	url: string | null;
 }
@@ -52,10 +67,10 @@ export interface PortalResponse {
 	url: string;
 }
 
-// ---------- Tier metadata ----------
+// ---------- Plan metadata ----------
 
-export const TIER_METADATA: Record<SubscriptionTier, TierMetadata> = {
-	[SUBSCRIPTION_TIERS.FREE]: {
+export const PLAN_METADATA: Record<SubscriptionPlan, PlanMetadata> = {
+	[SUBSCRIPTION_PLANS.FREE]: {
 		id: "free",
 		label: "Hobby",
 		description: "Great for individual developers and side projects.",
@@ -74,31 +89,25 @@ export const TIER_METADATA: Record<SubscriptionTier, TierMetadata> = {
 			"Community support",
 		],
 	},
-	[SUBSCRIPTION_TIERS.TEAM]: {
-		id: "team",
-		label: "Startup",
-		description: "Perfect for early-stage companies and small growing teams.",
+	[SUBSCRIPTION_PLANS.BASIC]: {
+		id: "basic",
+		label: "Basic",
+		description: "For small teams getting started.",
 		memberLimit: -1,
-		monthlyPriceUsd: 19,
+		monthlyPriceUsd: 10,
 		flags: {
-			hasAdvancedAnalytics: true,
+			hasAdvancedAnalytics: false,
 			hasCustomBranding: false,
 			hasSSO: false,
 		},
-		features: [
-			"Unlimited members",
-			"Up to 20 projects",
-			"Advanced analytics",
-			"20 GB storage",
-			"Priority email support",
-		],
+		features: [],
 	},
-	[SUBSCRIPTION_TIERS.PRO]: {
-		id: "pro",
+	[SUBSCRIPTION_PLANS.BUSINESS]: {
+		id: "business",
 		label: "Business",
 		description: "For scaling companies that need advanced workflows.",
 		memberLimit: -1,
-		monthlyPriceUsd: 59,
+		monthlyPriceUsd: 15,
 		flags: {
 			hasAdvancedAnalytics: true,
 			hasCustomBranding: true,
@@ -113,13 +122,13 @@ export const TIER_METADATA: Record<SubscriptionTier, TierMetadata> = {
 			"API access",
 		],
 	},
-	[SUBSCRIPTION_TIERS.ENTERPRISE]: {
+	[SUBSCRIPTION_PLANS.ENTERPRISE]: {
 		id: "enterprise",
 		label: "Enterprise",
 		description:
 			"Dedicated support, custom contracts, and unlimited scale for large organizations.",
 		memberLimit: -1,
-		monthlyPriceUsd: 199,
+		monthlyPriceUsd: 0,
 		flags: {
 			hasAdvancedAnalytics: true,
 			hasCustomBranding: true,

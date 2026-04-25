@@ -10,11 +10,12 @@ import {
 } from "@nestjs/common";
 import type {
 	CheckoutResponse,
+	PlanResponse,
 	PortalResponse,
+	SubscriptionPlan,
 	SubscriptionResponse,
-	SubscriptionTier,
 } from "@orbit/shared";
-import { TIER_METADATA } from "@orbit/shared";
+import { PLAN_METADATA } from "@orbit/shared";
 import type { User } from "../auth/auth.constants";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { AuthGuard } from "../common/guards/auth.guard";
@@ -29,6 +30,11 @@ export class BillingController {
 		private readonly stripeService: StripeService,
 	) {}
 
+	@Get("plans")
+	async getPlans(): Promise<PlanResponse[]> {
+		return this.billingService.getPlans();
+	}
+
 	@Get(":orgSlug/subscription")
 	async getSubscription(
 		@Param("orgSlug") orgSlug: string,
@@ -36,21 +42,20 @@ export class BillingController {
 		const org = await this.billingService.getOrgBySlug(orgSlug);
 		if (!org) throw new NotFoundException("Organization not found");
 
-		const tier = await this.billingService.getOrgSubscriptionTier(org.id);
+		const plan = await this.billingService.getOrgSubscriptionPlan(org.id);
 		const subscription = await this.billingService.getSubscription(org.id);
 		const memberCount = await this.billingService.getMemberCount(org.id);
-		const metadata = TIER_METADATA[tier];
+		const metadata = PLAN_METADATA[plan];
 
 		return {
-			tier,
-			tierLabel: metadata.label,
+			plan,
+			planLabel: metadata.label,
 			usage: {
 				members: {
 					current: memberCount,
 					limit: metadata.memberLimit,
 				},
 			},
-
 			subscription: subscription
 				? {
 						status: subscription.status,
@@ -64,21 +69,23 @@ export class BillingController {
 	@Post(":orgSlug/checkout")
 	async createCheckout(
 		@Param("orgSlug") orgSlug: string,
-		@Body() body: { tier: SubscriptionTier },
+		@Body() body: { plan: SubscriptionPlan; interval: "monthly" | "yearly" },
 		@CurrentUser() user: User,
 	): Promise<CheckoutResponse> {
-		const { tier } = body;
-		if (tier === "free") {
-			throw new BadRequestException("Cannot checkout for the free tier");
+		const { plan, interval } = body;
+		if (plan === "free" || plan === "enterprise") {
+			throw new BadRequestException("Cannot checkout for this plan");
 		}
 
-		const priceId = this.billingService.getPriceIdForTier(tier);
-		if (!priceId) {
-			throw new BadRequestException("Invalid tier");
+		const lookupKey = this.billingService.getLookupKeyForPlan(plan, interval);
+		if (!lookupKey) {
+			throw new BadRequestException("Invalid plan or interval");
 		}
 
 		const org = await this.billingService.getOrgBySlug(orgSlug);
 		if (!org) throw new NotFoundException("Organization not found");
+
+		const seatCount = await this.billingService.getMemberCount(org.id);
 
 		let billing = await this.billingService.getBillingRecord(org.id);
 		if (!billing) {
@@ -95,7 +102,8 @@ export class BillingController {
 
 		const session = await this.stripeService.createCheckoutSession(
 			billing.stripeCustomerId,
-			priceId,
+			lookupKey,
+			seatCount,
 			orgSlug,
 			org.id,
 		);

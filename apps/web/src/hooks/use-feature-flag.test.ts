@@ -37,11 +37,11 @@ describe("useFeatureFlag", () => {
 		expect(result.current.enabled).toBe(true);
 	});
 
-	it("returns enabled:false for hasAdvancedAnalytics on free tier", () => {
+	it("returns enabled:false for hasAdvancedAnalytics on free plan", () => {
 		mockUseOrgSubscription.mockReturnValue({
 			data: {
-				tier: "free",
-				usage: { members: { current: 1, limit: 5 } },
+				plan: "free",
+				usage: { members: { current: 1, limit: -1 } },
 				subscription: null,
 			},
 			isLoading: false,
@@ -49,14 +49,14 @@ describe("useFeatureFlag", () => {
 		});
 		const { result } = renderHook(() => useFeatureFlag("hasAdvancedAnalytics"));
 		expect(result.current.enabled).toBe(false);
-		expect(result.current.requiredTier).toBe("team");
+		expect(result.current.requiredPlan).toBe("business");
 	});
 
-	it("returns enabled:true for hasAdvancedAnalytics on team tier", () => {
+	it("returns enabled:true for hasAdvancedAnalytics on business plan", () => {
 		mockUseOrgSubscription.mockReturnValue({
 			data: {
-				tier: "team",
-				usage: { members: { current: 3, limit: 25 } },
+				plan: "business",
+				usage: { members: { current: 3, limit: -1 } },
 				subscription: null,
 			},
 			isLoading: false,
@@ -66,11 +66,11 @@ describe("useFeatureFlag", () => {
 		expect(result.current.enabled).toBe(true);
 	});
 
-	it("returns requiredTier:enterprise for hasSSO on pro tier", () => {
+	it("returns requiredPlan:enterprise for hasSSO on business plan", () => {
 		mockUseOrgSubscription.mockReturnValue({
 			data: {
-				tier: "pro",
-				usage: { members: { current: 10, limit: 100 } },
+				plan: "business",
+				usage: { members: { current: 10, limit: -1 } },
 				subscription: null,
 			},
 			isLoading: false,
@@ -78,6 +78,6 @@ describe("useFeatureFlag", () => {
 		});
 		const { result } = renderHook(() => useFeatureFlag("hasSSO"));
 		expect(result.current.enabled).toBe(false);
-		expect(result.current.requiredTier).toBe("enterprise");
+		expect(result.current.requiredPlan).toBe("enterprise");
 	});
 });

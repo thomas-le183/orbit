@@ -10,7 +10,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 vi.mock("@/hooks/use-billing", () => ({
-	useOrgSubscription: () => ({ data: { tier: "free" }, isLoading: false }),
+	useOrgSubscription: () => ({ data: { plan: "free" }, isLoading: false }),
 	useCheckout: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
@@ -23,7 +23,7 @@ describe("UpgradeGate", () => {
 	it("renders children normally when feature is enabled", () => {
 		vi.mocked(useFeatureFlag).mockReturnValue({
 			enabled: true,
-			requiredTier: "team",
+			requiredPlan: "business",
 		});
 		render(
 			<UpgradeGate flag="hasAdvancedAnalytics">
@@ -38,7 +38,7 @@ describe("UpgradeGate", () => {
 	it("renders children as disabled when feature is not enabled", () => {
 		vi.mocked(useFeatureFlag).mockReturnValue({
 			enabled: false,
-			requiredTier: "pro",
+			requiredPlan: "business",
 		});
 		render(
 			<UpgradeGate flag="hasCustomBranding">
@@ -53,7 +53,7 @@ describe("UpgradeGate", () => {
 	it("opens upgrade modal on click when feature is not enabled", () => {
 		vi.mocked(useFeatureFlag).mockReturnValue({
 			enabled: false,
-			requiredTier: "pro",
+			requiredPlan: "business",
 		});
 		render(
 			<UpgradeGate flag="hasCustomBranding">

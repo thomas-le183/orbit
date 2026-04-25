@@ -1,4 +1,4 @@
-import { TIER_METADATA } from "@orbit/shared";
+import { PLAN_METADATA } from "@orbit/shared";
 import { Badge } from "@orbit/ui/components/badge";
 import { Button } from "@orbit/ui/components/button";
 import { Separator } from "@orbit/ui/components/separator";
@@ -30,7 +30,7 @@ export function CurrentPlanCard() {
 		return <div className="h-48 animate-pulse rounded-lg bg-muted" />;
 	}
 
-	const meta = TIER_METADATA[data.tier];
+	const meta = PLAN_METADATA[data.plan];
 	const { current } = data.usage.members;
 
 	const statusInfo = data.subscription
@@ -43,11 +43,7 @@ export function CurrentPlanCard() {
 	const periodEnd = data.subscription
 		? new Date(data.subscription.currentPeriodEnd).toLocaleDateString(
 				undefined,
-				{
-					month: "short",
-					day: "numeric",
-					year: "numeric",
-				},
+				{ month: "short", day: "numeric", year: "numeric" },
 			)
 		: null;
 
@@ -59,13 +55,12 @@ export function CurrentPlanCard() {
 
 	return (
 		<div className="rounded-lg border p-6 space-y-5 bg-card">
-			{/* Header */}
 			<div className="flex items-start justify-between gap-4">
 				<div className="space-y-1">
 					<div className="flex items-center gap-2 flex-wrap">
 						<span>{meta.label}</span>
 						<Badge variant="secondary" className="capitalize">
-							{data.tier}
+							{data.plan}
 						</Badge>
 						{statusInfo && (
 							<Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
@@ -74,7 +69,6 @@ export function CurrentPlanCard() {
 				</div>
 			</div>
 
-			{/* Billing cycle */}
 			{data.subscription && periodEnd && (
 				<div className="flex items-center gap-2 text-sm">
 					<CalendarDays className="size-4 text-muted-foreground shrink-0" />
@@ -85,41 +79,30 @@ export function CurrentPlanCard() {
 				</div>
 			)}
 
-			{/* Seat usage */}
 			<div className="flex items-center gap-2 text-sm">
 				<Users className="size-4 text-muted-foreground shrink-0" />
 				<span className="text-muted-foreground">Total members</span>
 				<span>{current}</span>
 			</div>
 
-			{/* Feature flags */}
 			<div className="flex items-center gap-2 flex-wrap">
 				<Zap className="size-4 text-muted-foreground shrink-0" />
 				{meta.flags.hasAdvancedAnalytics && (
-					<Badge variant="outline" className="text-xs">
-						Advanced analytics
-					</Badge>
+					<Badge variant="outline" className="text-xs">Advanced analytics</Badge>
 				)}
 				{meta.flags.hasCustomBranding && (
-					<Badge variant="outline" className="text-xs">
-						Custom branding
-					</Badge>
+					<Badge variant="outline" className="text-xs">Custom branding</Badge>
 				)}
 				{meta.flags.hasSSO && (
-					<Badge variant="outline" className="text-xs">
-						SSO
-					</Badge>
+					<Badge variant="outline" className="text-xs">SSO</Badge>
 				)}
 				{!meta.flags.hasAdvancedAnalytics &&
 					!meta.flags.hasCustomBranding &&
 					!meta.flags.hasSSO && (
-						<span className="text-xs text-muted-foreground">
-							Basic features
-						</span>
+						<span className="text-xs text-muted-foreground">Basic features</span>
 					)}
 			</div>
 
-			{/* Actions */}
 			{data.subscription && (
 				<>
 					<Separator />

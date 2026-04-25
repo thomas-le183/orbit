@@ -1,4 +1,4 @@
-import type { SubscriptionTier } from "@orbit/shared";
+import type { SubscriptionPlan } from "@orbit/shared";
 import { createFileRoute, useParams } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { CurrentPlanCard } from "@/components/billing/current-plan-card";
@@ -14,8 +14,8 @@ function BillingPage() {
 	const { data } = useOrgSubscription(orgSlug);
 	const checkout = useCheckout(orgSlug);
 
-	function handleSelectTier(tier: SubscriptionTier) {
-		checkout.mutate(tier, {
+	function handleSelectPlan(plan: SubscriptionPlan) {
+		checkout.mutate(plan, {
 			onError: () => toast.error("Could not start checkout. Please try again."),
 		});
 	}
@@ -34,8 +34,8 @@ function BillingPage() {
 			<div>
 				<h2 className="mb-4 text-base font-semibold">Plans</h2>
 				<PricingTable
-					currentTier={data?.tier ?? "free"}
-					onSelectTier={handleSelectTier}
+					currentPlan={data?.plan ?? "free"}
+					onSelectPlan={handleSelectPlan}
 				/>
 			</div>
 		</div>

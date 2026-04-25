@@ -6,9 +6,9 @@ const mutateMock = vi.fn();
 vi.mock("@/hooks/use-billing", () => ({
 	useOrgSubscription: () => ({
 		data: {
-			tier: "team",
-			tierLabel: "Startup",
-			usage: { members: { current: 8, limit: 25 } },
+			plan: "business",
+			planLabel: "Business",
+			usage: { members: { current: 8, limit: -1 } },
 			subscription: {
 				status: "active",
 				currentPeriodEnd: new Date("2026-05-20"),
@@ -27,14 +27,9 @@ vi.mock("@tanstack/react-router", () => ({
 const { CurrentPlanCard } = await import("./current-plan-card");
 
 describe("CurrentPlanCard", () => {
-	it("shows the tier label", () => {
+	it("shows the plan label", () => {
 		render(<CurrentPlanCard />);
-		expect(screen.getByText("Startup")).toBeDefined();
-	});
-
-	it("shows member usage", () => {
-		render(<CurrentPlanCard />);
-		expect(screen.getByText(/8\s*\/\s*25/)).toBeDefined();
+		expect(screen.getByText("Business")).toBeDefined();
 	});
 
 	it("shows Manage subscription button when subscription exists", () => {

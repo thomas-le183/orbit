@@ -1,34 +1,34 @@
 import {
-	SUBSCRIPTION_TIERS,
-	type SubscriptionTier,
-	TIER_METADATA,
-	type TierFlags,
+	PLAN_METADATA,
+	type PlanFlags,
+	SUBSCRIPTION_PLANS,
+	type SubscriptionPlan,
 } from "@orbit/shared";
 import { useParams } from "@tanstack/react-router";
 import { useOrgSubscription } from "@/hooks/use-billing";
 
-const TIER_ORDER: SubscriptionTier[] = [
-	SUBSCRIPTION_TIERS.FREE,
-	SUBSCRIPTION_TIERS.TEAM,
-	SUBSCRIPTION_TIERS.PRO,
-	SUBSCRIPTION_TIERS.ENTERPRISE,
+const PLAN_ORDER: SubscriptionPlan[] = [
+	SUBSCRIPTION_PLANS.FREE,
+	SUBSCRIPTION_PLANS.BASIC,
+	SUBSCRIPTION_PLANS.BUSINESS,
+	SUBSCRIPTION_PLANS.ENTERPRISE,
 ];
 
-export function useFeatureFlag(flag: keyof TierFlags): {
+export function useFeatureFlag(flag: keyof PlanFlags): {
 	enabled: boolean;
-	requiredTier: SubscriptionTier;
+	requiredPlan: SubscriptionPlan;
 } {
 	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
 	const { data, isLoading, isError } = useOrgSubscription(orgSlug);
 
 	if (isLoading || isError || !data) {
-		return { enabled: true, requiredTier: SUBSCRIPTION_TIERS.FREE };
+		return { enabled: true, requiredPlan: SUBSCRIPTION_PLANS.FREE };
 	}
 
-	const enabled = TIER_METADATA[data.tier].flags[flag];
-	const requiredTier =
-		TIER_ORDER.find((t) => TIER_METADATA[t].flags[flag]) ??
-		SUBSCRIPTION_TIERS.ENTERPRISE;
+	const enabled = PLAN_METADATA[data.plan].flags[flag];
+	const requiredPlan =
+		PLAN_ORDER.find((p) => PLAN_METADATA[p].flags[flag]) ??
+		SUBSCRIPTION_PLANS.ENTERPRISE;
 
-	return { enabled, requiredTier };
+	return { enabled, requiredPlan };
 }

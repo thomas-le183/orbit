@@ -1,4 +1,4 @@
-import { TIER_METADATA, type TierFlags } from "@orbit/shared";
+import { PLAN_METADATA, type PlanFlags } from "@orbit/shared";
 import {
 	Tooltip,
 	TooltipContent,
@@ -12,20 +12,20 @@ import { useFeatureFlag } from "@/hooks/use-feature-flag";
 import { UpgradeModal } from "./upgrade-modal";
 
 interface UpgradeGateProps {
-	flag: keyof TierFlags;
+	flag: keyof PlanFlags;
 	children: ReactNode;
 	message?: string;
 }
 
 export function UpgradeGate({ flag, children, message }: UpgradeGateProps) {
-	const { enabled, requiredTier } = useFeatureFlag(flag);
+	const { enabled, requiredPlan } = useFeatureFlag(flag);
 	const [modalOpen, setModalOpen] = useState(false);
 	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
 	const { data } = useOrgSubscription(orgSlug);
 
 	if (enabled) return <>{children}</>;
 
-	const defaultMessage = `Available on ${TIER_METADATA[requiredTier].label} and above. Click to upgrade.`;
+	const defaultMessage = `Available on ${PLAN_METADATA[requiredPlan].label} and above. Click to upgrade.`;
 
 	return (
 		<>
@@ -46,8 +46,8 @@ export function UpgradeGate({ flag, children, message }: UpgradeGateProps) {
 			<UpgradeModal
 				open={modalOpen}
 				onOpenChange={setModalOpen}
-				highlightTier={requiredTier}
-				currentTier={data?.tier ?? "free"}
+				highlightPlan={requiredPlan}
+				currentPlan={data?.plan ?? "free"}
 			/>
 		</>
 	);

@@ -1,21 +1,21 @@
 import {
-	SUBSCRIPTION_TIERS,
-	type SubscriptionTier,
-	TIER_METADATA,
+	PLAN_METADATA,
+	SUBSCRIPTION_PLANS,
+	type SubscriptionPlan,
 } from "@orbit/shared";
 import { Pricing } from "@orbit/ui/components/pricing";
 
 interface PricingTableProps {
-	currentTier: SubscriptionTier;
-	highlightTier?: SubscriptionTier;
-	onSelectTier?: (tier: SubscriptionTier) => void;
+	currentPlan: SubscriptionPlan;
+	highlightPlan?: SubscriptionPlan;
+	onSelectPlan?: (plan: SubscriptionPlan) => void;
 }
 
-const TIER_ORDER: SubscriptionTier[] = [
-	SUBSCRIPTION_TIERS.FREE,
-	SUBSCRIPTION_TIERS.TEAM,
-	SUBSCRIPTION_TIERS.PRO,
-	SUBSCRIPTION_TIERS.ENTERPRISE,
+const PLAN_ORDER: SubscriptionPlan[] = [
+	SUBSCRIPTION_PLANS.FREE,
+	SUBSCRIPTION_PLANS.BASIC,
+	SUBSCRIPTION_PLANS.BUSINESS,
+	SUBSCRIPTION_PLANS.ENTERPRISE,
 ];
 
 function yearlyMonthlyPrice(monthlyUsd: number): number {
@@ -23,29 +23,27 @@ function yearlyMonthlyPrice(monthlyUsd: number): number {
 }
 
 export function PricingTable({
-	currentTier,
-	highlightTier,
-	onSelectTier,
+	currentPlan,
+	highlightPlan,
+	onSelectPlan,
 }: PricingTableProps) {
-	const effectiveHighlight = highlightTier ?? SUBSCRIPTION_TIERS.PRO;
+	const effectiveHighlight = highlightPlan ?? SUBSCRIPTION_PLANS.BUSINESS;
 
-	const plans = TIER_ORDER.map((tier, index) => {
-		const meta = TIER_METADATA[tier];
-		const isCurrent = tier === currentTier;
-		const isHighlighted = tier === effectiveHighlight;
-		const isEnterprise = tier === SUBSCRIPTION_TIERS.ENTERPRISE;
+	const plans = PLAN_ORDER.map((plan, index) => {
+		const meta = PLAN_METADATA[plan];
+		const isCurrent = plan === currentPlan;
+		const isHighlighted = plan === effectiveHighlight;
+		const isEnterprise = plan === SUBSCRIPTION_PLANS.ENTERPRISE;
 		const isPaid = meta.monthlyPriceUsd > 0 && !isEnterprise;
-		const prevLabel = index > 0 ? TIER_METADATA[TIER_ORDER[index - 1]].label : null;
+		const prevLabel = index > 0 ? PLAN_METADATA[PLAN_ORDER[index - 1]].label : null;
 
 		return {
-			id: tier,
+			id: plan,
 			name: meta.label,
 			description: meta.description,
 			price: meta.monthlyPriceUsd,
 			period: isEnterprise ? undefined : "per seat/month",
-			yearlyPrice: isPaid
-				? yearlyMonthlyPrice(meta.monthlyPriceUsd)
-				: undefined,
+			yearlyPrice: isPaid ? yearlyMonthlyPrice(meta.monthlyPriceUsd) : undefined,
 			badge: isHighlighted && !isEnterprise ? "Most popular" : undefined,
 			highlighted: isHighlighted && !isEnterprise,
 			featuresPrefix: prevLabel ? `Everything in ${prevLabel}, plus:` : undefined,
@@ -55,14 +53,14 @@ export function PricingTable({
 				? "Current plan"
 				: isEnterprise
 					? "Contact Sales"
-					: tier === SUBSCRIPTION_TIERS.FREE
+					: plan === SUBSCRIPTION_PLANS.FREE
 						? "Downgrade"
 						: "Get started",
-			ctaDisabled: isCurrent || tier === SUBSCRIPTION_TIERS.FREE,
+			ctaDisabled: isCurrent || plan === SUBSCRIPTION_PLANS.FREE,
 			onCta:
-				isCurrent || tier === SUBSCRIPTION_TIERS.FREE
+				isCurrent || plan === SUBSCRIPTION_PLANS.FREE
 					? undefined
-					: () => onSelectTier?.(tier),
+					: () => onSelectPlan?.(plan),
 		};
 	});
 

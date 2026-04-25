@@ -1,6 +1,17 @@
-import type { SubscriptionResponse, SubscriptionTier } from "@orbit/shared";
+import type { PlanResponse, SubscriptionPlan, SubscriptionResponse } from "@orbit/shared";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+
+export function usePlans() {
+	return useQuery({
+		queryKey: ["billing", "plans"],
+		queryFn: async () => {
+			const { data } = await api.get<PlanResponse[]>("/billing/plans");
+			return data;
+		},
+		staleTime: 1000 * 60 * 60,
+	});
+}
 
 export function useOrgSubscription(orgSlug: string) {
 	return useQuery({
@@ -16,10 +27,10 @@ export function useOrgSubscription(orgSlug: string) {
 
 export function useCheckout(orgSlug: string) {
 	return useMutation({
-		mutationFn: async (tier: SubscriptionTier) => {
+		mutationFn: async (plan: SubscriptionPlan) => {
 			const { data } = await api.post<{ url: string }>(
 				`/billing/${orgSlug}/checkout`,
-				{ tier },
+				{ plan },
 			);
 			return data;
 		},

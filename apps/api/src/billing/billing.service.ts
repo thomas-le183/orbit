@@ -1,17 +1,21 @@
 import { randomUUID } from "node:crypto";
 import { Inject, Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import type { SubscriptionTier } from "@orbit/shared";
-import { TIER_METADATA } from "@orbit/shared";
+import {
+	PLAN_METADATA,
+	SUBSCRIPTION_PLANS,
+	type PlanResponse,
+	type SubscriptionPlan,
+} from "@orbit/shared";
 import { count, eq } from "drizzle-orm";
 import { DB, type Db } from "../db/db.module";
 import * as schema from "../db/schema";
+import type { StripeService } from "./stripe.service";
 
 @Injectable()
 export class BillingService {
 	constructor(
 		@Inject(DB) private readonly db: Db,
-		private readonly config: ConfigService,
+		private readonly stripeService: StripeService,
 	) {}
 
 	async getOrgBySlug(slug: string) {
@@ -50,20 +54,18 @@ export class BillingService {
 		});
 	}
 
-	async getOrgSubscriptionTier(
-		organizationId: string,
-	): Promise<SubscriptionTier> {
+	async getOrgSubscriptionPlan(organizationId: string): Promise<SubscriptionPlan> {
 		const sub = await this.getSubscription(organizationId);
 		if (!sub || sub.status === "canceled" || sub.status === "unpaid") {
 			return "free";
 		}
-		return sub.subscriptionTier as SubscriptionTier;
+		return sub.subscriptionPlan as SubscriptionPlan;
 	}
 
-	async getOrgSubscriptionBySlug(slug: string): Promise<SubscriptionTier> {
+	async getOrgPlanBySlug(slug: string): Promise<SubscriptionPlan> {
 		const org = await this.getOrgBySlug(slug);
 		if (!org) return "free";
-		return this.getOrgSubscriptionTier(org.id);
+		return this.getOrgSubscriptionPlan(org.id);
 	}
 
 	async getMemberCount(organizationId: string): Promise<number> {
@@ -75,8 +77,8 @@ export class BillingService {
 	}
 
 	async canAddMember(organizationId: string): Promise<boolean> {
-		const tier = await this.getOrgSubscriptionTier(organizationId);
-		const metadata = TIER_METADATA[tier];
+		const plan = await this.getOrgSubscriptionPlan(organizationId);
+		const metadata = PLAN_METADATA[plan];
 		if (metadata.memberLimit === -1) return true;
 		const memberCount = await this.getMemberCount(organizationId);
 		return memberCount < metadata.memberLimit;
@@ -86,7 +88,7 @@ export class BillingService {
 		organizationId: string;
 		stripeSubscriptionId: string;
 		stripePriceId: string;
-		subscriptionTier: SubscriptionTier;
+		subscriptionPlan: SubscriptionPlan;
 		status: string;
 		currentPeriodStart: Date;
 		currentPeriodEnd: Date;
@@ -101,7 +103,7 @@ export class BillingService {
 				.set({
 					stripeSubscriptionId: data.stripeSubscriptionId,
 					stripePriceId: data.stripePriceId,
-					subscriptionTier: data.subscriptionTier,
+					subscriptionPlan: data.subscriptionPlan,
 					status: data.status,
 					currentPeriodStart: data.currentPeriodStart,
 					currentPeriodEnd: data.currentPeriodEnd,
@@ -125,32 +127,63 @@ export class BillingService {
 		});
 	}
 
+	async updateSubscriptionStatus(stripeSubscriptionId: string, status: string) {
+		await this.db
+			.update(schema.subscription)
+			.set({ status, updatedAt: new Date() })
+			.where(eq(schema.subscription.stripeSubscriptionId, stripeSubscriptionId));
+	}
+
 	async deleteSubscription(stripeSubscriptionId: string) {
 		await this.db
 			.delete(schema.subscription)
-			.where(
-				eq(schema.subscription.stripeSubscriptionId, stripeSubscriptionId),
-			);
+			.where(eq(schema.subscription.stripeSubscriptionId, stripeSubscriptionId));
 	}
 
-	mapPriceIdToTier(priceId: string): SubscriptionTier {
-		const proPriceId = this.config.get<string>("STRIPE_PRO_PRICE_ID");
-		const enterprisePriceId = this.config.get<string>(
-			"STRIPE_ENTERPRISE_PRICE_ID",
-		);
+	private readonly LOOKUP_KEYS: Record<string, SubscriptionPlan> = {
+		basic_monthly: "basic",
+		basic_yearly: "basic",
+		business_monthly: "business",
+		business_yearly: "business",
+	};
 
-		if (priceId === proPriceId) return "pro";
-		if (priceId === enterprisePriceId) return "enterprise";
-		return "free";
+	private readonly PLAN_LOOKUP_KEYS: Partial<Record<SubscriptionPlan, { monthly: string; yearly: string }>> = {
+		basic: { monthly: "basic_monthly", yearly: "basic_yearly" },
+		business: { monthly: "business_monthly", yearly: "business_yearly" },
+	};
+
+	mapLookupKeyToPlan(lookupKey: string): SubscriptionPlan {
+		return this.LOOKUP_KEYS[lookupKey] ?? "free";
 	}
 
-	getPriceIdForTier(tier: SubscriptionTier): string | null {
-		if (tier === "pro") {
-			return this.config.getOrThrow<string>("STRIPE_PRO_PRICE_ID");
-		}
-		if (tier === "enterprise") {
-			return this.config.getOrThrow<string>("STRIPE_ENTERPRISE_PRICE_ID");
-		}
-		return null;
+	getLookupKeyForPlan(plan: SubscriptionPlan, interval: "monthly" | "yearly"): string | null {
+		return this.PLAN_LOOKUP_KEYS[plan]?.[interval] ?? null;
+	}
+
+	async getPlans(): Promise<PlanResponse[]> {
+		const allLookupKeys = Object.keys(this.LOOKUP_KEYS);
+		const prices = await this.stripeService.getPricesByLookupKeys(allLookupKeys);
+
+		return (Object.keys(SUBSCRIPTION_PLANS) as Array<keyof typeof SUBSCRIPTION_PLANS>)
+			.map((key) => SUBSCRIPTION_PLANS[key])
+			.map((plan) => {
+				const meta = PLAN_METADATA[plan];
+				const keys = this.PLAN_LOOKUP_KEYS[plan];
+				const isEnterprise = plan === SUBSCRIPTION_PLANS.ENTERPRISE;
+				const monthlyAmount = keys ? prices[keys.monthly] : null;
+				const yearlyAmount = keys ? prices[keys.yearly] : null;
+				return {
+					id: plan,
+					label: meta.label,
+					description: meta.description,
+					features: meta.features,
+					flags: meta.flags,
+					isEnterprise,
+					price: {
+						monthly: monthlyAmount != null ? monthlyAmount / 100 : null,
+						yearly: yearlyAmount != null ? yearlyAmount / 100 : null,
+					},
+				};
+			});
 	}
 }

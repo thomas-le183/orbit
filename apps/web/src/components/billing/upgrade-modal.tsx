@@ -1,4 +1,4 @@
-import type { SubscriptionTier } from "@orbit/shared";
+import type { SubscriptionPlan } from "@orbit/shared";
 import {
 	Dialog,
 	DialogContent,
@@ -13,21 +13,21 @@ import { PricingTable } from "./pricing-table";
 interface UpgradeModalProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	highlightTier?: SubscriptionTier;
-	currentTier: SubscriptionTier;
+	highlightPlan?: SubscriptionPlan;
+	currentPlan: SubscriptionPlan;
 }
 
 export function UpgradeModal({
 	open,
 	onOpenChange,
-	highlightTier,
-	currentTier,
+	highlightPlan,
+	currentPlan,
 }: UpgradeModalProps) {
 	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
 	const checkout = useCheckout(orgSlug);
 
-	function handleSelectTier(tier: SubscriptionTier) {
-		checkout.mutate(tier, {
+	function handleSelectPlan(plan: SubscriptionPlan) {
+		checkout.mutate(plan, {
 			onError: () => toast.error("Could not start checkout. Please try again."),
 		});
 	}
@@ -39,9 +39,9 @@ export function UpgradeModal({
 					<DialogTitle>Upgrade your plan</DialogTitle>
 				</DialogHeader>
 				<PricingTable
-					currentTier={currentTier}
-					highlightTier={highlightTier}
-					onSelectTier={handleSelectTier}
+					currentPlan={currentPlan}
+					highlightPlan={highlightPlan}
+					onSelectPlan={handleSelectPlan}
 				/>
 			</DialogContent>
 		</Dialog>
