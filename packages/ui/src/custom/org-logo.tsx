@@ -1,10 +1,6 @@
-import { getInitials, pickFromPalette } from "@orbit/shared";
-import {
-	Avatar,
-	AvatarFallback,
-	AvatarImage,
-} from "../components/avatar";
-import { cn } from "../lib/utils";
+import { getInitials } from "@orbit/shared";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/avatar";
+import { cn, pickFromPalette } from "../lib/utils";
 
 type Size = "sm" | "default" | "lg";
 
@@ -23,7 +19,6 @@ export function OrgLogo({
 }) {
 	const seed = colorSeed ?? placeholder ?? "";
 	const paletteClasses = seed ? pickFromPalette(seed) : "bg-muted";
-
 	return (
 		<Avatar
 			size={size}

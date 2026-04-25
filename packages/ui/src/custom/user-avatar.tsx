@@ -1,5 +1,6 @@
-import { cn, getInitials, pickFromPalette } from "@orbit/shared";
+import { getInitials } from "@orbit/shared";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/avatar";
+import { cn, pickFromPalette } from "../lib/utils";
 
 type Size = "sm" | "default" | "lg";
 
