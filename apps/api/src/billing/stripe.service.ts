@@ -53,8 +53,8 @@ export class StripeService {
 			customer: customerId,
 			mode: "subscription",
 			line_items: [{ price: price.id, quantity: seatCount }],
-			success_url: `${webBaseUrl}/${orgSlug}/settings?tab=billing&checkout=success`,
-			cancel_url: `${webBaseUrl}/${orgSlug}/settings?tab=billing&checkout=canceled`,
+			success_url: `${webBaseUrl}/${orgSlug}/settings/billing?checkout=success`,
+			cancel_url: `${webBaseUrl}/${orgSlug}/settings/billing?checkout=canceled`,
 			client_reference_id: organizationId,
 		});
 	}

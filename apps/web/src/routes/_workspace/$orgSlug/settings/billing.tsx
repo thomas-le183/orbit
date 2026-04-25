@@ -1,16 +1,29 @@
 import type { SubscriptionPlan } from "@orbit/shared";
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import { createFileRoute, useParams, useSearch } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { CurrentPlanCard } from "@/components/billing/current-plan-card";
 import { PricingTable } from "@/components/billing/pricing-table";
 import { useCheckout, useOrgSubscription } from "@/hooks/use-billing";
 
 export const Route = createFileRoute("/_workspace/$orgSlug/settings/billing")({
+	validateSearch: (search: Record<string, unknown>) => ({
+		checkout: search.checkout as "success" | "canceled" | undefined,
+	}),
 	component: BillingPage,
 });
 
 function BillingPage() {
 	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
+	const { checkout: checkoutResult } = useSearch({ from: "/_workspace/$orgSlug/settings/billing" });
+
+	useEffect(() => {
+		if (checkoutResult === "success") {
+			toast.success("Subscription activated! Welcome to your new plan.");
+		} else if (checkoutResult === "canceled") {
+			toast.info("Checkout canceled. No changes were made.");
+		}
+	}, [checkoutResult]);
 	const { data } = useOrgSubscription(orgSlug);
 	const checkout = useCheckout(orgSlug);
 
