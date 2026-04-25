@@ -27,10 +27,16 @@ export function useOrgSubscription(orgSlug: string) {
 
 export function useCheckout(orgSlug: string) {
 	return useMutation({
-		mutationFn: async (plan: SubscriptionPlan) => {
+		mutationFn: async ({
+			plan,
+			interval,
+		}: {
+			plan: SubscriptionPlan;
+			interval: "monthly" | "yearly";
+		}) => {
 			const { data } = await api.post<{ url: string }>(
 				`/billing/${orgSlug}/checkout`,
-				{ plan },
+				{ plan, interval },
 			);
 			return data;
 		},

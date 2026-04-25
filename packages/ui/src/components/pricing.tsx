@@ -16,7 +16,7 @@ export interface PricingPlan {
 	features: string[];
 	cta: string;
 	ctaDisabled?: boolean;
-	onCta?: () => void;
+	onCta?: (period: "monthly" | "yearly") => void;
 	highlighted?: boolean;
 	isEnterprise?: boolean;
 }
@@ -99,7 +99,7 @@ export function Pricing({ plans }: PricingProps) {
 									className="w-full"
 									variant={plan.highlighted ? "default" : "outline"}
 									disabled={plan.ctaDisabled}
-									onClick={plan.onCta}
+									onClick={() => plan.onCta?.(period)}
 								>
 									{plan.cta}
 								</Button>
@@ -141,7 +141,7 @@ export function Pricing({ plans }: PricingProps) {
 								className="w-fit"
 								variant={enterprisePlan.ctaDisabled ? "outline" : "default"}
 								disabled={enterprisePlan.ctaDisabled}
-								onClick={enterprisePlan.onCta}
+								onClick={() => enterprisePlan.onCta?.(period)}
 							>
 								{enterprisePlan.cta}
 							</Button>

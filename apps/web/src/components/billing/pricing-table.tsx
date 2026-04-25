@@ -8,7 +8,7 @@ import { Pricing } from "@orbit/ui/components/pricing";
 interface PricingTableProps {
 	currentPlan: SubscriptionPlan;
 	highlightPlan?: SubscriptionPlan;
-	onSelectPlan?: (plan: SubscriptionPlan) => void;
+	onSelectPlan?: (plan: SubscriptionPlan, interval: "monthly" | "yearly") => void;
 }
 
 const PLAN_ORDER: SubscriptionPlan[] = [
@@ -60,7 +60,7 @@ export function PricingTable({
 			onCta:
 				isCurrent || plan === SUBSCRIPTION_PLANS.FREE
 					? undefined
-					: () => onSelectPlan?.(plan),
+					: (period: "monthly" | "yearly") => onSelectPlan?.(plan, period),
 		};
 	});
 
