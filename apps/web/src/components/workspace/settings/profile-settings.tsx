@@ -104,6 +104,11 @@ export function ProfileSettings() {
 									onChange={(e) => {
 										const file = e.target.files?.[0];
 										if (!file) return;
+										if (file.size > 10 * 1024 * 1024) {
+											toast.error("Image must be under 10 MB");
+											e.target.value = "";
+											return;
+										}
 										const reader = new FileReader();
 										reader.onload = () =>
 											saveAvatar(String(reader.result ?? ""));

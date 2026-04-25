@@ -17,6 +17,7 @@ import {
 } from "@orbit/ui/components/field";
 import { Input } from "@orbit/ui/components/input";
 import { useRouter } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { ImageIcon, Trash2Icon, UploadIcon } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { useDeleteOrganization, useUpdateOrganization } from "@/hooks/use-auth";
@@ -115,6 +116,11 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 									onChange={(e) => {
 										const file = e.target.files?.[0];
 										if (!file) return;
+										if (file.size > 10 * 1024 * 1024) {
+											toast.error("Logo must be under 10 MB");
+											e.target.value = "";
+											return;
+										}
 										const reader = new FileReader();
 										reader.onload = () =>
 											saveIf(
