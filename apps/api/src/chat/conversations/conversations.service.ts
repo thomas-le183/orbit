@@ -41,68 +41,63 @@ export class ConversationsService {
 	}
 
 	async findOrCreate(orgId: string, userId: string, participantIds: string[]) {
-		// Always include the requesting user in the participant set, deduplicate
 		const participantSet = [...new Set([userId, ...participantIds])].sort();
 
-		// Find existing conversation in this org where the user is a participant
-		const userConvos = await this.db
-			.select({
-				conversationId: schema.conversationParticipant.conversationId,
-			})
-			.from(schema.conversationParticipant)
-			.innerJoin(
-				schema.conversation,
-				eq(
-					schema.conversation.id,
-					schema.conversationParticipant.conversationId,
-				),
-			)
-			.where(
-				and(
-					eq(schema.conversationParticipant.userId, userId),
-					eq(schema.conversation.organizationId, orgId),
-				),
-			);
+		return this.db.transaction(async (tx) => {
+			const userConvos = await tx
+				.select({
+					conversationId: schema.conversationParticipant.conversationId,
+				})
+				.from(schema.conversationParticipant)
+				.innerJoin(
+					schema.conversation,
+					eq(
+						schema.conversation.id,
+						schema.conversationParticipant.conversationId,
+					),
+				)
+				.where(
+					and(
+						eq(schema.conversationParticipant.userId, userId),
+						eq(schema.conversation.organizationId, orgId),
+					),
+				);
 
-		// Check each candidate for an exact participant-set match
-		for (const { conversationId } of userConvos) {
-			const participants = await this.db.query.conversationParticipant.findMany(
-				{
+			for (const { conversationId } of userConvos) {
+				const participants = await tx.query.conversationParticipant.findMany({
 					where: eq(
 						schema.conversationParticipant.conversationId,
 						conversationId,
 					),
-				},
-			);
+				});
 
-			const existingSet = participants.map((p) => p.userId).sort();
+				const existingSet = participants.map((p) => p.userId).sort();
+				const isExactMatch =
+					existingSet.length === participantSet.length &&
+					existingSet.every((id, i) => id === participantSet[i]);
 
-			const isExactMatch =
-				existingSet.length === participantSet.length &&
-				existingSet.every((id, i) => id === participantSet[i]);
-
-			if (isExactMatch) {
-				return { conversationId, participants };
+				if (isExactMatch) {
+					return { conversationId, participants };
+				}
 			}
-		}
 
-		// No match — create a new conversation
-		const id = randomUUID();
-		const now = new Date();
+			const id = randomUUID();
+			const now = new Date();
 
-		await this.db
-			.insert(schema.conversation)
-			.values({ id, organizationId: orgId, createdAt: now });
+			await tx
+				.insert(schema.conversation)
+				.values({ id, organizationId: orgId, createdAt: now });
 
-		const participants = participantSet.map((uid) => ({
-			id: randomUUID(),
-			conversationId: id,
-			userId: uid,
-			joinedAt: now,
-		}));
+			const participants = participantSet.map((uid) => ({
+				id: randomUUID(),
+				conversationId: id,
+				userId: uid,
+				joinedAt: now,
+			}));
 
-		await this.db.insert(schema.conversationParticipant).values(participants);
+			await tx.insert(schema.conversationParticipant).values(participants);
 
-		return { conversationId: id, participants };
+			return { conversationId: id, participants };
+		});
 	}
 }
