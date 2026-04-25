@@ -31,6 +31,89 @@
 	--color-info-foreground: var(--info-foreground);
 	--color-success: var(--success);
 	--color-success-foreground: var(--success-foreground);
+
+	/* ---------- Semantic Radix palette (bg = step 3, border = step 7, foreground = step 11) ---------- */
+	/* Reds */
+	--color-red-bg: var(--red-3);
+	--color-red-border: var(--red-7);
+	--color-red-foreground: var(--red-11);
+	--color-ruby-bg: var(--ruby-3);
+	--color-ruby-border: var(--ruby-7);
+	--color-ruby-foreground: var(--ruby-11);
+	--color-crimson-bg: var(--crimson-3);
+	--color-crimson-border: var(--crimson-7);
+	--color-crimson-foreground: var(--crimson-11);
+	--color-tomato-bg: var(--tomato-3);
+	--color-tomato-border: var(--tomato-7);
+	--color-tomato-foreground: var(--tomato-11);
+	/* Oranges & yellows */
+	--color-orange-bg: var(--orange-3);
+	--color-orange-border: var(--orange-7);
+	--color-orange-foreground: var(--orange-11);
+	--color-amber-bg: var(--amber-3);
+	--color-amber-border: var(--amber-7);
+	--color-amber-foreground: var(--amber-11);
+	--color-yellow-bg: var(--yellow-3);
+	--color-yellow-border: var(--yellow-7);
+	--color-yellow-foreground: var(--yellow-11);
+	/* Greens */
+	--color-lime-bg: var(--lime-3);
+	--color-lime-border: var(--lime-7);
+	--color-lime-foreground: var(--lime-11);
+	--color-grass-bg: var(--grass-3);
+	--color-grass-border: var(--grass-7);
+	--color-grass-foreground: var(--grass-11);
+	--color-green-bg: var(--green-3);
+	--color-green-border: var(--green-7);
+	--color-green-foreground: var(--green-11);
+	--color-jade-bg: var(--jade-3);
+	--color-jade-border: var(--jade-7);
+	--color-jade-foreground: var(--jade-11);
+	--color-mint-bg: var(--mint-3);
+	--color-mint-border: var(--mint-7);
+	--color-mint-foreground: var(--mint-11);
+	/* Cyans & blues (turquoise → Radix teal) */
+	--color-turquoise-bg: var(--teal-3);
+	--color-turquoise-border: var(--teal-7);
+	--color-turquoise-foreground: var(--teal-11);
+	--color-cyan-bg: var(--cyan-3);
+	--color-cyan-border: var(--cyan-7);
+	--color-cyan-foreground: var(--cyan-11);
+	--color-sky-bg: var(--sky-3);
+	--color-sky-border: var(--sky-7);
+	--color-sky-foreground: var(--sky-11);
+	--color-blue-bg: var(--blue-3);
+	--color-blue-border: var(--blue-7);
+	--color-blue-foreground: var(--blue-11);
+	/* Purples & pinks */
+	--color-iris-bg: var(--iris-3);
+	--color-iris-border: var(--iris-7);
+	--color-iris-foreground: var(--iris-11);
+	--color-violet-bg: var(--violet-3);
+	--color-violet-border: var(--violet-7);
+	--color-violet-foreground: var(--violet-11);
+	--color-purple-bg: var(--purple-3);
+	--color-purple-border: var(--purple-7);
+	--color-purple-foreground: var(--purple-11);
+	--color-plum-bg: var(--plum-3);
+	--color-plum-border: var(--plum-7);
+	--color-plum-foreground: var(--plum-11);
+	--color-pink-bg: var(--pink-3);
+	--color-pink-border: var(--pink-7);
+	--color-pink-foreground: var(--pink-11);
+	/* Earth tones & neutrals */
+	--color-bronze-bg: var(--bronze-3);
+	--color-bronze-border: var(--bronze-7);
+	--color-bronze-foreground: var(--bronze-11);
+	--color-gold-bg: var(--gold-3);
+	--color-gold-border: var(--gold-7);
+	--color-gold-foreground: var(--gold-11);
+	--color-brown-bg: var(--brown-3);
+	--color-brown-border: var(--brown-7);
+	--color-brown-foreground: var(--brown-11);
+	--color-gray-bg: var(--gray-3);
+	--color-gray-border: var(--gray-7);
+	--color-gray-foreground: var(--gray-11);
 	--color-accent-foreground: var(--accent-foreground);
 	--color-accent: var(--accent);
 	--color-muted-foreground: var(--muted-foreground);

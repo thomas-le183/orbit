@@ -26,4 +26,4 @@ export {
 	type TierMetadata,
 } from "./types/billing.js";
 
-export { cn, getInitials } from "./utils/index.js";
+export { cn, getInitials, pickFromPalette } from "./utils/index.js";
