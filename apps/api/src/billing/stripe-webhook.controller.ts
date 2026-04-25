@@ -10,28 +10,16 @@ import {
 import { BillingService } from "./billing.service";
 import { StripeService } from "./stripe.service";
 
-/** Subset of Stripe Checkout Session fields we use from the webhook payload. */
+/** Minimal fields we need from the raw webhook payload — only IDs, never resource data. */
 interface CheckoutSessionPayload {
 	client_reference_id: string | null;
 	subscription: string | { id: string } | null;
 }
 
-/** Subset of Stripe Subscription fields we use from the webhook payload. */
 interface SubscriptionPayload {
 	id: string;
-	customer: string | { id: string };
-	status: string;
-	items: {
-		data: Array<{
-			price: { id: string; lookup_key: string | null };
-			current_period_start: number;
-			current_period_end: number;
-		}>;
-	};
-	cancel_at_period_end: boolean;
 }
 
-/** Subset of Stripe Invoice fields we use from the webhook payload. */
 interface InvoicePayload {
 	subscription: string | { id: string } | null;
 }
@@ -106,13 +94,40 @@ export class StripeWebhookController {
 				? session.subscription
 				: session.subscription.id;
 
-		const sub =
-			await this.stripeService.stripe.subscriptions.retrieve(subscriptionId);
-		const rawSub = sub as unknown as SubscriptionPayload;
-		const item = rawSub.items.data[0];
+		const sub = await this.stripeService.stripe.subscriptions.retrieve(subscriptionId);
+		await this.upsertSubscriptionFromStripe(organizationId, sub);
+		this.logger.log(`Checkout completed: org=${organizationId}`);
+	}
+
+	private async handleSubscriptionUpdated(payload: SubscriptionPayload) {
+		const sub = await this.stripeService.stripe.subscriptions.retrieve(payload.id);
+		const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+
+		const billing = await this.billingService.findBillingByCustomerId(customerId);
+		if (!billing) {
+			this.logger.warn(`No billing record for customer ${customerId}`);
+			return;
+		}
+
+		await this.upsertSubscriptionFromStripe(billing.organizationId, sub);
+		this.logger.log(`Subscription updated: org=${billing.organizationId} status=${sub.status}`);
+	}
+
+	private async handleSubscriptionDeleted(payload: SubscriptionPayload) {
+		await this.billingService.deleteSubscription(payload.id);
+		this.logger.log(`Subscription deleted: ${payload.id}`);
+	}
+
+	private async upsertSubscriptionFromStripe(
+		organizationId: string,
+		sub: Awaited<ReturnType<typeof this.stripeService.stripe.subscriptions.retrieve>>,
+	) {
+		const item = sub.items.data[0];
 		if (!item?.price) return;
 
-		const plan = this.billingService.mapLookupKeyToPlan(item.price.lookup_key ?? "");
+		const plan = this.billingService.mapLookupKeyToPlan(
+			(item.price as { lookup_key?: string | null }).lookup_key ?? "",
+		);
 
 		await this.billingService.upsertSubscription({
 			organizationId,
@@ -124,45 +139,6 @@ export class StripeWebhookController {
 			currentPeriodEnd: new Date(item.current_period_end * 1000),
 			cancelAtPeriodEnd: sub.cancel_at_period_end,
 		});
-
-		this.logger.log(`Checkout completed: org=${organizationId} plan=${plan}`);
-	}
-
-	private async handleSubscriptionUpdated(sub: SubscriptionPayload) {
-		const customerId =
-			typeof sub.customer === "string" ? sub.customer : sub.customer.id;
-
-		const billing =
-			await this.billingService.findBillingByCustomerId(customerId);
-		if (!billing) {
-			this.logger.warn(`No billing record for customer ${customerId}`);
-			return;
-		}
-
-		const item = sub.items.data[0];
-		if (!item?.price) return;
-
-		const plan = this.billingService.mapLookupKeyToPlan(item.price.lookup_key ?? "");
-
-		await this.billingService.upsertSubscription({
-			organizationId: billing.organizationId,
-			stripeSubscriptionId: sub.id,
-			stripePriceId: item.price.id,
-			subscriptionPlan: plan,
-			status: sub.status,
-			currentPeriodStart: new Date(item.current_period_start * 1000),
-			currentPeriodEnd: new Date(item.current_period_end * 1000),
-			cancelAtPeriodEnd: sub.cancel_at_period_end,
-		});
-
-		this.logger.log(
-			`Subscription updated: org=${billing.organizationId} plan=${plan} status=${sub.status}`,
-		);
-	}
-
-	private async handleSubscriptionDeleted(sub: SubscriptionPayload) {
-		await this.billingService.deleteSubscription(sub.id);
-		this.logger.log(`Subscription deleted: ${sub.id}`);
 	}
 
 	private async handlePaymentFailed(invoice: InvoicePayload) {
