@@ -1,5 +1,10 @@
 import { Button } from "@orbit/ui/components/button";
 import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@orbit/ui/components/collapsible";
+import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuGroup,
@@ -13,7 +18,6 @@ import {
 	SidebarContent,
 	SidebarFooter,
 	SidebarGroup,
-	SidebarGroupAction,
 	SidebarGroupLabel,
 	SidebarHeader,
 	SidebarMenu,
@@ -34,6 +38,7 @@ import {
 import {
 	ArrowLeftIcon,
 	CheckIcon,
+	ChevronRightIcon,
 	ChevronsUpDownIcon,
 	LogOutIcon,
 	MoonIcon,
@@ -44,8 +49,13 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
+import { useLocalStorage } from "usehooks-ts";
 import { CommandMenu } from "@/components/workspace/command-menu";
-import { resolveModule, type SidebarItem } from "@/config/navigation";
+import {
+	resolveModule,
+	type SidebarItem,
+	type SidebarSection,
+} from "@/config/navigation";
 import { useOrganizations, useSession, useSignOut } from "@/hooks/use-auth";
 
 export function AppSidebar() {
@@ -63,16 +73,17 @@ export function AppSidebar() {
 					<div className="min-w-0 flex-1">
 						<WorkspaceSwitcher orgSlug={orgSlug} />
 					</div>
-					<Button
-						variant="ghost"
-						size="icon-sm"
-						aria-label="Search"
-						onClick={() => setCommandOpen(true)}
-						className="group-data-[collapsible=icon]:hidden"
-					>
-						<SearchIcon />
-					</Button>
-					<SidebarTrigger className="group-data-[collapsible=icon]:hidden" />
+					<div className="flex shrink-0 items-center gap-1 group-data-[collapsible=icon]:hidden">
+						<Button
+							variant="ghost"
+							size="icon-sm"
+							aria-label="Search"
+							onClick={() => setCommandOpen(true)}
+						>
+							<SearchIcon />
+						</Button>
+						<SidebarTrigger />
+					</div>
 				</div>
 				<CommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
 			</SidebarHeader>
@@ -95,24 +106,12 @@ export function AppSidebar() {
 						</SidebarMenu>
 					</SidebarGroup>
 				)}
-				{config?.sections.map((section, index) => (
-					<SidebarGroup key={section.label}>
-						<SidebarGroupLabel>{section.label}</SidebarGroupLabel>
-						{index === 0 && config.action && (
-							<SidebarGroupAction title={config.action.label}>
-								<config.action.icon />
-							</SidebarGroupAction>
-						)}
-						<SidebarMenu>
-							{section.items.map((item) => (
-								<ModuleSidebarItem
-									key={item.label}
-									item={item}
-									orgSlug={orgSlug}
-								/>
-							))}
-						</SidebarMenu>
-					</SidebarGroup>
+				{config?.sections.map((section) => (
+					<CollapsibleSection
+						key={section.label}
+						section={section}
+						orgSlug={orgSlug}
+					/>
 				))}
 			</SidebarContent>
 
@@ -265,6 +264,53 @@ function UserMenu() {
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
+	);
+}
+
+function CollapsibleSection({
+	section,
+	orgSlug,
+}: {
+	section: SidebarSection;
+	orgSlug: string;
+}) {
+	const [open, setOpen] = useLocalStorage(
+		`sidebar:section:${section.label}`,
+		true,
+	);
+
+	return (
+		<SidebarGroup>
+			<Collapsible
+				open={open}
+				onOpenChange={setOpen}
+				className="group/collapsible"
+			>
+				<CollapsibleTrigger
+					render={
+						<SidebarMenuButton
+							size="sm"
+							tooltip={section.label}
+							className="group-data-[collapsible=icon]:hidden"
+						/>
+					}
+				>
+					<SidebarGroupLabel>{section.label}</SidebarGroupLabel>
+					<ChevronRightIcon className="ml-auto size-3.5 transition-transform ease-in-out group-data-open/collapsible:rotate-90" />
+				</CollapsibleTrigger>
+				<CollapsibleContent className="overflow-hidden mt-0.5">
+					<SidebarMenu>
+						{section.items.map((item) => (
+							<ModuleSidebarItem
+								key={item.label}
+								item={item}
+								orgSlug={orgSlug}
+							/>
+						))}
+					</SidebarMenu>
+				</CollapsibleContent>
+			</Collapsible>
+		</SidebarGroup>
 	);
 }
 

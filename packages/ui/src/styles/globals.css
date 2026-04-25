@@ -67,9 +67,7 @@
 	* {
 		@apply border-border-medium outline-ring/50;
 	}
-	html {
-		font-size: 14px;
-	}
+
 	body {
 		@apply bg-background-tertiary text-foreground text-sm;
 		font-synthesis-weight: none;
