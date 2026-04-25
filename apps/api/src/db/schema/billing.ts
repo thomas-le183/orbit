@@ -27,7 +27,7 @@ export const subscription = pgTable("subscription", {
 		.references(() => organization.id, { onDelete: "cascade" }),
 	stripeSubscriptionId: text("stripe_subscription_id").notNull().unique(),
 	stripePriceId: text("stripe_price_id").notNull(),
-	subscriptionPlan: text("subscription_tier")
+	subscriptionPlan: text("subscription_plan")
 		.$type<SubscriptionPlan>()
 		.notNull()
 		.default(SUBSCRIPTION_PLANS.FREE),

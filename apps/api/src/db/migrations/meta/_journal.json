@@ -29,6 +29,13 @@
 			"when": 1775844449078,
 			"tag": "0003_funny_hercules",
 			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "7",
+			"when": 1745539200000,
+			"tag": "0004_rename_subscription_tier_to_plan",
+			"breakpoints": true
 		}
 	]
 }
