@@ -2,6 +2,7 @@ import {
 	ActivityIcon,
 	BarChartIcon,
 	BellIcon,
+	BookOpenIcon,
 	BotIcon,
 	BuildingIcon,
 	CalendarIcon,
@@ -90,6 +91,21 @@ function getHomeConfig(orgSlug: string): ModuleConfig {
 				items: [
 					{ icon: StarIcon, label: "Starred", to: `/${orgSlug}/starred` },
 					{ icon: ClockIcon, label: "Recent", to: `/${orgSlug}/recent` },
+				],
+			},
+			{
+				label: "Others",
+				items: [
+					{
+						icon: SettingsIcon,
+						label: "Settings",
+						to: `/${orgSlug}/settings`,
+					},
+					{
+						icon: BookOpenIcon,
+						label: "Documentation",
+						to: `/${orgSlug}/docs`, 
+					},
 				],
 			},
 		],

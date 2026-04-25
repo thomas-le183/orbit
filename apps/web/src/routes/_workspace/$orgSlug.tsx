@@ -1,5 +1,17 @@
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
+} from "@orbit/ui/components/breadcrumb";
 import { Button } from "@orbit/ui/components/button";
-import { SidebarInset, SidebarProvider } from "@orbit/ui/components/sidebar";
+import {
+	SidebarInset,
+	SidebarProvider,
+	SidebarTrigger,
+	useSidebar,
+} from "@orbit/ui/components/sidebar";
 import {
 	createFileRoute,
 	Link,
@@ -57,10 +69,26 @@ function PageHeader() {
 	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
 	const config = resolveModule(pathname, orgSlug);
+	const { state } = useSidebar();
+
+	const match = config?.sections
+		.flatMap((section) => section.items.map((item) => ({ section, item })))
+		.find(({ item }) => item.to && item.to === pathname);
 
 	return (
 		<header className="flex h-12 shrink-0 items-center gap-2 px-4">
-			<h1 className="text-sm font-medium">{config?.title}</h1>
+			{state === "collapsed" && <SidebarTrigger />}
+			{match && (
+				<Breadcrumb>
+					<BreadcrumbList>
+						<BreadcrumbItem>{match.section.label}</BreadcrumbItem>
+						<BreadcrumbSeparator />
+						<BreadcrumbItem>
+							<BreadcrumbPage>{match.item.label}</BreadcrumbPage>
+						</BreadcrumbItem>
+					</BreadcrumbList>
+				</Breadcrumb>
+			)}
 		</header>
 	);
 }
