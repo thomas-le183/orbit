@@ -114,8 +114,8 @@ export class StripeWebhookController {
 	}
 
 	private async handleSubscriptionDeleted(payload: SubscriptionPayload) {
-		await this.billingService.deleteSubscription(payload.id);
-		this.logger.log(`Subscription deleted: ${payload.id}`);
+		await this.billingService.cancelSubscription(payload.id);
+		this.logger.log(`Subscription canceled: ${payload.id}`);
 	}
 
 	private async upsertSubscriptionFromStripe(

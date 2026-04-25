@@ -58,9 +58,13 @@ export class BillingService {
 		organizationId: string,
 	): Promise<SubscriptionPlan> {
 		const sub = await this.getSubscription(organizationId);
-		if (!sub || sub.status === "canceled" || sub.status === "unpaid") {
+		if (!sub || sub.status === "unpaid") return "free";
+
+		// Honor paid access until the period actually ends, even after cancellation.
+		if (sub.status === "canceled" && sub.currentPeriodEnd <= new Date()) {
 			return "free";
 		}
+
 		return sub.subscriptionPlan as SubscriptionPlan;
 	}
 
@@ -138,9 +142,10 @@ export class BillingService {
 			);
 	}
 
-	async deleteSubscription(stripeSubscriptionId: string) {
+	async cancelSubscription(stripeSubscriptionId: string) {
 		await this.db
-			.delete(schema.subscription)
+			.update(schema.subscription)
+			.set({ status: "canceled", updatedAt: new Date() })
 			.where(
 				eq(schema.subscription.stripeSubscriptionId, stripeSubscriptionId),
 			);
