@@ -21,9 +21,13 @@ interface SubscriptionPayload {
 	id: string;
 	customer: string | { id: string };
 	status: string;
-	items: { data: Array<{ price: { id: string; lookup_key: string | null } }> };
-	current_period_start: number;
-	current_period_end: number;
+	items: {
+		data: Array<{
+			price: { id: string; lookup_key: string | null };
+			current_period_start: number;
+			current_period_end: number;
+		}>;
+	};
 	cancel_at_period_end: boolean;
 }
 
@@ -105,19 +109,19 @@ export class StripeWebhookController {
 		const sub =
 			await this.stripeService.stripe.subscriptions.retrieve(subscriptionId);
 		const rawSub = sub as unknown as SubscriptionPayload;
-		const priceItem = rawSub.items.data[0]?.price;
-		if (!priceItem) return;
+		const item = rawSub.items.data[0];
+		if (!item?.price) return;
 
-		const plan = this.billingService.mapLookupKeyToPlan(priceItem.lookup_key ?? "");
+		const plan = this.billingService.mapLookupKeyToPlan(item.price.lookup_key ?? "");
 
 		await this.billingService.upsertSubscription({
 			organizationId,
 			stripeSubscriptionId: sub.id,
-			stripePriceId: priceItem.id,
+			stripePriceId: item.price.id,
 			subscriptionPlan: plan,
 			status: sub.status,
-			currentPeriodStart: new Date(rawSub.current_period_start * 1000),
-			currentPeriodEnd: new Date(rawSub.current_period_end * 1000),
+			currentPeriodStart: new Date(item.current_period_start * 1000),
+			currentPeriodEnd: new Date(item.current_period_end * 1000),
 			cancelAtPeriodEnd: sub.cancel_at_period_end,
 		});
 
@@ -135,19 +139,19 @@ export class StripeWebhookController {
 			return;
 		}
 
-		const priceItem = sub.items.data[0]?.price;
-		if (!priceItem) return;
+		const item = sub.items.data[0];
+		if (!item?.price) return;
 
-		const plan = this.billingService.mapLookupKeyToPlan(priceItem.lookup_key ?? "");
+		const plan = this.billingService.mapLookupKeyToPlan(item.price.lookup_key ?? "");
 
 		await this.billingService.upsertSubscription({
 			organizationId: billing.organizationId,
 			stripeSubscriptionId: sub.id,
-			stripePriceId: priceItem.id,
+			stripePriceId: item.price.id,
 			subscriptionPlan: plan,
 			status: sub.status,
-			currentPeriodStart: new Date(sub.current_period_start * 1000),
-			currentPeriodEnd: new Date(sub.current_period_end * 1000),
+			currentPeriodStart: new Date(item.current_period_start * 1000),
+			currentPeriodEnd: new Date(item.current_period_end * 1000),
 			cancelAtPeriodEnd: sub.cancel_at_period_end,
 		});
 
