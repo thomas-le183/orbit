@@ -2,14 +2,14 @@ import { randomUUID } from "node:crypto";
 import { Inject, Injectable } from "@nestjs/common";
 import {
 	PLAN_METADATA,
-	SUBSCRIPTION_PLANS,
 	type PlanResponse,
+	SUBSCRIPTION_PLANS,
 	type SubscriptionPlan,
 } from "@orbit/shared";
 import { count, eq } from "drizzle-orm";
 import { DB, type Db } from "../db/db.module";
 import * as schema from "../db/schema";
-import type { StripeService } from "./stripe.service";
+import { StripeService } from "./stripe.service";
 
 @Injectable()
 export class BillingService {
@@ -54,7 +54,9 @@ export class BillingService {
 		});
 	}
 
-	async getOrgSubscriptionPlan(organizationId: string): Promise<SubscriptionPlan> {
+	async getOrgSubscriptionPlan(
+		organizationId: string,
+	): Promise<SubscriptionPlan> {
 		const sub = await this.getSubscription(organizationId);
 		if (!sub || sub.status === "canceled" || sub.status === "unpaid") {
 			return "free";
@@ -131,13 +133,17 @@ export class BillingService {
 		await this.db
 			.update(schema.subscription)
 			.set({ status, updatedAt: new Date() })
-			.where(eq(schema.subscription.stripeSubscriptionId, stripeSubscriptionId));
+			.where(
+				eq(schema.subscription.stripeSubscriptionId, stripeSubscriptionId),
+			);
 	}
 
 	async deleteSubscription(stripeSubscriptionId: string) {
 		await this.db
 			.delete(schema.subscription)
-			.where(eq(schema.subscription.stripeSubscriptionId, stripeSubscriptionId));
+			.where(
+				eq(schema.subscription.stripeSubscriptionId, stripeSubscriptionId),
+			);
 	}
 
 	private readonly LOOKUP_KEYS: Record<string, SubscriptionPlan> = {
@@ -147,7 +153,9 @@ export class BillingService {
 		business_yearly: "business",
 	};
 
-	private readonly PLAN_LOOKUP_KEYS: Partial<Record<SubscriptionPlan, { monthly: string; yearly: string }>> = {
+	private readonly PLAN_LOOKUP_KEYS: Partial<
+		Record<SubscriptionPlan, { monthly: string; yearly: string }>
+	> = {
 		basic: { monthly: "basic_monthly", yearly: "basic_yearly" },
 		business: { monthly: "business_monthly", yearly: "business_yearly" },
 	};
@@ -156,15 +164,21 @@ export class BillingService {
 		return this.LOOKUP_KEYS[lookupKey] ?? "free";
 	}
 
-	getLookupKeyForPlan(plan: SubscriptionPlan, interval: "monthly" | "yearly"): string | null {
+	getLookupKeyForPlan(
+		plan: SubscriptionPlan,
+		interval: "monthly" | "yearly",
+	): string | null {
 		return this.PLAN_LOOKUP_KEYS[plan]?.[interval] ?? null;
 	}
 
 	async getPlans(): Promise<PlanResponse[]> {
 		const allLookupKeys = Object.keys(this.LOOKUP_KEYS);
-		const prices = await this.stripeService.getPricesByLookupKeys(allLookupKeys);
+		const prices =
+			await this.stripeService.getPricesByLookupKeys(allLookupKeys);
 
-		return (Object.keys(SUBSCRIPTION_PLANS) as Array<keyof typeof SUBSCRIPTION_PLANS>)
+		return (
+			Object.keys(SUBSCRIPTION_PLANS) as Array<keyof typeof SUBSCRIPTION_PLANS>
+		)
 			.map((key) => SUBSCRIPTION_PLANS[key])
 			.map((plan) => {
 				const meta = PLAN_METADATA[plan];

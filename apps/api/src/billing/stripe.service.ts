@@ -59,7 +59,10 @@ export class StripeService {
 		});
 	}
 
-	async updateSubscriptionQuantity(stripeSubscriptionId: string, quantity: number) {
+	async updateSubscriptionQuantity(
+		stripeSubscriptionId: string,
+		quantity: number,
+	) {
 		const sub = await this.stripe.subscriptions.retrieve(stripeSubscriptionId);
 		const itemId = sub.items.data[0]?.id;
 		if (!itemId) throw new Error("Subscription has no items");
