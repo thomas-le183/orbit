@@ -1,10 +1,11 @@
 import type { SubscriptionPlan } from "@orbit/shared";
-import { createFileRoute, useParams, useSearch } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { CurrentPlanCard } from "@/components/billing/current-plan-card";
 import { PricingTable } from "@/components/billing/pricing-table";
-import { useCheckout, useOrgSubscription } from "@/hooks/use-billing";
+import { useChangePlan, useCheckout, useOrgSubscription } from "@/hooks/use-billing";
 
 export const Route = createFileRoute("/_workspace/$orgSlug/settings/billing")({
 	validateSearch: (search: Record<string, unknown>) => ({
@@ -13,25 +14,50 @@ export const Route = createFileRoute("/_workspace/$orgSlug/settings/billing")({
 	component: BillingPage,
 });
 
+const ACTIVE_STATUSES = new Set(["active", "trialing", "past_due"]);
+
 function BillingPage() {
 	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
 	const { checkout: checkoutResult } = useSearch({ from: "/_workspace/$orgSlug/settings/billing" });
+	const queryClient = useQueryClient();
+	const navigate = useNavigate();
 
 	useEffect(() => {
+		if (!checkoutResult) return;
 		if (checkoutResult === "success") {
 			toast.success("Subscription activated! Welcome to your new plan.");
 		} else if (checkoutResult === "canceled") {
 			toast.info("Checkout canceled. No changes were made.");
 		}
-	}, [checkoutResult]);
+		// Clear the checkout query param by navigating to the same route without it
+		navigate({ to: ".", search: (prev) => ({ ...prev, checkout: undefined }) });
+	}, [checkoutResult, navigate]);
+
 	const { data } = useOrgSubscription(orgSlug);
 	const checkout = useCheckout(orgSlug);
+	const changePlan = useChangePlan(orgSlug);
+
+	const hasActiveSubscription =
+		data?.subscription != null && ACTIVE_STATUSES.has(data.subscription.status);
 
 	function handleSelectPlan(plan: SubscriptionPlan, interval: "monthly" | "yearly") {
-		checkout.mutate(
-			{ plan, interval },
-			{ onError: () => toast.error("Could not start checkout. Please try again.") },
-		);
+		if (hasActiveSubscription) {
+			changePlan.mutate(
+				{ plan, interval },
+				{
+					onSuccess: () => {
+						toast.success("Plan updated successfully.");
+						queryClient.invalidateQueries({ queryKey: ["billing", orgSlug, "subscription"] });
+					},
+					onError: () => toast.error("Could not change plan. Please try again."),
+				},
+			);
+		} else {
+			checkout.mutate(
+				{ plan, interval },
+				{ onError: () => toast.error("Could not start checkout. Please try again.") },
+			);
+		}
 	}
 
 	return (
