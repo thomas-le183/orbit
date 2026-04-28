@@ -6,7 +6,7 @@ import {
 	SUBSCRIPTION_PLANS,
 	type SubscriptionPlan,
 } from "@orbit/shared";
-import { count, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { DB, type Db } from "../db/db.module";
 import * as schema from "../db/schema";
 import { StripeService } from "./stripe.service";
@@ -82,6 +82,15 @@ export class BillingService {
 		return result[0]?.value ?? 0;
 	}
 
+	async getOrgMember(userId: string, organizationId: string) {
+		return this.db.query.member.findFirst({
+			where: and(
+				eq(schema.member.userId, userId),
+				eq(schema.member.organizationId, organizationId),
+			),
+		});
+	}
+
 	async canAddMember(organizationId: string): Promise<boolean> {
 		const plan = await this.getOrgSubscriptionPlan(organizationId);
 		const metadata = PLAN_METADATA[plan];
@@ -140,6 +149,30 @@ export class BillingService {
 			.where(
 				eq(schema.subscription.stripeSubscriptionId, stripeSubscriptionId),
 			);
+	}
+
+	private readonly PLAN_TIER: Record<SubscriptionPlan, number> = {
+		free: 0,
+		basic: 1,
+		business: 2,
+		enterprise: 3,
+	};
+
+	async changeOrgSubscriptionPlan(
+		organizationId: string,
+		newPlan: SubscriptionPlan,
+		interval: "monthly" | "yearly",
+	) {
+		const sub = await this.getSubscription(organizationId);
+		if (!sub?.stripeSubscriptionId) throw new Error("No active subscription to change");
+
+		const newLookupKey = this.getLookupKeyForPlan(newPlan, interval);
+		if (!newLookupKey) throw new Error("Invalid plan or interval");
+
+		const currentTier = this.PLAN_TIER[sub.subscriptionPlan as SubscriptionPlan] ?? 0;
+		const newTier = this.PLAN_TIER[newPlan] ?? 0;
+
+		await this.stripeService.changePlan(sub.stripeSubscriptionId, newLookupKey, currentTier, newTier);
 	}
 
 	async cancelSubscription(stripeSubscriptionId: string) {
