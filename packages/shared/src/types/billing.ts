@@ -31,6 +31,7 @@ export type PlanFlags = PlanMetadata["flags"];
 export interface SubscriptionResponse {
 	plan: SubscriptionPlan;
 	planLabel: string;
+	trialEligible: boolean;
 	usage: {
 		members: {
 			current: number;
@@ -39,6 +40,7 @@ export interface SubscriptionResponse {
 	};
 	subscription: {
 		status: string;
+		currentPeriodStart: Date;
 		currentPeriodEnd: Date;
 		cancelAtPeriodEnd: boolean;
 	} | null;
