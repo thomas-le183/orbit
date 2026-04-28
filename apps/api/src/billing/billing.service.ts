@@ -147,7 +147,7 @@ export class BillingService {
 		userEmail: string,
 	): Promise<void> {
 		const billing = await this.getBillingRecord(organizationId);
-		if (billing?.trialUsedAt) {
+		if (!(await this.isTrialEligible(organizationId))) {
 			throw new BadRequestException(
 				"Trial has already been used for this organization",
 			);
@@ -176,9 +176,12 @@ export class BillingService {
 			);
 		}
 
+		const lookupKey = this.getLookupKeyForPlan("business", "monthly");
+		if (!lookupKey) throw new BadRequestException("Trial plan configuration missing");
+
 		const stripeSub = await this.stripeService.createTrialSubscription(
 			billingRecord.stripeCustomerId,
-			"business_monthly",
+			lookupKey,
 			organizationId,
 		);
 
@@ -207,6 +210,9 @@ export class BillingService {
 	}
 
 	async markTrialUsed(organizationId: string): Promise<void> {
+		const billing = await this.getBillingRecord(organizationId);
+		if (!billing) return;
+
 		await this.db
 			.update(schema.organizationBilling)
 			.set({ trialUsedAt: new Date(), updatedAt: new Date() })

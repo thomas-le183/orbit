@@ -106,10 +106,44 @@ describe("startTrial", () => {
 
     expect(mockStripe.createTrialSubscription).toHaveBeenCalledWith(
       "cus_123",
-      "business_monthly",
+      expect.any(String), // lookup key
       "org-1",
     );
-    expect(mockDb.update).toHaveBeenCalled();
+    expect(mockDb.insert).toHaveBeenCalled();
+  });
+
+  it("creates a new Stripe customer when no billing record exists", async () => {
+    mockDb.query.organizationBilling.findFirst.mockResolvedValue(null);
+    mockDb.query.subscription.findFirst.mockResolvedValue(null);
+    mockStripe.createCustomer.mockResolvedValue({ id: "cus_new" });
+    mockStripe.createTrialSubscription.mockResolvedValue({
+      id: "sub_trial",
+      status: "trialing",
+      cancel_at_period_end: false,
+      items: {
+        data: [
+          {
+            price: { id: "price_biz" },
+            current_period_start: 1700000000,
+            current_period_end: 1700604800,
+          },
+        ],
+      },
+    });
+
+    const svc = makeService();
+    await svc.startTrial("org-1", "Acme", "user@test.com");
+
+    expect(mockStripe.createCustomer).toHaveBeenCalledWith(
+      "org-1",
+      "Acme",
+      "user@test.com",
+    );
+    expect(mockStripe.createTrialSubscription).toHaveBeenCalledWith(
+      "cus_new",
+      expect.any(String),
+      "org-1",
+    );
   });
 });
 
