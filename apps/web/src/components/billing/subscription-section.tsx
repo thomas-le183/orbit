@@ -108,7 +108,7 @@ export function SubscriptionSection() {
 
 	function handleSubscribeNow() {
 		checkout.mutate(
-			{ plan: "basic", interval: "monthly" },
+			{ plan: currentPlan as "basic" | "business", interval: interval ?? "monthly" },
 			{
 				onError: () =>
 					toast.error("Could not start checkout. Please try again."),
@@ -117,8 +117,9 @@ export function SubscriptionSection() {
 	}
 
 	function handleSwitchYearly() {
+		if (currentPlan !== "basic" && currentPlan !== "business") return;
 		changePlan.mutate(
-			{ plan: currentPlan as "basic" | "business", interval: "yearly" },
+			{ plan: currentPlan, interval: "yearly" },
 			{
 				onSuccess: () => {
 					toast.success("Switched to yearly billing.");
@@ -273,7 +274,7 @@ export function SubscriptionSection() {
 					)}
 					{showUpgrade && (
 						<>
-							{nextTier === "business" && data.trialEligible ? (
+							{nextTier === "business" && data.trialEligible && !sub ? (
 								<>
 									<Button
 										size="sm"
