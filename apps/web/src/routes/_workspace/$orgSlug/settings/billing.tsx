@@ -1,11 +1,20 @@
 import type { SubscriptionPlan } from "@orbit/shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate, useParams, useSearch } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	useNavigate,
+	useParams,
+	useSearch,
+} from "@tanstack/react-router";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { CurrentPlanCard } from "@/components/billing/current-plan-card";
 import { PricingTable } from "@/components/billing/pricing-table";
-import { useChangePlan, useCheckout, useOrgSubscription } from "@/hooks/use-billing";
+import {
+	useChangePlan,
+	useCheckout,
+	useOrgSubscription,
+} from "@/hooks/use-billing";
 
 export const Route = createFileRoute("/_workspace/$orgSlug/settings/billing")({
 	validateSearch: (search: Record<string, unknown>) => ({
@@ -18,7 +27,9 @@ const ACTIVE_STATUSES = new Set(["active", "trialing", "past_due"]);
 
 function BillingPage() {
 	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
-	const { checkout: checkoutResult } = useSearch({ from: "/_workspace/$orgSlug/settings/billing" });
+	const { checkout: checkoutResult } = useSearch({
+		from: "/_workspace/$orgSlug/settings/billing",
+	});
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
 
@@ -40,22 +51,31 @@ function BillingPage() {
 	const hasActiveSubscription =
 		data?.subscription != null && ACTIVE_STATUSES.has(data.subscription.status);
 
-	function handleSelectPlan(plan: SubscriptionPlan, interval: "monthly" | "yearly") {
+	function handleSelectPlan(
+		plan: SubscriptionPlan,
+		interval: "monthly" | "yearly",
+	) {
 		if (hasActiveSubscription) {
 			changePlan.mutate(
 				{ plan, interval },
 				{
 					onSuccess: () => {
 						toast.success("Plan updated successfully.");
-						queryClient.invalidateQueries({ queryKey: ["billing", orgSlug, "subscription"] });
+						queryClient.invalidateQueries({
+							queryKey: ["billing", orgSlug, "subscription"],
+						});
 					},
-					onError: () => toast.error("Could not change plan. Please try again."),
+					onError: () =>
+						toast.error("Could not change plan. Please try again."),
 				},
 			);
 		} else {
 			checkout.mutate(
 				{ plan, interval },
-				{ onError: () => toast.error("Could not start checkout. Please try again.") },
+				{
+					onError: () =>
+						toast.error("Could not start checkout. Please try again."),
+				},
 			);
 		}
 	}
