@@ -53,6 +53,9 @@ export class StripeService {
 			customer: customerId,
 			mode: "subscription",
 			line_items: [{ price: price.id, quantity: seatCount }],
+			subscription_data: {
+				metadata: { organizationId },
+			},
 			success_url: `${webBaseUrl}/${orgSlug}/settings/billing?checkout=success`,
 			cancel_url: `${webBaseUrl}/${orgSlug}/settings/billing?checkout=canceled`,
 			client_reference_id: organizationId,
@@ -71,11 +74,38 @@ export class StripeService {
 		});
 	}
 
+	async changePlan(
+		stripeSubscriptionId: string,
+		newLookupKey: string,
+		currentPlanTier: number,
+		newPlanTier: number,
+	) {
+		const sub = await this.stripe.subscriptions.retrieve(stripeSubscriptionId);
+		const item = sub.items.data[0];
+		if (!item) throw new Error("Subscription has no items");
+
+		const newPrice = await this.getPriceByLookupKey(newLookupKey);
+		if (!newPrice) throw new Error(`No price found for lookup key: ${newLookupKey}`);
+
+		let isUpgrade: boolean;
+		if (newPlanTier !== currentPlanTier) {
+			isUpgrade = newPlanTier > currentPlanTier;
+		} else {
+			const currentInterval = item.price.recurring?.interval;
+			isUpgrade = currentInterval === "month" && newPrice.recurring?.interval === "year";
+		}
+
+		return this.stripe.subscriptions.update(stripeSubscriptionId, {
+			items: [{ id: item.id, price: newPrice.id }],
+			proration_behavior: isUpgrade ? "create_prorations" : "none",
+		});
+	}
+
 	async createPortalSession(customerId: string, orgSlug: string) {
 		const webBaseUrl = this.config.getOrThrow<string>("WEB_BASE_URL");
 		return this.stripe.billingPortal.sessions.create({
 			customer: customerId,
-			return_url: `${webBaseUrl}/${orgSlug}/settings?tab=billing`,
+			return_url: `${webBaseUrl}/${orgSlug}/settings/billing`,
 		});
 	}
 
