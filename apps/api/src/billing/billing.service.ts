@@ -147,7 +147,7 @@ export class BillingService {
 		userEmail: string,
 	): Promise<void> {
 		const billing = await this.getBillingRecord(organizationId);
-		if (!(await this.isTrialEligible(organizationId))) {
+		if (billing?.trialUsedAt != null) {
 			throw new BadRequestException(
 				"Trial has already been used for this organization",
 			);
@@ -210,9 +210,6 @@ export class BillingService {
 	}
 
 	async markTrialUsed(organizationId: string): Promise<void> {
-		const billing = await this.getBillingRecord(organizationId);
-		if (!billing) return;
-
 		await this.db
 			.update(schema.organizationBilling)
 			.set({ trialUsedAt: new Date(), updatedAt: new Date() })
