@@ -44,6 +44,7 @@ export class StripeService {
 		seatCount: number,
 		orgSlug: string,
 		organizationId: string,
+		trialDays?: number,
 	) {
 		const price = await this.getPriceByLookupKey(lookupKey);
 		if (!price) throw new Error(`No price found for lookup key: ${lookupKey}`);
@@ -55,10 +56,31 @@ export class StripeService {
 			line_items: [{ price: price.id, quantity: seatCount }],
 			subscription_data: {
 				metadata: { organizationId },
+				...(trialDays ? { trial_period_days: trialDays } : {}),
 			},
 			success_url: `${webBaseUrl}/${orgSlug}/settings/billing?checkout=success`,
 			cancel_url: `${webBaseUrl}/${orgSlug}/settings/billing?checkout=canceled`,
 			client_reference_id: organizationId,
+		});
+	}
+
+	async createTrialSubscription(
+		customerId: string,
+		lookupKey: string,
+		organizationId: string,
+	) {
+		const price = await this.getPriceByLookupKey(lookupKey);
+		if (!price) throw new Error(`No price found for lookup key: ${lookupKey}`);
+
+		return this.stripe.subscriptions.create({
+			customer: customerId,
+			items: [{ price: price.id }],
+			trial_period_days: 7,
+			trial_settings: {
+				end_behavior: { missing_payment_method: "cancel" },
+			},
+			metadata: { organizationId },
+			payment_settings: { save_default_payment_method: "on_subscription" },
 		});
 	}
 
@@ -106,6 +128,12 @@ export class StripeService {
 		return this.stripe.billingPortal.sessions.create({
 			customer: customerId,
 			return_url: `${webBaseUrl}/${orgSlug}/settings/billing`,
+		});
+	}
+
+	async cancelSubscriptionAtPeriodEnd(stripeSubscriptionId: string) {
+		return this.stripe.subscriptions.update(stripeSubscriptionId, {
+			cancel_at_period_end: true,
 		});
 	}
 
