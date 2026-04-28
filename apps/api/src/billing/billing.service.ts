@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Inject, Injectable } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable } from "@nestjs/common";
 import {
 	PLAN_METADATA,
 	type PlanResponse,
@@ -164,10 +164,10 @@ export class BillingService {
 		interval: "monthly" | "yearly",
 	) {
 		const sub = await this.getSubscription(organizationId);
-		if (!sub?.stripeSubscriptionId) throw new Error("No active subscription to change");
+		if (!sub?.stripeSubscriptionId) throw new BadRequestException("No active subscription to change");
 
 		const newLookupKey = this.getLookupKeyForPlan(newPlan, interval);
-		if (!newLookupKey) throw new Error("Invalid plan or interval");
+		if (!newLookupKey) throw new BadRequestException("Invalid plan or interval");
 
 		const currentTier = this.PLAN_TIER[sub.subscriptionPlan as SubscriptionPlan] ?? 0;
 		const newTier = this.PLAN_TIER[newPlan] ?? 0;
