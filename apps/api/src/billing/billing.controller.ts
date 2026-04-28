@@ -50,10 +50,12 @@ export class BillingController {
 		const subscription = await this.billingService.getSubscription(org.id);
 		const memberCount = await this.billingService.getMemberCount(org.id);
 		const metadata = PLAN_METADATA[plan];
+		const trialEligible = await this.billingService.isTrialEligible(org.id);
 
 		return {
 			plan,
 			planLabel: metadata.label,
+			trialEligible,
 			usage: {
 				members: {
 					current: memberCount,
@@ -114,12 +116,16 @@ export class BillingController {
 			);
 		}
 
+		const trialEligible = await this.billingService.isTrialEligible(org.id);
+		const trialDays = plan === "business" && trialEligible ? 30 : undefined;
+
 		const session = await this.stripeService.createCheckoutSession(
 			billing.stripeCustomerId,
 			lookupKey,
 			seatCount,
 			orgSlug,
 			org.id,
+			trialDays,
 		);
 
 		return { url: session.url };
@@ -143,6 +149,42 @@ export class BillingController {
 
 		await this.billingService.changeOrgSubscriptionPlan(org.id, plan, interval);
 		return { success: true };
+	}
+
+	@Post(":orgSlug/cancel")
+	async cancelSubscription(
+		@Param("orgSlug") orgSlug: string,
+		@CurrentUser() user: User,
+	): Promise<{ success: boolean }> {
+		const org = await this.billingService.getOrgBySlug(orgSlug);
+		if (!org) throw new NotFoundException("Organization not found");
+
+		await this.requireAdminOrOwner(user.id, org.id);
+
+		const sub = await this.billingService.getSubscription(org.id);
+		if (!sub?.stripeSubscriptionId) {
+			throw new BadRequestException("No active subscription to cancel");
+		}
+		if (sub.cancelAtPeriodEnd || sub.status === "canceled") {
+			throw new BadRequestException("Subscription is already canceled or canceling");
+		}
+
+		await this.stripeService.cancelSubscriptionAtPeriodEnd(sub.stripeSubscriptionId);
+		return { success: true };
+	}
+
+	@Post(":orgSlug/start-trial")
+	async startTrial(
+		@Param("orgSlug") orgSlug: string,
+		@CurrentUser() user: User,
+	): Promise<{ status: string }> {
+		const org = await this.billingService.getOrgBySlug(orgSlug);
+		if (!org) throw new NotFoundException("Organization not found");
+
+		await this.requireAdminOrOwner(user.id, org.id);
+
+		await this.billingService.startTrial(org.id, org.name, user.email);
+		return { status: "trialing" };
 	}
 
 	@Post(":orgSlug/portal")
