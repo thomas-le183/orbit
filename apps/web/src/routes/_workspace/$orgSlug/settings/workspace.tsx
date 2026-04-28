@@ -1,9 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { GeneralSettings } from "@/components/workspace/settings/general-settings";
-import { useOrganizations, useOrgRole } from "@/hooks/use-auth";
+import { loadOrgRole, useOrganizations, useOrgRole } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_workspace/$orgSlug/settings/workspace")(
 	{
+		beforeLoad: async ({ context, params }) => {
+			const { authState, targetOrg } = context;
+			const role = await loadOrgRole(context.queryClient, targetOrg.id, authState.user?.id ?? "");
+			if (role === "member" || role === null) {
+				throw redirect({ to: "/$orgSlug", params });
+			}
+		},
 		component: WorkspacePage,
 	},
 );

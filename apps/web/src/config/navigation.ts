@@ -244,7 +244,11 @@ function getAiConfig(): ModuleConfig {
 	};
 }
 
-function getSettingsConfig(orgSlug: string): ModuleConfig {
+function getSettingsConfig(
+	orgSlug: string,
+	role: "owner" | "admin" | "member" | null,
+): ModuleConfig {
+	const isAdmin = role === "owner" || role === "admin";
 	return {
 		icon: SettingsIcon,
 		title: "Settings",
@@ -264,26 +268,30 @@ function getSettingsConfig(orgSlug: string): ModuleConfig {
 					},
 				],
 			},
-			{
-				label: "Workspace",
-				items: [
-					{
-						icon: BuildingIcon,
-						label: "General",
-						to: `/${orgSlug}/settings/workspace`,
-					},
-					{
-						icon: UsersIcon,
-						label: "Members",
-						to: `/${orgSlug}/settings/members`,
-					},
-					{
-						icon: CreditCardIcon,
-						label: "Billing",
-						to: `/${orgSlug}/settings/billing`,
-					},
-				],
-			},
+			...(isAdmin
+				? [
+						{
+							label: "Workspace",
+							items: [
+								{
+									icon: BuildingIcon,
+									label: "General",
+									to: `/${orgSlug}/settings/workspace`,
+								},
+								{
+									icon: UsersIcon,
+									label: "Members",
+									to: `/${orgSlug}/settings/members`,
+								},
+								{
+									icon: CreditCardIcon,
+									label: "Billing",
+									to: `/${orgSlug}/settings/billing`,
+								},
+							],
+						},
+					]
+				: []),
 		],
 	};
 }
@@ -293,6 +301,7 @@ function getSettingsConfig(orgSlug: string): ModuleConfig {
 export function resolveModule(
 	pathname: string,
 	orgSlug: string,
+	role: "owner" | "admin" | "member" | null = null,
 ): ModuleConfig | null {
 	const base = `/${orgSlug}/`;
 	const segment = pathname.slice(base.length).split("/")[0];
@@ -313,7 +322,7 @@ export function resolveModule(
 		case "ai":
 			return getAiConfig();
 		case "settings":
-			return getSettingsConfig(orgSlug);
+			return getSettingsConfig(orgSlug, role);
 		default:
 			return null;
 	}

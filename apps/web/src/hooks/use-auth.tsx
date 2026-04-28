@@ -320,6 +320,29 @@ export async function loadAuthState(
 }
 
 /**
+ * Load the current user's role in an org for use in `beforeLoad` guards.
+ * Reuses the same cache entry as `useOrgMembers` to avoid duplicate fetches.
+ */
+export async function loadOrgRole(
+	queryClient: QueryClient,
+	orgId: string,
+	userId: string,
+): Promise<"owner" | "admin" | "member" | null> {
+	const orgData = await queryClient.ensureQueryData({
+		queryKey: ["auth", "org-full", orgId],
+		queryFn: async () => {
+			const { data, error } = await authClient.organization.getFullOrganization({
+				query: { organizationId: orgId },
+			});
+			if (error) throw error;
+			return data;
+		},
+	});
+	const member = orgData?.members?.find((m: { userId: string }) => m.userId === userId);
+	return (member?.role as "owner" | "admin" | "member" | null) ?? null;
+}
+
+/**
  * Given an authenticated user's state, decide where they should land.
  * Returns `null` if unauthenticated — caller should allow the route to render.
  */

@@ -56,12 +56,15 @@ import {
 	type SidebarItem,
 	type SidebarSection,
 } from "@/config/navigation";
-import { useOrganizations, useSession, useSignOut } from "@/hooks/use-auth";
+import { useOrganizations, useOrgRole, useSession, useSignOut } from "@/hooks/use-auth";
 
 export function AppSidebar() {
 	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
-	const config = resolveModule(pathname, orgSlug);
+	const { data: organizations } = useOrganizations();
+	const activeOrg = organizations?.find((o) => o.slug === orgSlug);
+	const role = useOrgRole(activeOrg?.id);
+	const config = resolveModule(pathname, orgSlug, role);
 	const [commandOpen, setCommandOpen] = useState(false);
 	const navigate = useNavigate();
 	const isSettings = pathname.startsWith(`/${orgSlug}/settings`);

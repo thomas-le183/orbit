@@ -3,13 +3,23 @@ import { Alert, AlertDescription } from "@orbit/ui/components/alert";
 import { Badge } from "@orbit/ui/components/badge";
 import { Button } from "@orbit/ui/components/button";
 import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@orbit/ui/components/dialog";
+import {
 	FieldDescription,
 	FieldLegend,
 	FieldSet,
 } from "@orbit/ui/components/field";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Zap } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
 	useChangePlan,
@@ -17,6 +27,75 @@ import {
 	useOrgSubscription,
 	useStartTrial,
 } from "@/hooks/use-billing";
+
+function TrialModal({
+	open,
+	onClose,
+	onStartTrial,
+	onTryWithCard,
+	isStartingTrial,
+	isCheckingOut,
+}: {
+	open: boolean;
+	onClose: () => void;
+	onStartTrial: () => void;
+	onTryWithCard: () => void;
+	isStartingTrial: boolean;
+	isCheckingOut: boolean;
+}) {
+	return (
+		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+			<DialogContent className="max-w-md">
+				<DialogHeader>
+					<DialogTitle className="flex items-center gap-2">
+						<Zap className="size-5 text-primary" />
+						Try Business for free
+					</DialogTitle>
+					<DialogDescription>
+						Experience all Business features before committing. Choose the
+						option that works best for you.
+					</DialogDescription>
+				</DialogHeader>
+
+				<div className="grid gap-3 py-2">
+					<button
+						type="button"
+						onClick={onStartTrial}
+						disabled={isStartingTrial || isCheckingOut}
+						className="group flex flex-col gap-1 rounded-lg border border-border bg-card p-4 text-left transition-colors hover:border-primary hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50"
+					>
+						<span className="font-medium">7-day free trial</span>
+						<span className="text-sm text-muted-foreground">
+							No credit card required. Full Business access for 7 days, then
+							automatically reverts to Hobby.
+						</span>
+					</button>
+
+					<button
+						type="button"
+						onClick={onTryWithCard}
+						disabled={isStartingTrial || isCheckingOut}
+						className="group flex flex-col gap-1 rounded-lg border border-border bg-card p-4 text-left transition-colors hover:border-primary hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50"
+					>
+						<span className="font-medium">30-day free trial</span>
+						<span className="text-sm text-muted-foreground">
+							Credit card required. 30 days free, then billed monthly. Cancel
+							anytime before the trial ends.
+						</span>
+					</button>
+				</div>
+
+				<DialogFooter>
+					<DialogClose>
+						<Button variant="ghost" size="sm">
+							Maybe later
+						</Button>
+					</DialogClose>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	);
+}
 
 const STATUS_BADGE: Record<
 	string,
@@ -57,6 +136,7 @@ function getBillingInterval(
 export function SubscriptionSection() {
 	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
 	const queryClient = useQueryClient();
+	const [trialModalOpen, setTrialModalOpen] = useState(false);
 	const { data, isLoading } = useOrgSubscription(orgSlug);
 	const checkout = useCheckout(orgSlug);
 	const changePlan = useChangePlan(orgSlug);
@@ -102,9 +182,12 @@ export function SubscriptionSection() {
 	const nextTier = NEXT_TIER[currentPlan];
 	const showSubscribeNow = sub?.status === "trialing";
 	const showSwitchYearly = isActive && interval === "monthly";
+	const showTrialCta = data.trialEligible && !sub && !showSubscribeNow;
 	const showUpgrade =
-		nextTier != null && !showSubscribeNow && (isActive || !sub);
-	const showBusinessTrialCtas = data.trialEligible && !sub && !showSubscribeNow;
+		nextTier != null &&
+		!showSubscribeNow &&
+		!showTrialCta &&
+		(isActive || !sub);
 
 	function invalidateSub() {
 		queryClient.invalidateQueries({
@@ -178,6 +261,7 @@ export function SubscriptionSection() {
 	function handleStartTrial() {
 		startTrial.mutate(undefined, {
 			onSuccess: () => {
+				setTrialModalOpen(false);
 				toast.success("Your 7-day Business trial has started!");
 				invalidateSub();
 			},
@@ -186,142 +270,143 @@ export function SubscriptionSection() {
 	}
 
 	return (
-		<FieldSet>
-			<FieldLegend>Subscription</FieldLegend>
-			<FieldDescription>About my subscription</FieldDescription>
-			{isPastDue && (
-				<Alert variant="destructive">
-					<AlertTriangle />
-					<AlertDescription>
-						Your last payment failed. Please update your payment method to avoid
-						service interruption.
-					</AlertDescription>
-				</Alert>
-			)}
+		<>
+			<FieldSet>
+				<FieldLegend>Subscription</FieldLegend>
+				<FieldDescription>About my subscription</FieldDescription>
+				{isPastDue && (
+					<Alert variant="destructive">
+						<AlertTriangle />
+						<AlertDescription>
+							Your last payment failed. Please update your payment method to
+							avoid service interruption.
+						</AlertDescription>
+					</Alert>
+				)}
 
-			{isCancelingAtEnd && (
-				<Alert className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400">
-					<AlertTriangle />
-					<AlertDescription className="text-amber-700 dark:text-amber-400">
-						Subscription cancels on{" "}
-						<strong>{formatDate(sub.currentPeriodEnd)}</strong>. You'll keep
-						full access until then.
-					</AlertDescription>
-				</Alert>
-			)}
+				{isCancelingAtEnd && (
+					<Alert className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400">
+						<AlertTriangle />
+						<AlertDescription className="text-amber-700 dark:text-amber-400">
+							Subscription cancels on{" "}
+							<strong>{formatDate(sub.currentPeriodEnd)}</strong>. You'll keep
+							full access until then.
+						</AlertDescription>
+					</Alert>
+				)}
 
-			{isCanceled && (
-				<Alert variant="destructive">
-					<AlertTriangle />
-					<AlertDescription>
-						Subscription canceled. Access continues until{" "}
-						<strong>{formatDate(sub.currentPeriodEnd)}</strong>.
-					</AlertDescription>
-				</Alert>
-			)}
+				{isCanceled && (
+					<Alert variant="destructive">
+						<AlertTriangle />
+						<AlertDescription>
+							Subscription canceled. Access continues until{" "}
+							<strong>{formatDate(sub.currentPeriodEnd)}</strong>.
+						</AlertDescription>
+					</Alert>
+				)}
 
-			{/* Card */}
-			<div className="rounded-lg border bg-card">
-				<div className="grid grid-cols-[auto_1fr] items-center gap-x-8 gap-y-3 p-6 text-sm">
-					<span className="text-muted-foreground">Plan</span>
-					<span className="flex items-center gap-2 font-medium">
-						<Badge className="rounded-md text-sm">{meta.label}</Badge>
-						{sub?.status === "trialing" && statusInfo && (
-							<Badge variant={statusInfo.variant} className="text-xs">
-								{statusInfo.label}
-							</Badge>
+				{/* Card */}
+				<div className="rounded-lg border bg-card">
+					<div className="grid grid-cols-[auto_1fr] items-center gap-x-8 gap-y-3 p-6 text-sm">
+						<span className="text-muted-foreground">Plan</span>
+						<span className="flex items-center gap-2 font-medium">
+							<Badge className="rounded-md text-sm">{meta.label}</Badge>
+							{sub?.status === "trialing" && statusInfo && (
+								<Badge variant={statusInfo.variant} className="text-xs">
+									{statusInfo.label}
+								</Badge>
+							)}
+						</span>
+
+						{interval && (
+							<>
+								<span className="text-muted-foreground">Billing</span>
+								<span className="capitalize">{interval}</span>
+							</>
 						)}
-					</span>
 
-					{interval && (
-						<>
-							<span className="text-muted-foreground">Billing</span>
-							<span className="capitalize">{interval}</span>
-						</>
-					)}
-
-					{sub && (
-						<>
-							<span className="text-muted-foreground">{renewalLabel}</span>
-							<span>{formatDate(sub.currentPeriodEnd)}</span>
-						</>
-					)}
-
-					<span className="text-muted-foreground">Seats</span>
-					<span>
-						{data.usage.members.current}
-						{data.usage.members.limit !== -1 && (
-							<span className="text-muted-foreground">
-								{" "}
-								/ {data.usage.members.limit}
-							</span>
+						{sub && (
+							<>
+								<span className="text-muted-foreground">{renewalLabel}</span>
+								<span>{formatDate(sub.currentPeriodEnd)}</span>
+							</>
 						)}
-					</span>
 
-					{daysRemaining !== null && (
-						<>
-							<span className="text-muted-foreground">Trial ends</span>
-							<span>
-								{daysRemaining} day{daysRemaining !== 1 ? "s" : ""} remaining
-							</span>
-						</>
-					)}
+						<span className="text-muted-foreground">Seats</span>
+						<span>
+							{data.usage.members.current}
+							{data.usage.members.limit !== -1 && (
+								<span className="text-muted-foreground">
+									{" "}
+									/ {data.usage.members.limit}
+								</span>
+							)}
+						</span>
+
+						{daysRemaining !== null && (
+							<>
+								<span className="text-muted-foreground">Trial ends</span>
+								<span>
+									{daysRemaining} day{daysRemaining !== 1 ? "s" : ""} remaining
+								</span>
+							</>
+						)}
+					</div>
 				</div>
-			</div>
 
-			{/* Actions */}
-			{(showSubscribeNow || showSwitchYearly || showUpgrade || showBusinessTrialCtas) && (
-				<div className="flex flex-wrap gap-2">
-					{showSubscribeNow && (
-						<Button
-							size="sm"
-							onClick={handleSubscribeNow}
-							disabled={checkout.isPending}
-						>
-							Subscribe now
-						</Button>
-					)}
-					{showSwitchYearly && (
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={handleSwitchYearly}
-							disabled={changePlan.isPending}
-						>
-							Switch to yearly
-						</Button>
-					)}
-					{showUpgrade && (
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={handleUpgrade}
-							disabled={checkout.isPending || changePlan.isPending}
-						>
-							Upgrade to {PLAN_METADATA[nextTier].label}
-						</Button>
-					)}
-					{showBusinessTrialCtas && (
-						<>
+				{/* Actions */}
+				{(showSubscribeNow ||
+					showSwitchYearly ||
+					showUpgrade ||
+					showTrialCta) && (
+					<div className="flex flex-wrap gap-2">
+						{showSubscribeNow && (
 							<Button
 								size="sm"
-								onClick={handleStartTrial}
-								disabled={startTrial.isPending}
+								onClick={handleSubscribeNow}
+								disabled={checkout.isPending}
 							>
-								Start 7-day free trial
+								Subscribe now
 							</Button>
+						)}
+						{showSwitchYearly && (
 							<Button
 								variant="outline"
 								size="sm"
-								onClick={handleTryBusinessTrial}
-								disabled={checkout.isPending}
+								onClick={handleSwitchYearly}
+								disabled={changePlan.isPending}
 							>
-								Try 30 days free
+								Switch to yearly
 							</Button>
-						</>
-					)}
-				</div>
-			)}
-		</FieldSet>
+						)}
+						{showUpgrade && (
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={handleUpgrade}
+								disabled={checkout.isPending || changePlan.isPending}
+							>
+								Upgrade to {PLAN_METADATA[nextTier].label}
+							</Button>
+						)}
+						{showTrialCta && (
+							<Button size="sm" onClick={() => setTrialModalOpen(true)}>
+								<Zap />
+								Try Business free
+							</Button>
+						)}
+					</div>
+				)}
+			</FieldSet>
+
+			<TrialModal
+				open={trialModalOpen}
+				onClose={() => setTrialModalOpen(false)}
+				onStartTrial={handleStartTrial}
+				onTryWithCard={handleTryBusinessTrial}
+				isStartingTrial={startTrial.isPending}
+				isCheckingOut={checkout.isPending}
+			/>
+		</>
 	);
 }

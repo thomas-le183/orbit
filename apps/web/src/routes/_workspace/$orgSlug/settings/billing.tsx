@@ -6,6 +6,7 @@ import {
 } from "@orbit/ui/components/field";
 import {
 	createFileRoute,
+	redirect,
 	useNavigate,
 	useParams,
 	useSearch,
@@ -14,9 +15,17 @@ import { CreditCard } from "lucide-react";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { SubscriptionSection } from "@/components/billing/subscription-section";
+import { loadOrgRole } from "@/hooks/use-auth";
 import { usePortal } from "@/hooks/use-billing";
 
 export const Route = createFileRoute("/_workspace/$orgSlug/settings/billing")({
+	beforeLoad: async ({ context, params }) => {
+		const { authState, targetOrg } = context;
+		const role = await loadOrgRole(context.queryClient, targetOrg.id, authState.user?.id ?? "");
+		if (role === "member" || role === null) {
+			throw redirect({ to: "/$orgSlug", params });
+		}
+	},
 	validateSearch: (search: Record<string, unknown>) => ({
 		checkout: search.checkout as "success" | "canceled" | undefined,
 	}),
