@@ -6,7 +6,7 @@ import {
 	SUBSCRIPTION_PLANS,
 	type SubscriptionPlan,
 } from "@orbit/shared";
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, isNull } from "drizzle-orm";
 import { DB, type Db } from "../db/db.module";
 import * as schema from "../db/schema";
 import { StripeService } from "./stripe.service";
@@ -41,6 +41,7 @@ export class BillingService {
 			id: randomUUID(),
 			organizationId,
 			stripeCustomerId,
+			trialUsedAt: null,
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		};
@@ -134,12 +135,87 @@ export class BillingService {
 				updatedAt: now,
 			});
 		}
+
+		if (data.status === "trialing") {
+			await this.markTrialUsed(data.organizationId);
+		}
+	}
+
+	async startTrial(
+		organizationId: string,
+		orgName: string,
+		userEmail: string,
+	): Promise<void> {
+		const billing = await this.getBillingRecord(organizationId);
+		if (billing?.trialUsedAt) {
+			throw new BadRequestException(
+				"Trial has already been used for this organization",
+			);
+		}
+
+		const existingSub = await this.getSubscription(organizationId);
+		if (
+			existingSub &&
+			["active", "trialing", "past_due"].includes(existingSub.status)
+		) {
+			throw new BadRequestException(
+				"Organization already has an active subscription",
+			);
+		}
+
+		let billingRecord = billing;
+		if (!billingRecord) {
+			const customer = await this.stripeService.createCustomer(
+				organizationId,
+				orgName,
+				userEmail,
+			);
+			billingRecord = await this.getOrCreateBillingRecord(
+				organizationId,
+				customer.id,
+			);
+		}
+
+		const stripeSub = await this.stripeService.createTrialSubscription(
+			billingRecord.stripeCustomerId,
+			"business_monthly",
+			organizationId,
+		);
+
+		const item = stripeSub.items.data[0];
+		await this.upsertSubscription({
+			organizationId,
+			stripeSubscriptionId: stripeSub.id,
+			stripePriceId: item.price.id,
+			subscriptionPlan: "business",
+			status: stripeSub.status,
+			currentPeriodStart: new Date(item.current_period_start * 1000),
+			currentPeriodEnd: new Date(item.current_period_end * 1000),
+			cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
+		});
 	}
 
 	async findBillingByCustomerId(stripeCustomerId: string) {
 		return this.db.query.organizationBilling.findFirst({
 			where: eq(schema.organizationBilling.stripeCustomerId, stripeCustomerId),
 		});
+	}
+
+	async isTrialEligible(organizationId: string): Promise<boolean> {
+		const billing = await this.getBillingRecord(organizationId);
+		return billing?.trialUsedAt == null;
+	}
+
+	async markTrialUsed(organizationId: string): Promise<void> {
+		await this.db
+			.update(schema.organizationBilling)
+			.set({ trialUsedAt: new Date(), updatedAt: new Date() })
+			.where(
+				and(
+					eq(schema.organizationBilling.organizationId, organizationId),
+					isNull(schema.organizationBilling.trialUsedAt),
+				),
+			);
 	}
 
 	async updateSubscriptionStatus(stripeSubscriptionId: string, status: string) {
