@@ -15,6 +15,7 @@ export const organizationBilling = pgTable("organization_billing", {
 		.unique()
 		.references(() => organization.id, { onDelete: "cascade" }),
 	stripeCustomerId: text("stripe_customer_id").notNull().unique(),
+	trialUsedAt: timestamp("trial_used_at"),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
