@@ -48,6 +48,46 @@ export function useCheckout(orgSlug: string) {
 	});
 }
 
+export function useStartTrial(orgSlug: string) {
+	return useMutation({
+		mutationFn: async () => {
+			const { data } = await api.post<{ status: string }>(
+				`/billing/${orgSlug}/start-trial`,
+			);
+			return data;
+		},
+	});
+}
+
+export function useChangePlan(orgSlug: string) {
+	return useMutation({
+		mutationFn: async ({
+			plan,
+			interval,
+		}: {
+			plan: SubscriptionPlan;
+			interval: "monthly" | "yearly";
+		}) => {
+			const { data } = await api.post<{ success: boolean }>(
+				`/billing/${orgSlug}/change-plan`,
+				{ plan, interval },
+			);
+			return data;
+		},
+	});
+}
+
+export function useCancelSubscription(orgSlug: string) {
+	return useMutation({
+		mutationFn: async () => {
+			const { data } = await api.post<{ success: boolean }>(
+				`/billing/${orgSlug}/cancel`,
+			);
+			return data;
+		},
+	});
+}
+
 export function usePortal(orgSlug: string) {
 	return useMutation({
 		mutationFn: async () => {
