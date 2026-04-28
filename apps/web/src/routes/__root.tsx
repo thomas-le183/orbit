@@ -10,6 +10,9 @@ import { queryClient } from "@/lib/query-client";
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 	{
 		component: RootComponent,
+		errorComponent: ({ error }) => {
+			<div>{error.message}</div>;
+		},
 	},
 );
 

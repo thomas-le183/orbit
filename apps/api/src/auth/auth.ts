@@ -31,7 +31,7 @@ export const auth = betterAuth({
 	plugins: [
 		organization({
 			allowUserToCreateOrganization: true,
-			teams: { enabled: true },
+			teams: { enabled: true, defaultTeam: { enabled: false } },
 		}),
 	],
 });

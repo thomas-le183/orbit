@@ -1,10 +1,9 @@
-import { useForm } from "@tanstack/react-form";
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { Button } from "@orbit/ui/components/button";
 import { Input } from "@orbit/ui/components/input";
+import { useForm } from "@tanstack/react-form";
+import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import {
 	loadAuthState,
-	resolveAuthenticatedLanding,
 	useCreateOrganization,
 	useSetActiveOrganization,
 } from "@/hooks/use-auth";
@@ -19,11 +18,6 @@ export const Route = createFileRoute("/create-workspace")({
 
 		if (!state.user.name) {
 			throw redirect({ to: "/onboarding" });
-		}
-
-		if (state.organizations.length > 0) {
-			const landing = resolveAuthenticatedLanding(state);
-			if (landing) throw redirect(landing);
 		}
 	},
 	component: RouteComponent,

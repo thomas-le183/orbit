@@ -35,6 +35,7 @@ import { AuthController } from "./auth.controller";
 							allowUserToCreateOrganization: true,
 							teams: {
 								enabled: true,
+								defaultTeam: { enabled: false },
 							},
 							organizationHooks: {
 								// === INVITATIONS ===
@@ -51,7 +52,9 @@ import { AuthController } from "./auth.controller";
 								afterRejectInvitation: async () => {},
 
 								// === ORGANIZATIONS ===
-								beforeCreateOrganization: async () => {},
+								beforeCreateOrganization: async (data) => {
+									console.log("Hello I'm creating an org", data);
+								},
 								afterCreateOrganization: async () => {},
 
 								beforeUpdateOrganization: async () => {},

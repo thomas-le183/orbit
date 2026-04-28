@@ -18,6 +18,7 @@ import {
 } from "@orbit/ui/components/field";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
+import type { AxiosError } from "axios";
 import { AlertTriangle, Zap } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -62,7 +63,7 @@ function TrialModal({
 						type="button"
 						onClick={onStartTrial}
 						disabled={isStartingTrial || isCheckingOut}
-						className="group flex flex-col gap-1 rounded-lg border border-border bg-card p-4 text-left transition-colors hover:border-primary hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50"
+						className="group flex flex-col gap-1 rounded-lg border border-border-strong bg-card p-4 text-left transition-colors hover:border-primary hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50"
 					>
 						<span className="font-medium">7-day free trial</span>
 						<span className="text-sm text-muted-foreground">
@@ -75,7 +76,7 @@ function TrialModal({
 						type="button"
 						onClick={onTryWithCard}
 						disabled={isStartingTrial || isCheckingOut}
-						className="group flex flex-col gap-1 rounded-lg border border-border bg-card p-4 text-left transition-colors hover:border-primary hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50"
+						className="group flex flex-col gap-1 rounded-lg border border-border-strong bg-card p-4 text-left transition-colors hover:border-primary hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50"
 					>
 						<span className="font-medium">30-day free trial</span>
 						<span className="text-sm text-muted-foreground">
@@ -202,8 +203,10 @@ export function SubscriptionSection() {
 				interval: interval ?? "monthly",
 			},
 			{
-				onError: () =>
-					toast.error("Could not start checkout. Please try again."),
+				onError: (e) =>
+					toast.error(
+						e.message ?? "Could not start checkout. Please try again.",
+					),
 			},
 		);
 	}
@@ -217,8 +220,10 @@ export function SubscriptionSection() {
 					toast.success("Switched to yearly billing.");
 					invalidateSub();
 				},
-				onError: () =>
-					toast.error("Could not switch billing interval. Please try again."),
+				onError: (e) =>
+					toast.error(
+						e.message ?? "Could not switch billing interval. Please try again.",
+					),
 			},
 		);
 	}
@@ -229,8 +234,10 @@ export function SubscriptionSection() {
 			checkout.mutate(
 				{ plan: nextTier, interval: "monthly" },
 				{
-					onError: () =>
-						toast.error("Could not start checkout. Please try again."),
+					onError: (e) =>
+						toast.error(
+							e.message ?? "Could not start checkout. Please try again.",
+						),
 				},
 			);
 		} else {
@@ -241,8 +248,10 @@ export function SubscriptionSection() {
 						toast.success("Plan upgraded successfully.");
 						invalidateSub();
 					},
-					onError: () =>
-						toast.error("Could not upgrade plan. Please try again."),
+					onError: (e) =>
+						toast.error(
+							e.message ?? "Could not upgrade plan. Please try again.",
+						),
 				},
 			);
 		}
@@ -252,8 +261,10 @@ export function SubscriptionSection() {
 		checkout.mutate(
 			{ plan: "business", interval: "monthly" },
 			{
-				onError: () =>
-					toast.error("Could not start checkout. Please try again."),
+				onError: (e) =>
+					toast.error(
+						e.message ?? "Could not start checkout. Please try again.",
+					),
 			},
 		);
 	}
@@ -265,7 +276,8 @@ export function SubscriptionSection() {
 				toast.success("Your 7-day Business trial has started!");
 				invalidateSub();
 			},
-			onError: () => toast.error("Could not start trial. Please try again."),
+			onError: (e) =>
+				toast.error(e.message ?? "Could not start trial. Please try again."),
 		});
 	}
 
@@ -363,6 +375,7 @@ export function SubscriptionSection() {
 						{showSubscribeNow && (
 							<Button
 								size="sm"
+								variant="outline"
 								onClick={handleSubscribeNow}
 								disabled={checkout.isPending}
 							>

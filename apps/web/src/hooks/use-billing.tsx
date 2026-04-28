@@ -1,4 +1,8 @@
-import type { PlanResponse, SubscriptionPlan, SubscriptionResponse } from "@orbit/shared";
+import type {
+	PlanResponse,
+	SubscriptionPlan,
+	SubscriptionResponse,
+} from "@orbit/shared";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
