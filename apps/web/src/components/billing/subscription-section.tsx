@@ -102,7 +102,9 @@ export function SubscriptionSection() {
 	const nextTier = NEXT_TIER[currentPlan];
 	const showSubscribeNow = sub?.status === "trialing";
 	const showSwitchYearly = isActive && interval === "monthly";
-	const showUpgrade = nextTier != null && !showSubscribeNow && (isActive || !sub);
+	const showUpgrade =
+		nextTier != null && !showSubscribeNow && (isActive || !sub);
+	const showBusinessTrialCtas = data.trialEligible && !sub && !showSubscribeNow;
 
 	function invalidateSub() {
 		queryClient.invalidateQueries({
@@ -112,7 +114,10 @@ export function SubscriptionSection() {
 
 	function handleSubscribeNow() {
 		checkout.mutate(
-			{ plan: currentPlan as "basic" | "business", interval: interval ?? "monthly" },
+			{
+				plan: currentPlan as "basic" | "business",
+				interval: interval ?? "monthly",
+			},
 			{
 				onError: () =>
 					toast.error("Could not start checkout. Please try again."),
@@ -158,6 +163,16 @@ export function SubscriptionSection() {
 				},
 			);
 		}
+	}
+
+	function handleTryBusinessTrial() {
+		checkout.mutate(
+			{ plan: "business", interval: "monthly" },
+			{
+				onError: () =>
+					toast.error("Could not start checkout. Please try again."),
+			},
+		);
 	}
 
 	function handleStartTrial() {
@@ -255,7 +270,7 @@ export function SubscriptionSection() {
 			</div>
 
 			{/* Actions */}
-			{(showSubscribeNow || showSwitchYearly || showUpgrade) && (
+			{(showSubscribeNow || showSwitchYearly || showUpgrade || showBusinessTrialCtas) && (
 				<div className="flex flex-wrap gap-2">
 					{showSubscribeNow && (
 						<Button
@@ -277,35 +292,32 @@ export function SubscriptionSection() {
 						</Button>
 					)}
 					{showUpgrade && (
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={handleUpgrade}
+							disabled={checkout.isPending || changePlan.isPending}
+						>
+							Upgrade to {PLAN_METADATA[nextTier].label}
+						</Button>
+					)}
+					{showBusinessTrialCtas && (
 						<>
-							{nextTier === "business" && data.trialEligible && !sub ? (
-								<>
-									<Button
-										size="sm"
-										onClick={handleStartTrial}
-										disabled={startTrial.isPending}
-									>
-										Start 7-day free trial
-									</Button>
-									<Button
-										variant="outline"
-										size="sm"
-										onClick={handleUpgrade}
-										disabled={checkout.isPending || changePlan.isPending}
-									>
-										Try 30 days free
-									</Button>
-								</>
-							) : (
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={handleUpgrade}
-									disabled={checkout.isPending || changePlan.isPending}
-								>
-									Upgrade to {PLAN_METADATA[nextTier].label}
-								</Button>
-							)}
+							<Button
+								size="sm"
+								onClick={handleStartTrial}
+								disabled={startTrial.isPending}
+							>
+								Start 7-day free trial
+							</Button>
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={handleTryBusinessTrial}
+								disabled={checkout.isPending}
+							>
+								Try 30 days free
+							</Button>
 						</>
 					)}
 				</div>
