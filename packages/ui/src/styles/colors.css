@@ -33,6 +33,8 @@
 	--background-tertiary: var(--gray-4);
 	--background-quaternary: var(--gray-5);
 
+	--background-overlay-primary: #000000b8;
+
 	--border-light: var(--gray-4);
 	--border-medium: var(--gray-5);
 	--border-strong: var(--gray-6);

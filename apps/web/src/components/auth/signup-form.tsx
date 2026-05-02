@@ -111,56 +111,74 @@ export function SignupForm({
 
 						<form.Field
 							name="name"
-							children={(field) => (
-								<Field>
-									<FieldLabel htmlFor={field.name}>Name</FieldLabel>
-									<Input
-										id={field.name}
-										type="text"
-										placeholder="John Doe"
-										value={field.state.value}
-										onChange={(e) => field.handleChange(e.target.value)}
-										required
-									/>
-									<FieldError errors={field.state.meta.errors} />
-								</Field>
-							)}
+							children={(field) => {
+								const isInvalid =
+									field.state.meta.isTouched && !field.state.meta.isValid;
+								return (
+									<Field>
+										<FieldLabel htmlFor={field.name}>Name</FieldLabel>
+										<Input
+											id={field.name}
+											type="text"
+											placeholder="John Doe"
+											value={field.state.value}
+											onChange={(e) => field.handleChange(e.target.value)}
+											required
+										/>
+										{isInvalid && (
+											<FieldError errors={field.state.meta.errors} />
+										)}
+									</Field>
+								);
+							}}
 						/>
 
 						<form.Field
 							name="email"
-							children={(field) => (
-								<Field>
-									<FieldLabel htmlFor={field.name}>Email</FieldLabel>
-									<Input
-										id={field.name}
-										type="email"
-										placeholder="m@example.com"
-										value={field.state.value}
-										onChange={(e) => field.handleChange(e.target.value)}
-										required
-									/>
-									<FieldError errors={field.state.meta.errors} />
-								</Field>
-							)}
+							children={(field) => {
+								const isInvalid =
+									field.state.meta.isTouched && !field.state.meta.isValid;
+								return (
+									<Field>
+										<FieldLabel htmlFor={field.name}>Email</FieldLabel>
+										<Input
+											id={field.name}
+											type="email"
+											placeholder="m@example.com"
+											value={field.state.value}
+											onChange={(e) => field.handleChange(e.target.value)}
+											required
+										/>
+										{isInvalid && (
+											<FieldError errors={field.state.meta.errors} />
+										)}
+									</Field>
+								);
+							}}
 						/>
 
 						<form.Field
 							name="password"
-							children={(field) => (
-								<Field>
-									<FieldLabel htmlFor={field.name}>Password</FieldLabel>
-									<Input
-										id={field.name}
-										type="password"
-										value={field.state.value}
-										onChange={(e) => field.handleChange(e.target.value)}
-										placeholder="**********"
-										required
-									/>
-									<FieldError errors={field.state.meta.errors} />
-								</Field>
-							)}
+							children={(field) => {
+								const isInvalid =
+									field.state.meta.isTouched && !field.state.meta.isValid;
+								return (
+									<Field>
+										<FieldLabel htmlFor={field.name}>Password</FieldLabel>
+										<Input
+											id={field.name}
+											type="password"
+											value={field.state.value}
+											onChange={(e) => field.handleChange(e.target.value)}
+											placeholder="**********"
+											required
+										/>
+										{isInvalid && (
+											<FieldError errors={field.state.meta.errors} />
+										)}
+									</Field>
+								);
+							}}
 						/>
 
 						<form.Subscribe

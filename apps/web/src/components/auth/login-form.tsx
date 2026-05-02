@@ -63,45 +63,57 @@ export function LoginForm({
 
 						<form.Field
 							name="email"
-							children={(field) => (
-								<Field>
-									<FieldLabel htmlFor={field.name}>Email</FieldLabel>
-									<Input
-										id={field.name}
-										type="email"
-										placeholder="m@example.com"
-										value={field.state.value}
-										onChange={(e) => field.handleChange(e.target.value)}
-										required
-									/>
-									<FieldError errors={field.state.meta.errors} />
-								</Field>
-							)}
+							children={(field) => {
+								const isInvalid =
+									field.state.meta.isTouched && !field.state.meta.isValid;
+								return (
+									<Field>
+										<FieldLabel htmlFor={field.name}>Email</FieldLabel>
+										<Input
+											id={field.name}
+											type="email"
+											placeholder="m@example.com"
+											value={field.state.value}
+											onChange={(e) => field.handleChange(e.target.value)}
+											required
+										/>
+										{isInvalid && (
+											<FieldError errors={field.state.meta.errors} />
+										)}
+									</Field>
+								);
+							}}
 						/>
 
 						<form.Field
 							name="password"
-							children={(field) => (
-								<Field>
-									<div className="flex items-center justify-between">
-										<FieldLabel htmlFor={field.name}>Password</FieldLabel>
-										<Link
-											to="/forgot-password"
-											className="text-sm underline underline-offset-4"
-										>
-											Forgot password?
-										</Link>
-									</div>
-									<Input
-										id={field.name}
-										type="password"
-										value={field.state.value}
-										onChange={(e) => field.handleChange(e.target.value)}
-										required
-									/>
-									<FieldError errors={field.state.meta.errors} />
-								</Field>
-							)}
+							children={(field) => {
+								const isInvalid =
+									field.state.meta.isTouched && !field.state.meta.isValid;
+								return (
+									<Field>
+										<div className="flex items-center justify-between">
+											<FieldLabel htmlFor={field.name}>Password</FieldLabel>
+											<Link
+												to="/forgot-password"
+												className="text-sm underline underline-offset-4"
+											>
+												Forgot password?
+											</Link>
+										</div>
+										<Input
+											id={field.name}
+											type="password"
+											value={field.state.value}
+											onChange={(e) => field.handleChange(e.target.value)}
+											required
+										/>
+										{isInvalid && (
+											<FieldError errors={field.state.meta.errors} />
+										)}
+									</Field>
+								);
+							}}
 						/>
 
 						<form.Subscribe

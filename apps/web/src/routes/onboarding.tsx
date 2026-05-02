@@ -1,6 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { Button } from "@orbit/ui/components/button";
+import { Field, FieldError, FieldLabel } from "@orbit/ui/components/field";
 import { Input } from "@orbit/ui/components/input";
 import { loadAuthState, resolveAuthenticatedLanding, useUpdateUser } from "@/hooks/use-auth";
 
@@ -56,23 +57,26 @@ function RouteComponent() {
 								!value.trim() ? "Name is required" : undefined,
 						}}
 					>
-						{(field) => (
-							<div className="space-y-1">
-								<Input
-									id={field.name}
-									placeholder="Your full name"
-									value={field.state.value}
-									onBlur={field.handleBlur}
-									onChange={(e) => field.handleChange(e.target.value)}
-									autoFocus
-								/>
-								{field.state.meta.errors.length > 0 && (
-									<p className="text-xs text-destructive">
-										{field.state.meta.errors[0]}
-									</p>
-								)}
-							</div>
-						)}
+						{(field) => {
+							const isInvalid =
+								field.state.meta.isTouched && !field.state.meta.isValid;
+							return (
+								<Field className="space-y-1">
+									<FieldLabel htmlFor={field.name}>Full name</FieldLabel>
+									<Input
+										id={field.name}
+										placeholder="Your full name"
+										value={field.state.value}
+										onBlur={field.handleBlur}
+										onChange={(e) => field.handleChange(e.target.value)}
+										autoFocus
+									/>
+									{isInvalid && (
+										<FieldError errors={field.state.meta.errors} />
+									)}
+								</Field>
+							);
+						}}
 					</form.Field>
 
 					<form.Subscribe selector={(s) => [s.canSubmit, s.isSubmitting]}>

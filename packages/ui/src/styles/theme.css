@@ -135,6 +135,8 @@
 	--color-background-tertiary: var(--background-tertiary);
 	--color-background-quaternary: var(--background-quaternary);
 
+	--color-background-overlay-primary: var(--background-overlay-primary);
+
 	/* Custom border scale */
 	--color-border-light: var(--border-light);
 	--color-border-medium: var(--border-medium);

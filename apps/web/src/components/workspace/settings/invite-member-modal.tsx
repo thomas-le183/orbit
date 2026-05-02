@@ -8,7 +8,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@orbit/ui/components/dialog";
-import { Field, FieldLabel } from "@orbit/ui/components/field";
+import { Field, FieldError, FieldLabel } from "@orbit/ui/components/field";
 import { Input } from "@orbit/ui/components/input";
 import {
 	Select,
@@ -63,18 +63,26 @@ export function InviteMemberModal({
 					className="flex flex-col gap-4"
 				>
 					<form.Field name="email">
-						{(field) => (
-							<Field>
-								<FieldLabel>Email address</FieldLabel>
-								<Input
-									type="email"
-									placeholder="colleague@example.com"
-									value={field.state.value}
-									onChange={(e) => field.handleChange(e.target.value)}
-									required
-								/>
-							</Field>
-						)}
+						{(field) => {
+							const isInvalid =
+								field.state.meta.isTouched && !field.state.meta.isValid;
+							return (
+								<Field>
+									<FieldLabel htmlFor={field.name}>Email address</FieldLabel>
+									<Input
+										id={field.name}
+										type="email"
+										placeholder="colleague@example.com"
+										value={field.state.value}
+										onChange={(e) => field.handleChange(e.target.value)}
+										required
+									/>
+									{isInvalid && (
+										<FieldError errors={field.state.meta.errors} />
+									)}
+								</Field>
+							);
+						}}
 					</form.Field>
 
 					<form.Field name="role">
