@@ -1,13 +1,13 @@
 import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { eq } from "drizzle-orm";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth } from "better-auth/minimal";
 import { organization } from "better-auth/plugins";
+import { eq } from "drizzle-orm";
 import { DB, type Db } from "../db/db.module";
+import * as schema from "../db/schema";
 import { EmailModule } from "../email/email.module";
 import { EmailService } from "../email/email.service";
-import * as schema from "../db/schema";
 import { AUTH } from "./auth.constants";
 import { AuthController } from "./auth.controller";
 
@@ -71,7 +71,10 @@ import { AuthController } from "./auth.controller";
 							},
 
 							organizationHooks: {
-								afterCreateOrganization: async ({ organization: org, user: owner }) => {
+								afterCreateOrganization: async ({
+									organization: org,
+									user: owner,
+								}) => {
 									void email.sendWorkspaceCreated(owner.email, {
 										ownerName: owner.name,
 										organizationName: org.name,
@@ -79,7 +82,11 @@ import { AuthController } from "./auth.controller";
 									});
 								},
 
-								afterAcceptInvitation: async ({ invitation, user: newMember, organization: org }) => {
+								afterAcceptInvitation: async ({
+									invitation,
+									user: newMember,
+									organization: org,
+								}) => {
 									const inviter = await db.query.user.findFirst({
 										where: eq(schema.user.id, invitation.inviterId),
 									});

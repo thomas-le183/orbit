@@ -1,3 +1,4 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@orbit/ui/components/avatar";
 import { Button } from "@orbit/ui/components/button";
 import {
 	Card,
@@ -7,17 +8,29 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@orbit/ui/components/card";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuGroup,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@orbit/ui/components/dropdown-menu";
 import { Field, FieldLabel } from "@orbit/ui/components/field";
 import { Input } from "@orbit/ui/components/input";
 import { Spinner } from "@orbit/ui/components/spinner";
 import { useForm } from "@tanstack/react-form";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import {
 	loadAuthState,
 	useCreateOrganization,
+	useOrganizations,
+	useSession,
 	useSetActiveOrganization,
+	useSignOut,
 } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/create-workspace")({
@@ -47,6 +60,17 @@ function RouteComponent() {
 	const router = useRouter();
 	const createOrg = useCreateOrganization();
 	const setActive = useSetActiveOrganization();
+	const { data: organizations = [] } = useOrganizations();
+	const { data: session } = useSession();
+	const signOut = useSignOut();
+
+	const user = session?.user;
+	const initials = user?.name
+		?.split(" ")
+		.map((n) => n[0])
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
 
 	const form = useForm({
 		defaultValues: { name: "", slug: "" },
@@ -70,16 +94,54 @@ function RouteComponent() {
 
 	return (
 		<div className="relative flex min-h-svh items-center justify-center p-4">
-			<Button
-				type="button"
-				variant="ghost"
-				size="sm"
-				className="absolute left-4 top-4 text-muted-foreground"
-				onClick={() => router.navigate({ to: "/" })}
-			>
-				<ArrowLeft className="size-4" />
-				Back
-			</Button>
+			<div className="absolute left-4 right-4 top-4 flex items-center justify-between">
+				{organizations.length > 0 ? (
+					<Button
+						type="button"
+						variant="ghost"
+						size="sm"
+						className="text-muted-foreground"
+						onClick={() => router.history.back()}
+					>
+						<ArrowLeft className="size-4" />
+						Back
+					</Button>
+				) : (
+					<div />
+				)}
+
+				{user && (
+					<DropdownMenu>
+						<DropdownMenuTrigger className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-accent">
+							<span>{user.email}</span>
+							<Avatar className="size-7">
+								<AvatarImage src={user.image ?? undefined} />
+								<AvatarFallback className="text-xs">{initials}</AvatarFallback>
+							</Avatar>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end" className="w-48">
+							<DropdownMenuGroup>
+								<DropdownMenuLabel className="font-normal">
+									<p className="font-medium">{user.name}</p>
+									<p className="text-xs text-muted-foreground">{user.email}</p>
+								</DropdownMenuLabel>
+							</DropdownMenuGroup>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem
+								onClick={() =>
+								signOut.mutate(undefined, {
+									onSuccess: () => router.navigate({ to: "/login" }),
+								})
+							}
+								className="text-destructive focus:text-destructive"
+							>
+								<LogOut className="size-4" />
+								Sign out
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
+				)}
+			</div>
 
 			<Card className="w-full max-w-md">
 				<CardHeader>

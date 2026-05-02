@@ -5,20 +5,12 @@ import type { Db } from "../../db.module";
 import * as schema from "../../schema";
 
 const USERS = [
-	{ name: "Dev User", email: "dev@orbit.local" },
-	{ name: "Alice Chen", email: "alice@orbit.local" },
-	{ name: "Bob Kim", email: "bob@orbit.local" },
-	{ name: "Carol Singh", email: "carol@orbit.local" },
-	{ name: "Dan Park", email: "dan@orbit.local" },
-	{ name: "Eve Torres", email: "eve@orbit.local" },
-	{ name: "Frank Wu", email: "frank@orbit.local" },
+	{ name: "Deja Vu", email: "dejavu@orbit.com" },
+	{ name: "Alice Chen", email: "alice@orbit.com" },
+	{ name: "Bob Kim", email: "bob@orbit.com" },
 ];
 
-const ORGS = [
-	{ name: "Orbit Dev", slug: "orbit-dev" },
-	{ name: "Acme Corp", slug: "acme-corp" },
-	{ name: "Stellar Labs", slug: "stellar-labs" },
-];
+const ORGS = [{ name: "Acme Corp", slug: "acme-corp" }];
 
 // Each org: [ownerIndex, member1Index, member2Index]
 const ORG_MEMBERS: [number, number, number][] = [

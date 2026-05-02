@@ -56,13 +56,28 @@ export function useSignUp() {
 			password: string;
 			name: string;
 		}) => {
-			const { data, error } = await authClient.signUp.email(input);
+			const { data, error } = await authClient.signUp.email({
+				...input,
+				callbackURL: `${import.meta.env.VITE_WEB_BASE_URL}/`,
+			});
 			if (error) throw error;
 			return data;
 		},
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: authKeys.session });
 			qc.invalidateQueries({ queryKey: authKeys.organizations });
+		},
+	});
+}
+
+export function useSendVerificationEmail() {
+	return useMutation({
+		mutationFn: async (email: string) => {
+			const { error } = await authClient.sendVerificationEmail({
+				email,
+				callbackURL: `${import.meta.env.VITE_WEB_BASE_URL}/`,
+			});
+			if (error) throw error;
 		},
 	});
 }
@@ -331,14 +346,18 @@ export async function loadOrgRole(
 	const orgData = await queryClient.ensureQueryData({
 		queryKey: ["auth", "org-full", orgId],
 		queryFn: async () => {
-			const { data, error } = await authClient.organization.getFullOrganization({
-				query: { organizationId: orgId },
-			});
+			const { data, error } = await authClient.organization.getFullOrganization(
+				{
+					query: { organizationId: orgId },
+				},
+			);
 			if (error) throw error;
 			return data;
 		},
 	});
-	const member = orgData?.members?.find((m: { userId: string }) => m.userId === userId);
+	const member = orgData?.members?.find(
+		(m: { userId: string }) => m.userId === userId,
+	);
 	return (member?.role as "owner" | "admin" | "member" | null) ?? null;
 }
 
