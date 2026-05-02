@@ -22,7 +22,6 @@ import { ImageIcon, Trash2Icon, UploadIcon } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { useDeleteOrganization, useUpdateOrganization } from "@/hooks/use-auth";
 import { SettingsPage } from "./settings-page";
-import { useSaveIndicator } from "./use-save-indicator";
 
 interface GeneralSettingsProps {
 	org: { id: string; name: string; slug: string; logo?: string | null };
@@ -33,9 +32,6 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 	const router = useRouter();
 	const update = useUpdateOrganization();
 	const deleteOrg = useDeleteOrganization();
-	const nameSave = useSaveIndicator();
-	const slugSave = useSaveIndicator();
-	const logoSave = useSaveIndicator();
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const [deleteConfirm, setDeleteConfirm] = useState("");
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,7 +43,6 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 		field: "name" | "slug" | "logo",
 		value: string,
 		prev: string | null | undefined,
-		indicator: ReturnType<typeof useSaveIndicator>,
 	) {
 		const next = value.trim();
 		const prevTrimmed = (prev ?? "").trim();
@@ -57,7 +52,7 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 				organizationId: org.id,
 				data: { [field]: field === "logo" ? next || null : next },
 			},
-			{ onSuccess: indicator.trigger },
+			{ onSuccess: () => toast.success("Saved") },
 		);
 	}
 
@@ -102,7 +97,7 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 									variant="outline"
 									size="sm"
 									disabled={!org.logo}
-									onClick={() => saveIf("logo", "", org.logo, logoSave)}
+									onClick={() => saveIf("logo", "", org.logo)}
 								>
 									<Trash2Icon />
 									Remove
@@ -127,7 +122,6 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 												"logo",
 												String(reader.result ?? ""),
 												org.logo,
-												logoSave,
 											);
 										reader.readAsDataURL(file);
 										e.target.value = "";
@@ -137,12 +131,7 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 							<FieldDescription>
 								We support your square PNGs, JPEGs and GIFs under 10MB
 							</FieldDescription>
-							{logoSave.saved && (
-								<FieldDescription className="text-green-500">
-									Saved ✓
-								</FieldDescription>
-							)}
-						</div>
+							</div>
 					</div>
 				</Field>
 
@@ -150,17 +139,12 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 					<FieldContent>
 						<FieldLabel htmlFor={nameId}>Workspace name</FieldLabel>
 						<FieldDescription>Displayed across the app.</FieldDescription>
-						{nameSave.saved && (
-							<FieldDescription className="text-green-500">
-								Saved ✓
-							</FieldDescription>
-						)}
 					</FieldContent>
 					<Input
 						id={nameId}
 						className="w-70 shrink-0"
 						defaultValue={org.name}
-						onBlur={(e) => saveIf("name", e.target.value, org.name, nameSave)}
+						onBlur={(e) => saveIf("name", e.target.value, org.name)}
 					/>
 				</Field>
 
@@ -170,11 +154,6 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 						<FieldDescription>
 							Changing invalidates existing links.
 						</FieldDescription>
-						{slugSave.saved && (
-							<FieldDescription className="text-green-500">
-								Saved ✓
-							</FieldDescription>
-						)}
 					</FieldContent>
 					<div className="flex w-70 shrink-0">
 						<span className="flex h-9 items-center rounded-l-md border border-r-0 bg-muted px-3 text-xs text-muted-foreground">
@@ -184,7 +163,7 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 							id={slugId}
 							className="rounded-l-none"
 							defaultValue={org.slug}
-							onBlur={(e) => saveIf("slug", e.target.value, org.slug, slugSave)}
+							onBlur={(e) => saveIf("slug", e.target.value, org.slug)}
 						/>
 					</div>
 				</Field>

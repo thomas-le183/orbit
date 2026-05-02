@@ -19,6 +19,9 @@ const config = defineConfig({
 	},
 	server: {
 		allowedHosts: true,
+		watch: {
+			usePolling: true,
+		},
 	},
 });
 

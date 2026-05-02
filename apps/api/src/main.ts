@@ -2,6 +2,7 @@ import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import cookieParser from "cookie-parser";
 import { AppModule } from "./app.module";
+import { LatencyInterceptor } from "./common/interceptors/latency.interceptor";
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, { rawBody: true });
@@ -11,6 +12,10 @@ async function bootstrap() {
 	app.useGlobalPipes(
 		new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
 	);
+
+	if (process.env.NODE_ENV === "development") {
+		app.useGlobalInterceptors(new LatencyInterceptor());
+	}
 
 	app.use(cookieParser());
 

@@ -37,15 +37,16 @@ import {
 } from "@tanstack/react-router";
 import {
 	ArrowLeftIcon,
-	CheckIcon,
 	ChevronRightIcon,
 	ChevronsUpDownIcon,
+	CrownIcon,
 	LogOutIcon,
 	MoonIcon,
 	PlusIcon,
 	SearchIcon,
 	SettingsIcon,
 	SunIcon,
+	UserPlusIcon,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
@@ -56,7 +57,13 @@ import {
 	type SidebarItem,
 	type SidebarSection,
 } from "@/config/navigation";
-import { useOrganizations, useOrgRole, useSession, useSignOut } from "@/hooks/use-auth";
+import {
+	useOrganizations,
+	useOrgRole,
+	useSession,
+	useSignOut,
+} from "@/hooks/use-auth";
+import { useOrgSubscription } from "@/hooks/use-billing";
 
 export function AppSidebar() {
 	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
@@ -133,6 +140,8 @@ function WorkspaceSwitcher({ orgSlug }: { orgSlug: string }) {
 	const router = useRouter();
 	const { data: organizations } = useOrganizations();
 	const activeOrganization = organizations?.find((o) => o.slug === orgSlug);
+	const otherOrganizations = organizations?.filter((o) => o.slug !== orgSlug);
+	const { data: subscription } = useOrgSubscription(orgSlug);
 
 	return (
 		<SidebarMenu>
@@ -142,6 +151,7 @@ function WorkspaceSwitcher({ orgSlug }: { orgSlug: string }) {
 						render={
 							<SidebarMenuButton
 								tooltip={activeOrganization?.name ?? orgSlug}
+								className="group-data-[collapsible=icon]:justify-center"
 							/>
 						}
 					>
@@ -151,37 +161,97 @@ function WorkspaceSwitcher({ orgSlug }: { orgSlug: string }) {
 							placeholder={activeOrganization?.name}
 							avatarUrl={activeOrganization?.logo}
 						/>
-						<span className="flex-1 truncate font-medium text-foreground-primary">
+						<span className="flex-1 truncate font-medium text-foreground-primary group-data-[collapsible=icon]:hidden">
 							{activeOrganization?.name ?? orgSlug}
 						</span>
-						<ChevronsUpDownIcon className="size-3.5 shrink-0" />
+						<ChevronsUpDownIcon className="size-3.5 shrink-0 group-data-[collapsible=icon]:hidden" />
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align="start" side="bottom" className="w-56">
-						{organizations?.map((org) => (
+					<DropdownMenuContent align="start" side="bottom" className="w-64">
+						{/* Section 1: Current workspace */}
+						<DropdownMenuGroup>
+							<DropdownMenuLabel className="flex items-center gap-2.5 px-2 py-2">
+								<OrgLogo
+									size="sm"
+									colorSeed={activeOrganization?.id}
+									placeholder={activeOrganization?.name}
+									avatarUrl={activeOrganization?.logo}
+								/>
+								<div className="flex min-w-0 flex-1 flex-col">
+									<span className="truncate text-sm font-medium text-foreground">
+										{activeOrganization?.name ?? orgSlug}
+									</span>
+									{subscription && (
+										<span className="flex items-center gap-1 truncate text-xs text-muted-foreground capitalize">
+											<CrownIcon className="size-3 shrink-0" />
+											{subscription.planLabel}
+										</span>
+									)}
+								</div>
+							</DropdownMenuLabel>
 							<DropdownMenuItem
-								key={org.id}
 								onClick={() =>
 									router.navigate({
-										to: "/$orgSlug",
-										params: { orgSlug: org.slug },
+										to: "/$orgSlug/settings",
+										params: { orgSlug },
+										search: {},
 									})
 								}
 							>
-								<OrgLogo
-									size="sm"
-									colorSeed={org.id}
-									placeholder={org.name}
-									avatarUrl={org.logo}
-								/>
-								<span className="flex-1 truncate">{org.name}</span>
-								{org.slug === orgSlug && <CheckIcon className="size-4" />}
+								<SettingsIcon />
+								Settings
 							</DropdownMenuItem>
-						))}
+							<DropdownMenuItem
+								onClick={() =>
+									router.navigate({
+										to: "/$orgSlug/settings/members",
+										params: { orgSlug },
+									})
+								}
+							>
+								<UserPlusIcon />
+								Invite members
+							</DropdownMenuItem>
+						</DropdownMenuGroup>
+
+						{/* Section 2: Switch workspace */}
+						{otherOrganizations && otherOrganizations.length > 0 && (
+							<>
+								<DropdownMenuSeparator />
+								<DropdownMenuGroup>
+									<DropdownMenuLabel className="px-2 py-1.5 text-xs text-muted-foreground">
+										Switch workspace
+									</DropdownMenuLabel>
+									<div className="max-h-48 overflow-y-auto">
+										{otherOrganizations.map((org) => (
+											<DropdownMenuItem
+												key={org.id}
+												onClick={() =>
+													router.navigate({
+														to: "/$orgSlug",
+														params: { orgSlug: org.slug },
+													})
+												}
+											>
+												<OrgLogo
+													size="sm"
+													colorSeed={org.id}
+													placeholder={org.name}
+													avatarUrl={org.logo}
+												/>
+												<span className="flex-1 truncate">{org.name}</span>
+											</DropdownMenuItem>
+										))}
+									</div>
+								</DropdownMenuGroup>
+							</>
+						)}
+
+						{/* Section 3: Create workspace */}
 						<DropdownMenuSeparator />
 						<DropdownMenuItem
 							onClick={() => router.navigate({ to: "/create-workspace" })}
 						>
-							<PlusIcon className="size-4" />
+							<PlusIcon />
 							Create workspace
 						</DropdownMenuItem>
 					</DropdownMenuContent>

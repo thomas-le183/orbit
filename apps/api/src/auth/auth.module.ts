@@ -52,9 +52,7 @@ import { AuthController } from "./auth.controller";
 								afterRejectInvitation: async () => {},
 
 								// === ORGANIZATIONS ===
-								beforeCreateOrganization: async (data) => {
-									console.log("Hello I'm creating an org", data);
-								},
+								beforeCreateOrganization: async () => {},
 								afterCreateOrganization: async () => {},
 
 								beforeUpdateOrganization: async () => {},

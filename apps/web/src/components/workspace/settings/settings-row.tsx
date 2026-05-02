@@ -4,13 +4,11 @@ import type { ReactNode } from "react";
 export function SettingsRow({
 	label,
 	hint,
-	saved = false,
 	last = false,
 	children,
 }: {
 	label: string;
 	hint?: string;
-	saved?: boolean;
 	last?: boolean;
 	children: ReactNode;
 }) {
@@ -27,14 +25,6 @@ export function SettingsRow({
 			</div>
 			<div className="relative w-70 shrink-0">
 				{children}
-				{saved && (
-					<span
-						className="pointer-events-none absolute -bottom-4 right-0 text-xs text-green-500"
-						aria-live="polite"
-					>
-						Saved ✓
-					</span>
-				)}
 			</div>
 		</div>
 	);
