@@ -241,7 +241,9 @@ export class BillingService {
 		organizationId: string,
 		newPlan: SubscriptionPlan,
 		interval: "monthly" | "yearly",
-	) {
+		endTrial?: boolean,
+		orgSlug?: string,
+	): Promise<{ success: true } | { url: string }> {
 		const sub = await this.getSubscription(organizationId);
 		if (!sub?.stripeSubscriptionId) throw new BadRequestException("No active subscription to change");
 
@@ -250,8 +252,41 @@ export class BillingService {
 
 		const currentTier = this.PLAN_TIER[sub.subscriptionPlan as SubscriptionPlan] ?? 0;
 		const newTier = this.PLAN_TIER[newPlan] ?? 0;
+		const shouldEndTrial = endTrial === true && sub.status === "trialing";
 
-		await this.stripeService.changePlan(sub.stripeSubscriptionId, newLookupKey, currentTier, newTier);
+		if (shouldEndTrial) {
+			const billing = await this.getBillingRecord(organizationId);
+			if (!billing) throw new BadRequestException("No billing record found");
+
+			const hasPaymentMethod = await this.stripeService.hasDefaultPaymentMethod(
+				billing.stripeCustomerId,
+			);
+
+			if (!hasPaymentMethod) {
+				// No payment method — cancel the trial and redirect to checkout so the
+				// user can provide payment details and activate the new plan.
+				await this.stripeService.cancelSubscriptionImmediately(sub.stripeSubscriptionId);
+				const seatCount = await this.getMemberCount(organizationId);
+				const session = await this.stripeService.createCheckoutSession(
+					billing.stripeCustomerId,
+					newLookupKey,
+					seatCount,
+					orgSlug ?? organizationId,
+					organizationId,
+				);
+				if (!session.url) throw new BadRequestException("Failed to create checkout session");
+				return { url: session.url };
+			}
+		}
+
+		await this.stripeService.changePlan(
+			sub.stripeSubscriptionId,
+			newLookupKey,
+			currentTier,
+			newTier,
+			shouldEndTrial,
+		);
+		return { success: true };
 	}
 
 	async cancelSubscription(stripeSubscriptionId: string) {

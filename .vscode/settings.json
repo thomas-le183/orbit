@@ -36,4 +36,7 @@
 	"cSpell.words": [
 		"VITE"
 	],
+	"tailwindCSS.experimental.configFile": {
+		"packages/ui/src/styles/globals.css": ["apps/web/src/**", "packages/ui/src/**"]
+	}
 }

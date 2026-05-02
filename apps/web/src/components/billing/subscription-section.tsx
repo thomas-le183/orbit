@@ -1,5 +1,9 @@
 import { PLAN_METADATA } from "@orbit/shared";
-import { Alert, AlertDescription } from "@orbit/ui/components/alert";
+import {
+	Alert,
+	AlertDescription,
+	AlertTitle,
+} from "@orbit/ui/components/alert";
 import { Badge } from "@orbit/ui/components/badge";
 import { Button } from "@orbit/ui/components/button";
 import {
@@ -18,7 +22,6 @@ import {
 } from "@orbit/ui/components/field";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
-import type { AxiosError } from "axios";
 import { AlertTriangle, Zap } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -28,6 +31,54 @@ import {
 	useOrgSubscription,
 	useStartTrial,
 } from "@/hooks/use-billing";
+
+function ConfirmSwitchYearlyModal({
+	open,
+	onClose,
+	onConfirm,
+	isPending,
+	monthlyPriceAnnual,
+}: {
+	open: boolean;
+	onClose: () => void;
+	onConfirm: () => void;
+	isPending: boolean;
+	monthlyPriceAnnual: number;
+}) {
+	const formatted =
+		monthlyPriceAnnual % 1 === 0
+			? `$${monthlyPriceAnnual}`
+			: `$${monthlyPriceAnnual.toFixed(2)}`;
+
+	return (
+		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+			<DialogContent className="max-w-md">
+				<DialogHeader>
+					<DialogTitle>Switch to yearly billing?</DialogTitle>
+					<DialogDescription>
+						Your trial period will end and you will be charged {formatted} per
+						user per month, billed annually. A pro-rata adjustment will be
+						applied.
+					</DialogDescription>
+				</DialogHeader>
+				<DialogFooter>
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={onClose}
+						disabled={isPending}
+					>
+						Cancel
+					</Button>
+					<Button size="sm" onClick={onConfirm} disabled={isPending}>
+						{isPending ? "Switching…" : "Confirm switch"}
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	);
+}
+
 
 function TrialModal({
 	open,
@@ -134,15 +185,19 @@ function getBillingInterval(
 	return days > 60 ? "yearly" : "monthly";
 }
 
-export function SubscriptionSection() {
+export function SubscriptionSection({
+	isPastDue = false,
+}: {
+	isPastDue?: boolean;
+}) {
 	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
 	const queryClient = useQueryClient();
 	const [trialModalOpen, setTrialModalOpen] = useState(false);
+	const [switchYearlyModalOpen, setSwitchYearlyModalOpen] = useState(false);
 	const { data, isLoading } = useOrgSubscription(orgSlug);
 	const checkout = useCheckout(orgSlug);
 	const changePlan = useChangePlan(orgSlug);
 	const startTrial = useStartTrial(orgSlug);
-
 	if (isLoading || !data) {
 		return <div className="h-36 animate-pulse rounded-lg bg-muted" />;
 	}
@@ -160,14 +215,13 @@ export function SubscriptionSection() {
 			})
 		: null;
 
-	const isPastDue = sub?.status === "past_due";
-	const isCancelingAtEnd = sub?.cancelAtPeriodEnd && sub.status !== "canceled";
 	const isCanceled = sub?.status === "canceled";
+	const isCancelingAtEnd = sub?.cancelAtPeriodEnd && !isCanceled;
+	const isAccessEnding = isCanceled || isCancelingAtEnd;
 	const interval = sub
 		? getBillingInterval(sub.currentPeriodStart, sub.currentPeriodEnd)
 		: null;
-	const renewalLabel =
-		isCanceled || isCancelingAtEnd ? "Access until" : "Renews";
+	const renewalLabel = isAccessEnding ? "Access until" : "Renewal date";
 
 	const daysRemaining =
 		sub?.status === "trialing"
@@ -181,8 +235,8 @@ export function SubscriptionSection() {
 			: null;
 
 	const nextTier = NEXT_TIER[currentPlan];
-	const showSubscribeNow = sub?.status === "trialing";
 	const showSwitchYearly = isActive && interval === "monthly";
+	const showSubscribeNow = sub?.status === "trialing";
 	const showTrialCta = data.trialEligible && !sub && !showSubscribeNow;
 	const showUpgrade =
 		nextTier != null &&
@@ -191,32 +245,44 @@ export function SubscriptionSection() {
 		(isActive || !sub);
 
 	function invalidateSub() {
-		queryClient.invalidateQueries({
+		queryClient.resetQueries({
 			queryKey: ["billing", orgSlug, "subscription"],
 		});
 	}
 
 	function handleSubscribeNow() {
-		checkout.mutate(
+		if (currentPlan !== "basic" && currentPlan !== "business") return;
+		changePlan.mutate(
+			{ plan: currentPlan, interval: "monthly", endTrial: true },
 			{
-				plan: currentPlan as "basic" | "business",
-				interval: interval ?? "monthly",
-			},
-			{
-				onError: (e) =>
-					toast.error(
-						e.message ?? "Could not start checkout. Please try again.",
-					),
+				onSuccess: (data) => {
+					if (data.url) return; // hook redirects
+					toast.success("Plan activated successfully.");
+					invalidateSub();
+				},
+				onError: (e: { message?: string }) =>
+					toast.error(e.message ?? "Could not activate plan. Please try again."),
 			},
 		);
 	}
 
 	function handleSwitchYearly() {
 		if (currentPlan !== "basic" && currentPlan !== "business") return;
+		if (sub?.status === "trialing") {
+			setSwitchYearlyModalOpen(true);
+			return;
+		}
+		confirmSwitchYearly();
+	}
+
+	function confirmSwitchYearly() {
+		if (currentPlan !== "basic" && currentPlan !== "business") return;
 		changePlan.mutate(
-			{ plan: currentPlan, interval: "yearly" },
+			{ plan: currentPlan, interval: "yearly", endTrial: sub?.status === "trialing" },
 			{
-				onSuccess: () => {
+				onSuccess: (data) => {
+					if (data.url) return; // hook redirects
+					setSwitchYearlyModalOpen(false);
 					toast.success("Switched to yearly billing.");
 					invalidateSub();
 				},
@@ -286,33 +352,29 @@ export function SubscriptionSection() {
 			<FieldSet>
 				<FieldLegend>Subscription</FieldLegend>
 				<FieldDescription>About my subscription</FieldDescription>
-				{isPastDue && (
-					<Alert variant="destructive">
+				{isAccessEnding && sub && (
+					<Alert
+						variant={isCanceled ? "destructive" : undefined}
+						className={
+							isCancelingAtEnd
+								? "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400"
+								: undefined
+						}
+					>
 						<AlertTriangle />
-						<AlertDescription>
-							Your last payment failed. Please update your payment method to
-							avoid service interruption.
-						</AlertDescription>
-					</Alert>
-				)}
-
-				{isCancelingAtEnd && (
-					<Alert className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400">
-						<AlertTriangle />
-						<AlertDescription className="text-amber-700 dark:text-amber-400">
-							Subscription cancels on{" "}
-							<strong>{formatDate(sub.currentPeriodEnd)}</strong>. You'll keep
-							full access until then.
-						</AlertDescription>
-					</Alert>
-				)}
-
-				{isCanceled && (
-					<Alert variant="destructive">
-						<AlertTriangle />
-						<AlertDescription>
-							Subscription canceled. Access continues until{" "}
-							<strong>{formatDate(sub.currentPeriodEnd)}</strong>.
+						<AlertTitle>Subscription canceled</AlertTitle>
+						<AlertDescription
+							className={
+								isCancelingAtEnd
+									? "text-amber-700 dark:text-amber-400"
+									: undefined
+							}
+						>
+							{isCancelingAtEnd
+								? "Cancels on"
+								: "Canceled. Access continues until"}{" "}
+							<strong>{formatDate(sub.currentPeriodEnd)}</strong>
+							{isCancelingAtEnd && ". You'll keep full access until then."}
 						</AlertDescription>
 					</Alert>
 				)}
@@ -377,7 +439,7 @@ export function SubscriptionSection() {
 								size="sm"
 								variant="outline"
 								onClick={handleSubscribeNow}
-								disabled={checkout.isPending}
+								disabled={changePlan.isPending || isPastDue}
 							>
 								Subscribe now
 							</Button>
@@ -387,7 +449,7 @@ export function SubscriptionSection() {
 								variant="outline"
 								size="sm"
 								onClick={handleSwitchYearly}
-								disabled={changePlan.isPending}
+								disabled={changePlan.isPending || isPastDue}
 							>
 								Switch to yearly
 							</Button>
@@ -397,13 +459,19 @@ export function SubscriptionSection() {
 								variant="outline"
 								size="sm"
 								onClick={handleUpgrade}
-								disabled={checkout.isPending || changePlan.isPending}
+								disabled={
+									checkout.isPending || changePlan.isPending || isPastDue
+								}
 							>
 								Upgrade to {PLAN_METADATA[nextTier].label}
 							</Button>
 						)}
 						{showTrialCta && (
-							<Button size="sm" onClick={() => setTrialModalOpen(true)}>
+							<Button
+								size="sm"
+								onClick={() => setTrialModalOpen(true)}
+								disabled={isPastDue}
+							>
 								<Zap />
 								Try Business free
 							</Button>
@@ -419,6 +487,13 @@ export function SubscriptionSection() {
 				onTryWithCard={handleTryBusinessTrial}
 				isStartingTrial={startTrial.isPending}
 				isCheckingOut={checkout.isPending}
+			/>
+			<ConfirmSwitchYearlyModal
+				open={switchYearlyModalOpen}
+				onClose={() => setSwitchYearlyModalOpen(false)}
+				onConfirm={confirmSwitchYearly}
+				isPending={changePlan.isPending}
+				monthlyPriceAnnual={(meta.monthlyPriceUsd * 10) / 12}
 			/>
 		</>
 	);

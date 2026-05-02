@@ -68,15 +68,22 @@ export function useChangePlan(orgSlug: string) {
 		mutationFn: async ({
 			plan,
 			interval,
+			endTrial,
 		}: {
 			plan: SubscriptionPlan;
 			interval: "monthly" | "yearly";
+			endTrial?: boolean;
 		}) => {
-			const { data } = await api.post<{ success: boolean }>(
+			const { data } = await api.post<{ success: boolean; url?: string }>(
 				`/billing/${orgSlug}/change-plan`,
-				{ plan, interval },
+				{ plan, interval, endTrial },
 			);
 			return data;
+		},
+		onSuccess: (data) => {
+			if (data.url) {
+				window.location.href = data.url;
+			}
 		},
 	});
 }

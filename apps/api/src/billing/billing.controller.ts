@@ -134,10 +134,10 @@ export class BillingController {
 	@Post(":orgSlug/change-plan")
 	async changePlan(
 		@Param("orgSlug") orgSlug: string,
-		@Body() body: { plan: SubscriptionPlan; interval: "monthly" | "yearly" },
+		@Body() body: { plan: SubscriptionPlan; interval: "monthly" | "yearly"; endTrial?: boolean },
 		@CurrentUser() user: User,
-	): Promise<{ success: boolean }> {
-		const { plan, interval } = body;
+	): Promise<{ success: boolean; url?: string } | { url: string }> {
+		const { plan, interval, endTrial } = body;
 		if (plan === "free" || plan === "enterprise") {
 			throw new BadRequestException("Cannot change to this plan via this endpoint");
 		}
@@ -147,8 +147,7 @@ export class BillingController {
 
 		await this.requireAdminOrOwner(user.id, org.id);
 
-		await this.billingService.changeOrgSubscriptionPlan(org.id, plan, interval);
-		return { success: true };
+		return this.billingService.changeOrgSubscriptionPlan(org.id, plan, interval, endTrial, orgSlug);
 	}
 
 	@Post(":orgSlug/cancel")

@@ -96,11 +96,24 @@ export class StripeService {
 		});
 	}
 
+	async hasDefaultPaymentMethod(customerId: string): Promise<boolean> {
+		const paymentMethods = await this.stripe.paymentMethods.list({
+			customer: customerId,
+			limit: 1,
+		});
+		return paymentMethods.data.length > 0;
+	}
+
+	async cancelSubscriptionImmediately(stripeSubscriptionId: string) {
+		return this.stripe.subscriptions.cancel(stripeSubscriptionId);
+	}
+
 	async changePlan(
 		stripeSubscriptionId: string,
 		newLookupKey: string,
 		currentPlanTier: number,
 		newPlanTier: number,
+		endTrial?: boolean,
 	) {
 		const sub = await this.stripe.subscriptions.retrieve(stripeSubscriptionId);
 		const item = sub.items.data[0];
@@ -120,6 +133,7 @@ export class StripeService {
 		return this.stripe.subscriptions.update(stripeSubscriptionId, {
 			items: [{ id: item.id, price: newPrice.id }],
 			proration_behavior: isUpgrade ? "create_prorations" : "none",
+			...(endTrial ? { trial_end: "now" as const } : {}),
 		});
 	}
 
