@@ -4,6 +4,7 @@ import { AuthModule } from "./auth/auth.module";
 import { BillingModule } from "./billing/billing.module";
 import { ChatModule } from "./chat/chat.module";
 import { DbModule } from "./db/db.module";
+import { EmailModule } from "./email/email.module";
 import { StorageModule } from "./storage/storage.module";
 
 @Module({
@@ -15,6 +16,7 @@ import { StorageModule } from "./storage/storage.module";
 		}),
 		DbModule,
 		StorageModule,
+		EmailModule,
 		AuthModule,
 		BillingModule,
 		ChatModule,
