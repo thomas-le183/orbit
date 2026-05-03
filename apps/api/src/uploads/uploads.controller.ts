@@ -41,6 +41,11 @@ export class UploadsController {
 			if (!membership) {
 				throw new ForbiddenException("Not a member of this organization");
 			}
+			if (membership.role !== "owner" && membership.role !== "admin") {
+				throw new ForbiddenException(
+					"Only admins and owners can update the organization logo",
+				);
+			}
 		}
 
 		const rawExt = body.fileName.includes(".")
