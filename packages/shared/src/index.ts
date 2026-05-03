@@ -1,8 +1,16 @@
 export {
 	type CreateUserInput,
 	createUserSchema,
+	type Theme,
+	themeSchema,
 	type UpdateUserInput,
+	type UpdateUserPreferencesInput,
+	type UserPreferences,
+	updateUserPreferencesSchema,
 	updateUserSchema,
+	userPreferencesSchema,
+	type WeekStart,
+	weekStartSchema,
 } from "./schemas/index.js";
 
 export {

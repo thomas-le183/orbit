@@ -1,4 +1,10 @@
-import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+	boolean,
+	integer,
+	pgTable,
+	text,
+	timestamp,
+} from "drizzle-orm/pg-core";
 
 // ---------- Core better-auth tables ----------
 
@@ -113,4 +119,18 @@ export const invitation = pgTable("invitation", {
 	inviterId: text("inviter_id")
 		.notNull()
 		.references(() => user.id, { onDelete: "cascade" }),
+});
+
+// ---------- User preferences ----------
+
+export const userPreferences = pgTable("user_preferences", {
+	userId: text("user_id")
+		.primaryKey()
+		.references(() => user.id, { onDelete: "cascade" }),
+	theme: text("theme").notNull().default("system"),
+	language: text("language").notNull().default("en"),
+	dateFormat: text("date_format").notNull().default("DD/MM/YYYY"),
+	timezone: text("timezone"),
+	weekStart: integer("week_start").notNull().default(0),
+	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
