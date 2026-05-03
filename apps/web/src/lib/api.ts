@@ -3,7 +3,7 @@ import axios from "axios";
 export type ApiError = {
 	statusCode: number;
 	message: string;
-	error?: string;
+	code: string;
 };
 
 export const api = axios.create({
