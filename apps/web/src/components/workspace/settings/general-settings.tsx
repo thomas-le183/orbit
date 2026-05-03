@@ -21,6 +21,7 @@ import { ImageIcon, Trash2Icon, UploadIcon } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useDeleteOrganization, useUpdateOrganization } from "@/hooks/use-auth";
+import { useUploadFile } from "@/hooks/use-upload-file";
 import { SettingsPage } from "./settings-page";
 
 interface GeneralSettingsProps {
@@ -32,8 +33,10 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 	const router = useRouter();
 	const update = useUpdateOrganization();
 	const deleteOrg = useDeleteOrganization();
+	const { upload } = useUploadFile();
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const [deleteConfirm, setDeleteConfirm] = useState("");
+	const [uploading, setUploading] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const logoId = useId();
 	const nameId = useId();
@@ -56,6 +59,31 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 		);
 	}
 
+	async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+		const file = e.target.files?.[0];
+		e.target.value = "";
+		if (!file) return;
+		if (file.size > 10 * 1024 * 1024) {
+			toast.error("Logo must be under 10 MB");
+			return;
+		}
+		setUploading(true);
+		try {
+			const publicUrl = await upload(file, "logo", org.id);
+			await update.mutateAsync(
+				{
+					organizationId: org.id,
+					data: { logo: publicUrl },
+				},
+				{ onSuccess: () => toast.success("Saved") },
+			);
+		} catch {
+			toast.error("Upload failed, please try again");
+		} finally {
+			setUploading(false);
+		}
+	}
+
 	const canDelete = deleteConfirm === org.name && !deleteOrg.isPending;
 
 	return (
@@ -70,7 +98,8 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 						<button
 							type="button"
 							onClick={() => fileInputRef.current?.click()}
-							className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+							disabled={uploading}
+							className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
 							aria-label="Upload logo"
 						>
 							{org.logo ? (
@@ -88,15 +117,16 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 								<Button
 									variant="outline"
 									size="sm"
+									disabled={uploading}
 									onClick={() => fileInputRef.current?.click()}
 								>
 									<UploadIcon />
-									Upload
+									{uploading ? "Uploading…" : "Upload"}
 								</Button>
 								<Button
 									variant="outline"
 									size="sm"
-									disabled={!org.logo}
+									disabled={!org.logo || uploading}
 									onClick={() => saveIf("logo", "", org.logo)}
 								>
 									<Trash2Icon />
@@ -106,26 +136,13 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 									ref={fileInputRef}
 									id={logoId}
 									type="file"
-									accept="image/png,image/jpeg,image/gif"
+									accept="image/png,image/jpeg,image/gif,image/webp"
 									className="hidden"
-									onChange={(e) => {
-										const file = e.target.files?.[0];
-										if (!file) return;
-										if (file.size > 10 * 1024 * 1024) {
-											toast.error("Logo must be under 10 MB");
-											e.target.value = "";
-											return;
-										}
-										const reader = new FileReader();
-										reader.onload = () =>
-											saveIf("logo", String(reader.result ?? ""), org.logo);
-										reader.readAsDataURL(file);
-										e.target.value = "";
-									}}
+									onChange={handleFileChange}
 								/>
 							</div>
 							<FieldDescription>
-								We support your square PNGs, JPEGs and GIFs under 10MB
+								We support your square PNGs, JPEGs, GIFs and WebPs under 10MB
 							</FieldDescription>
 						</div>
 					</div>

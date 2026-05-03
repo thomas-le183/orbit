@@ -159,9 +159,13 @@ export function useUpdateOrganization() {
 	return useMutation({
 		mutationFn: async (input: {
 			organizationId: string;
-			data: { name?: string; slug?: string };
+			data: { name?: string; slug?: string; logo?: string | null };
 		}) => {
-			const { data, error } = await authClient.organization.update(input);
+			const { logo, ...rest } = input.data;
+			const { data, error } = await authClient.organization.update({
+				organizationId: input.organizationId,
+				data: { ...rest, ...(logo !== undefined ? { logo: logo ?? undefined } : {}) },
+			});
 			if (error) throw error;
 			return data;
 		},
