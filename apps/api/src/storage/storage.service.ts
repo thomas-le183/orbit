@@ -32,8 +32,7 @@ export class StorageService implements OnModuleInit {
 
     this.bucket = config.getOrThrow<string>("STORAGE_BUCKET");
 
-    const storageEndpoint = config.get<string>("STORAGE_ENDPOINT") ?? "";
-    this.publicBaseUrl = `${storageEndpoint}/${this.bucket}`;
+    this.publicBaseUrl = `${endpoint ?? ""}/${this.bucket}`;
   }
 
   async onModuleInit() {
@@ -77,7 +76,7 @@ export class StorageService implements OnModuleInit {
       this.logger.log(`Public-read policy applied to avatars/* and logos/*`);
     } catch (err: unknown) {
       this.logger.warn(
-        `Could not set bucket policy (configure manually if needed): ${(err as Error).message}`,
+        `Could not set bucket policy [${(err as { name?: string }).name ?? "unknown"}] (configure manually if needed): ${(err as Error).message}`,
       );
     }
   }
