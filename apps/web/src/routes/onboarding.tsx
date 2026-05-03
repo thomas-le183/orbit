@@ -1,9 +1,13 @@
-import { useForm } from "@tanstack/react-form";
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { Button } from "@orbit/ui/components/button";
 import { Field, FieldError, FieldLabel } from "@orbit/ui/components/field";
 import { Input } from "@orbit/ui/components/input";
-import { loadAuthState, resolveAuthenticatedLanding, useUpdateUser } from "@/hooks/use-auth";
+import { useForm } from "@tanstack/react-form";
+import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import {
+	loadAuthState,
+	resolveAuthenticatedLanding,
+	useUpdateUser,
+} from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/onboarding")({
 	beforeLoad: async ({ context }) => {
@@ -71,9 +75,7 @@ function RouteComponent() {
 										onChange={(e) => field.handleChange(e.target.value)}
 										autoFocus
 									/>
-									{isInvalid && (
-										<FieldError errors={field.state.meta.errors} />
-									)}
+									{isInvalid && <FieldError errors={field.state.meta.errors} />}
 								</Field>
 							);
 						}}

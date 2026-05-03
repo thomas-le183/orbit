@@ -177,7 +177,8 @@ export class BillingService {
 		}
 
 		const lookupKey = this.getLookupKeyForPlan("business", "monthly");
-		if (!lookupKey) throw new BadRequestException("Trial plan configuration missing");
+		if (!lookupKey)
+			throw new BadRequestException("Trial plan configuration missing");
 
 		const stripeSub = await this.stripeService.createTrialSubscription(
 			billingRecord.stripeCustomerId,
@@ -245,12 +246,15 @@ export class BillingService {
 		orgSlug?: string,
 	): Promise<{ success: true } | { url: string }> {
 		const sub = await this.getSubscription(organizationId);
-		if (!sub?.stripeSubscriptionId) throw new BadRequestException("No active subscription to change");
+		if (!sub?.stripeSubscriptionId)
+			throw new BadRequestException("No active subscription to change");
 
 		const newLookupKey = this.getLookupKeyForPlan(newPlan, interval);
-		if (!newLookupKey) throw new BadRequestException("Invalid plan or interval");
+		if (!newLookupKey)
+			throw new BadRequestException("Invalid plan or interval");
 
-		const currentTier = this.PLAN_TIER[sub.subscriptionPlan as SubscriptionPlan] ?? 0;
+		const currentTier =
+			this.PLAN_TIER[sub.subscriptionPlan as SubscriptionPlan] ?? 0;
 		const newTier = this.PLAN_TIER[newPlan] ?? 0;
 		const shouldEndTrial = endTrial === true && sub.status === "trialing";
 
@@ -265,7 +269,9 @@ export class BillingService {
 			if (!hasPaymentMethod) {
 				// No payment method — cancel the trial and redirect to checkout so the
 				// user can provide payment details and activate the new plan.
-				await this.stripeService.cancelSubscriptionImmediately(sub.stripeSubscriptionId);
+				await this.stripeService.cancelSubscriptionImmediately(
+					sub.stripeSubscriptionId,
+				);
 				const seatCount = await this.getMemberCount(organizationId);
 				const session = await this.stripeService.createCheckoutSession(
 					billing.stripeCustomerId,
@@ -274,7 +280,8 @@ export class BillingService {
 					orgSlug ?? organizationId,
 					organizationId,
 				);
-				if (!session.url) throw new BadRequestException("Failed to create checkout session");
+				if (!session.url)
+					throw new BadRequestException("Failed to create checkout session");
 				return { url: session.url };
 			}
 		}

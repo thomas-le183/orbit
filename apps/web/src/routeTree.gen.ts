@@ -38,6 +38,7 @@ import { Route as WorkspaceOrgSlugTasksBacklogRouteImport } from './routes/_work
 import { Route as WorkspaceOrgSlugTasksAssignedRouteImport } from './routes/_workspace/$orgSlug/tasks/assigned'
 import { Route as WorkspaceOrgSlugSettingsWorkspaceRouteImport } from './routes/_workspace/$orgSlug/settings/workspace'
 import { Route as WorkspaceOrgSlugSettingsProfileRouteImport } from './routes/_workspace/$orgSlug/settings/profile'
+import { Route as WorkspaceOrgSlugSettingsPreferencesRouteImport } from './routes/_workspace/$orgSlug/settings/preferences'
 import { Route as WorkspaceOrgSlugSettingsNotificationsRouteImport } from './routes/_workspace/$orgSlug/settings/notifications'
 import { Route as WorkspaceOrgSlugSettingsMembersRouteImport } from './routes/_workspace/$orgSlug/settings/members'
 import { Route as WorkspaceOrgSlugSettingsBillingRouteImport } from './routes/_workspace/$orgSlug/settings/billing'
@@ -196,6 +197,12 @@ const WorkspaceOrgSlugSettingsProfileRoute =
     path: '/profile',
     getParentRoute: () => WorkspaceOrgSlugSettingsRoute,
   } as any)
+const WorkspaceOrgSlugSettingsPreferencesRoute =
+  WorkspaceOrgSlugSettingsPreferencesRouteImport.update({
+    id: '/preferences',
+    path: '/preferences',
+    getParentRoute: () => WorkspaceOrgSlugSettingsRoute,
+  } as any)
 const WorkspaceOrgSlugSettingsNotificationsRoute =
   WorkspaceOrgSlugSettingsNotificationsRouteImport.update({
     id: '/notifications',
@@ -237,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
   '/$orgSlug/settings/members': typeof WorkspaceOrgSlugSettingsMembersRoute
   '/$orgSlug/settings/notifications': typeof WorkspaceOrgSlugSettingsNotificationsRoute
+  '/$orgSlug/settings/preferences': typeof WorkspaceOrgSlugSettingsPreferencesRoute
   '/$orgSlug/settings/profile': typeof WorkspaceOrgSlugSettingsProfileRoute
   '/$orgSlug/settings/workspace': typeof WorkspaceOrgSlugSettingsWorkspaceRoute
   '/$orgSlug/tasks/assigned': typeof WorkspaceOrgSlugTasksAssignedRoute
@@ -266,6 +274,7 @@ export interface FileRoutesByTo {
   '/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
   '/$orgSlug/settings/members': typeof WorkspaceOrgSlugSettingsMembersRoute
   '/$orgSlug/settings/notifications': typeof WorkspaceOrgSlugSettingsNotificationsRoute
+  '/$orgSlug/settings/preferences': typeof WorkspaceOrgSlugSettingsPreferencesRoute
   '/$orgSlug/settings/profile': typeof WorkspaceOrgSlugSettingsProfileRoute
   '/$orgSlug/settings/workspace': typeof WorkspaceOrgSlugSettingsWorkspaceRoute
   '/$orgSlug/tasks/assigned': typeof WorkspaceOrgSlugTasksAssignedRoute
@@ -301,6 +310,7 @@ export interface FileRoutesById {
   '/_workspace/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
   '/_workspace/$orgSlug/settings/members': typeof WorkspaceOrgSlugSettingsMembersRoute
   '/_workspace/$orgSlug/settings/notifications': typeof WorkspaceOrgSlugSettingsNotificationsRoute
+  '/_workspace/$orgSlug/settings/preferences': typeof WorkspaceOrgSlugSettingsPreferencesRoute
   '/_workspace/$orgSlug/settings/profile': typeof WorkspaceOrgSlugSettingsProfileRoute
   '/_workspace/$orgSlug/settings/workspace': typeof WorkspaceOrgSlugSettingsWorkspaceRoute
   '/_workspace/$orgSlug/tasks/assigned': typeof WorkspaceOrgSlugTasksAssignedRoute
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/$orgSlug/settings/billing'
     | '/$orgSlug/settings/members'
     | '/$orgSlug/settings/notifications'
+    | '/$orgSlug/settings/preferences'
     | '/$orgSlug/settings/profile'
     | '/$orgSlug/settings/workspace'
     | '/$orgSlug/tasks/assigned'
@@ -364,6 +375,7 @@ export interface FileRouteTypes {
     | '/$orgSlug/settings/billing'
     | '/$orgSlug/settings/members'
     | '/$orgSlug/settings/notifications'
+    | '/$orgSlug/settings/preferences'
     | '/$orgSlug/settings/profile'
     | '/$orgSlug/settings/workspace'
     | '/$orgSlug/tasks/assigned'
@@ -398,6 +410,7 @@ export interface FileRouteTypes {
     | '/_workspace/$orgSlug/settings/billing'
     | '/_workspace/$orgSlug/settings/members'
     | '/_workspace/$orgSlug/settings/notifications'
+    | '/_workspace/$orgSlug/settings/preferences'
     | '/_workspace/$orgSlug/settings/profile'
     | '/_workspace/$orgSlug/settings/workspace'
     | '/_workspace/$orgSlug/tasks/assigned'
@@ -622,6 +635,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceOrgSlugSettingsProfileRouteImport
       parentRoute: typeof WorkspaceOrgSlugSettingsRoute
     }
+    '/_workspace/$orgSlug/settings/preferences': {
+      id: '/_workspace/$orgSlug/settings/preferences'
+      path: '/preferences'
+      fullPath: '/$orgSlug/settings/preferences'
+      preLoaderRoute: typeof WorkspaceOrgSlugSettingsPreferencesRouteImport
+      parentRoute: typeof WorkspaceOrgSlugSettingsRoute
+    }
     '/_workspace/$orgSlug/settings/notifications': {
       id: '/_workspace/$orgSlug/settings/notifications'
       path: '/notifications'
@@ -665,6 +685,7 @@ interface WorkspaceOrgSlugSettingsRouteChildren {
   WorkspaceOrgSlugSettingsBillingRoute: typeof WorkspaceOrgSlugSettingsBillingRoute
   WorkspaceOrgSlugSettingsMembersRoute: typeof WorkspaceOrgSlugSettingsMembersRoute
   WorkspaceOrgSlugSettingsNotificationsRoute: typeof WorkspaceOrgSlugSettingsNotificationsRoute
+  WorkspaceOrgSlugSettingsPreferencesRoute: typeof WorkspaceOrgSlugSettingsPreferencesRoute
   WorkspaceOrgSlugSettingsProfileRoute: typeof WorkspaceOrgSlugSettingsProfileRoute
   WorkspaceOrgSlugSettingsWorkspaceRoute: typeof WorkspaceOrgSlugSettingsWorkspaceRoute
 }
@@ -675,6 +696,8 @@ const WorkspaceOrgSlugSettingsRouteChildren: WorkspaceOrgSlugSettingsRouteChildr
     WorkspaceOrgSlugSettingsMembersRoute: WorkspaceOrgSlugSettingsMembersRoute,
     WorkspaceOrgSlugSettingsNotificationsRoute:
       WorkspaceOrgSlugSettingsNotificationsRoute,
+    WorkspaceOrgSlugSettingsPreferencesRoute:
+      WorkspaceOrgSlugSettingsPreferencesRoute,
     WorkspaceOrgSlugSettingsProfileRoute: WorkspaceOrgSlugSettingsProfileRoute,
     WorkspaceOrgSlugSettingsWorkspaceRoute:
       WorkspaceOrgSlugSettingsWorkspaceRoute,

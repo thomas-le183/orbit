@@ -6,7 +6,11 @@ import { loadOrgRole, useOrgMembers, useSession } from "@/hooks/use-auth";
 export const Route = createFileRoute("/_workspace/$orgSlug/settings/members")({
 	beforeLoad: async ({ context, params }) => {
 		const { authState, targetOrg } = context;
-		const role = await loadOrgRole(context.queryClient, targetOrg.id, authState.user?.id ?? "");
+		const role = await loadOrgRole(
+			context.queryClient,
+			targetOrg.id,
+			authState.user?.id ?? "",
+		);
 		if (role === "member" || role === null) {
 			throw redirect({ to: "/$orgSlug", params });
 		}

@@ -5,7 +5,10 @@ import { AppModule } from "./app.module";
 import { LatencyInterceptor } from "./common/interceptors/latency.interceptor";
 
 async function bootstrap() {
-	const app = await NestFactory.create(AppModule, { rawBody: true });
+	const app = await NestFactory.create(AppModule, {
+		rawBody: true,
+		logger: ["error", "warn", "log", "debug", "verbose"],
+	});
 
 	app.setGlobalPrefix("api");
 

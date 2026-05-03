@@ -105,6 +105,28 @@ Local dev depends on PostgreSQL (port 5433), Redis (6379), RabbitMQ (5672), and 
 - **Don't** write raw SQL or use any ORM other than Drizzle in `apps/api`.
 - **Don't** implement custom auth middleware or session logic — use `better-auth` APIs.
 
+### Settings pages
+
+Settings pages use `SettingsPage` as the outer shell, then `FieldGroup` + `Field` + `FieldContent` + `FieldLabel` + `FieldDescription` from `@orbit/ui/components/field` for layout. Do **not** use `SettingsSection` or `SettingsRow` — those are deprecated.
+
+Use `@tanstack/react-form` to manage field state. For controls that save on change (selects, toggles), call both `field.handleChange` and the mutation inside `onValueChange`. When form defaults depend on async data, sync with a `useEffect` + `form.reset` once data first loads.
+
+```tsx
+// Label-left / control-right row
+<Field orientation="horizontal">
+  <FieldContent>
+    <FieldLabel>Theme</FieldLabel>
+    <FieldDescription>Controls the color scheme</FieldDescription>
+  </FieldContent>
+  <Select value={field.state.value} onValueChange={(v) => { if (!v) return; field.handleChange(v); mutate({ theme: v }); }}>
+    <SelectTrigger className="w-70 shrink-0"><SelectValue /></SelectTrigger>
+    <SelectContent>...</SelectContent>
+  </Select>
+</Field>
+```
+
+See `apps/web/src/components/workspace/settings/preferences-settings.tsx` for a full example.
+
 ## Package manager
 
 pnpm with workspaces (`pnpm@10`, Node `>=24`). Do not use `yarn` or `npm`.

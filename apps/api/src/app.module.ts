@@ -5,6 +5,7 @@ import { BillingModule } from "./billing/billing.module";
 import { ChatModule } from "./chat/chat.module";
 import { DbModule } from "./db/db.module";
 import { EmailModule } from "./email/email.module";
+import { PreferencesModule } from "./preferences/preferences.module";
 import { StorageModule } from "./storage/storage.module";
 
 @Module({
@@ -20,6 +21,7 @@ import { StorageModule } from "./storage/storage.module";
 		AuthModule,
 		BillingModule,
 		ChatModule,
+		PreferencesModule,
 	],
 })
 export class AppModule {}

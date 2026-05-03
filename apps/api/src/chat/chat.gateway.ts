@@ -141,7 +141,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 		const content = payload.content?.trim() ?? "";
 		if (!content) throw new WsException("Message content cannot be empty");
-		if (content.length > 4000) throw new WsException("Message content exceeds 4000 characters");
+		if (content.length > 4000)
+			throw new WsException("Message content exceeds 4000 characters");
 
 		// Validate storageKey ownership — keys must be namespaced to this user
 		for (const key of payload.storageKeys ?? []) {

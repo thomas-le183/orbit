@@ -94,23 +94,30 @@ export class StripeWebhookController {
 				? session.subscription
 				: session.subscription.id;
 
-		const sub = await this.stripeService.stripe.subscriptions.retrieve(subscriptionId);
+		const sub =
+			await this.stripeService.stripe.subscriptions.retrieve(subscriptionId);
 		await this.upsertSubscriptionFromStripe(organizationId, sub);
 		this.logger.log(`Checkout completed: org=${organizationId}`);
 	}
 
 	private async handleSubscriptionUpdated(payload: SubscriptionPayload) {
-		const sub = await this.stripeService.stripe.subscriptions.retrieve(payload.id);
-		const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+		const sub = await this.stripeService.stripe.subscriptions.retrieve(
+			payload.id,
+		);
+		const customerId =
+			typeof sub.customer === "string" ? sub.customer : sub.customer.id;
 
-		const billing = await this.billingService.findBillingByCustomerId(customerId);
+		const billing =
+			await this.billingService.findBillingByCustomerId(customerId);
 		if (!billing) {
 			this.logger.warn(`No billing record for customer ${customerId}`);
 			return;
 		}
 
 		await this.upsertSubscriptionFromStripe(billing.organizationId, sub);
-		this.logger.log(`Subscription updated: org=${billing.organizationId} status=${sub.status}`);
+		this.logger.log(
+			`Subscription updated: org=${billing.organizationId} status=${sub.status}`,
+		);
 	}
 
 	private async handleSubscriptionDeleted(payload: SubscriptionPayload) {
@@ -120,7 +127,9 @@ export class StripeWebhookController {
 
 	private async upsertSubscriptionFromStripe(
 		organizationId: string,
-		sub: Awaited<ReturnType<typeof this.stripeService.stripe.subscriptions.retrieve>>,
+		sub: Awaited<
+			ReturnType<typeof this.stripeService.stripe.subscriptions.retrieve>
+		>,
 	) {
 		const item = sub.items.data[0];
 		if (!item?.price) return;

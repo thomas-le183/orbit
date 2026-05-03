@@ -79,7 +79,6 @@ function ConfirmSwitchYearlyModal({
 	);
 }
 
-
 function TrialModal({
 	open,
 	onClose,
@@ -261,7 +260,9 @@ export function SubscriptionSection({
 					invalidateSub();
 				},
 				onError: (e: { message?: string }) =>
-					toast.error(e.message ?? "Could not activate plan. Please try again."),
+					toast.error(
+						e.message ?? "Could not activate plan. Please try again.",
+					),
 			},
 		);
 	}
@@ -278,7 +279,11 @@ export function SubscriptionSection({
 	function confirmSwitchYearly() {
 		if (currentPlan !== "basic" && currentPlan !== "business") return;
 		changePlan.mutate(
-			{ plan: currentPlan, interval: "yearly", endTrial: sub?.status === "trialing" },
+			{
+				plan: currentPlan,
+				interval: "yearly",
+				endTrial: sub?.status === "trialing",
+			},
 			{
 				onSuccess: (data) => {
 					if (data.url) return; // hook redirects

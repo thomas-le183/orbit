@@ -1,23 +1,15 @@
 import {
 	ActivityIcon,
-	BarChartIcon,
 	BellIcon,
 	BookOpenIcon,
-	BotIcon,
 	BuildingIcon,
-	CalendarIcon,
-	CheckSquareIcon,
 	ClockIcon,
 	CreditCardIcon,
 	HomeIcon,
 	InboxIcon,
-	KanbanIcon,
 	LayoutDashboardIcon,
-	LayoutListIcon,
-	ListIcon,
-	MessageSquareIcon,
-	PlusIcon,
 	SettingsIcon,
+	SlidersHorizontalIcon,
 	StarIcon,
 	UserIcon,
 	UsersIcon,
@@ -104,140 +96,8 @@ function getHomeConfig(orgSlug: string): ModuleConfig {
 					{
 						icon: BookOpenIcon,
 						label: "Documentation",
-						to: `/${orgSlug}/docs`, 
+						to: `/${orgSlug}/docs`,
 					},
-				],
-			},
-		],
-	};
-}
-
-function getChatConfig(): ModuleConfig {
-	return {
-		icon: MessageSquareIcon,
-		title: "Chat",
-		action: { icon: PlusIcon, label: "New channel" },
-		sections: [
-			{
-				label: "Channels",
-				items: [
-					{ icon: ListIcon, label: "general" },
-					{ icon: ListIcon, label: "design-system", badge: 3 },
-					{ icon: ListIcon, label: "backend", dot: true },
-					{ icon: ListIcon, label: "announcements" },
-				],
-			},
-			{
-				label: "Direct Messages",
-				items: [
-					{ icon: UserIcon, label: "Aria Chen", badge: 1 },
-					{ icon: UserIcon, label: "James Park" },
-				],
-			},
-		],
-	};
-}
-
-function getTasksConfig(orgSlug: string): ModuleConfig {
-	return {
-		icon: CheckSquareIcon,
-		title: "Tasks",
-		action: { icon: PlusIcon, label: "New task" },
-		sections: [
-			{
-				label: "My Work",
-				items: [
-					{ icon: InboxIcon, label: "My tasks", to: `/${orgSlug}/tasks` },
-					{
-						icon: UserIcon,
-						label: "Assigned to me",
-						to: `/${orgSlug}/tasks/assigned`,
-						badge: 5,
-					},
-				],
-			},
-			{
-				label: "Projects",
-				items: [
-					{ icon: KanbanIcon, label: "Design system" },
-					{ icon: KanbanIcon, label: "API v2" },
-					{ icon: KanbanIcon, label: "Mobile app" },
-				],
-			},
-			{
-				label: "Views",
-				items: [
-					{ icon: KanbanIcon, label: "Board", to: `/${orgSlug}/tasks/board` },
-					{
-						icon: LayoutListIcon,
-						label: "Backlog",
-						to: `/${orgSlug}/tasks/backlog`,
-					},
-				],
-			},
-		],
-	};
-}
-
-function getTimeConfig(orgSlug: string): ModuleConfig {
-	return {
-		icon: ClockIcon,
-		title: "Time",
-		sections: [
-			{
-				label: "Tracking",
-				items: [
-					{ icon: ClockIcon, label: "Today", to: `/${orgSlug}/time` },
-					{
-						icon: CalendarIcon,
-						label: "This week",
-						to: `/${orgSlug}/time/week`,
-					},
-					{
-						icon: CalendarIcon,
-						label: "This month",
-						to: `/${orgSlug}/time/month`,
-					},
-				],
-			},
-			{
-				label: "Reports",
-				items: [
-					{ icon: BarChartIcon, label: "By project" },
-					{ icon: BarChartIcon, label: "By member" },
-				],
-			},
-			{
-				label: "Projects",
-				items: [
-					{ icon: KanbanIcon, label: "Design system" },
-					{ icon: KanbanIcon, label: "API v2" },
-				],
-			},
-		],
-	};
-}
-
-function getAiConfig(): ModuleConfig {
-	return {
-		icon: BotIcon,
-		title: "AI Chat",
-		action: { icon: PlusIcon, label: "New conversation" },
-		sections: [
-			{
-				label: "Recent",
-				items: [
-					{ icon: MessageSquareIcon, label: "Refactor auth module" },
-					{ icon: MessageSquareIcon, label: "Write API docs" },
-					{ icon: MessageSquareIcon, label: "Debug websocket issue" },
-					{ icon: MessageSquareIcon, label: "Design token naming" },
-				],
-			},
-			{
-				label: "This week",
-				items: [
-					{ icon: MessageSquareIcon, label: "DB schema review" },
-					{ icon: MessageSquareIcon, label: "PR review notes" },
 				],
 			},
 		],
@@ -265,6 +125,11 @@ function getSettingsConfig(
 						icon: BellIcon,
 						label: "Notifications",
 						to: `/${orgSlug}/settings/notifications`,
+					},
+					{
+						icon: SlidersHorizontalIcon,
+						label: "Preferences",
+						to: `/${orgSlug}/settings/preferences`,
 					},
 				],
 			},
@@ -313,14 +178,7 @@ export function resolveModule(
 		case "starred":
 		case "recent":
 			return getHomeConfig(orgSlug);
-		case "chat":
-			return getChatConfig();
-		case "tasks":
-			return getTasksConfig(orgSlug);
-		case "time":
-			return getTimeConfig(orgSlug);
-		case "ai":
-			return getAiConfig();
+
 		case "settings":
 			return getSettingsConfig(orgSlug, role);
 		default:

@@ -95,7 +95,10 @@ export class BillingController {
 		await this.requireAdminOrOwner(user.id, org.id);
 
 		const existingSub = await this.billingService.getSubscription(org.id);
-		if (existingSub && ["active", "trialing", "past_due"].includes(existingSub.status)) {
+		if (
+			existingSub &&
+			["active", "trialing", "past_due"].includes(existingSub.status)
+		) {
 			throw new BadRequestException(
 				"Organization already has an active subscription. Use change-plan instead.",
 			);
@@ -134,12 +137,18 @@ export class BillingController {
 	@Post(":orgSlug/change-plan")
 	async changePlan(
 		@Param("orgSlug") orgSlug: string,
-		@Body() body: { plan: SubscriptionPlan; interval: "monthly" | "yearly"; endTrial?: boolean },
+		@Body() body: {
+			plan: SubscriptionPlan;
+			interval: "monthly" | "yearly";
+			endTrial?: boolean;
+		},
 		@CurrentUser() user: User,
 	): Promise<{ success: boolean; url?: string } | { url: string }> {
 		const { plan, interval, endTrial } = body;
 		if (plan === "free" || plan === "enterprise") {
-			throw new BadRequestException("Cannot change to this plan via this endpoint");
+			throw new BadRequestException(
+				"Cannot change to this plan via this endpoint",
+			);
 		}
 
 		const org = await this.billingService.getOrgBySlug(orgSlug);
@@ -147,7 +156,13 @@ export class BillingController {
 
 		await this.requireAdminOrOwner(user.id, org.id);
 
-		return this.billingService.changeOrgSubscriptionPlan(org.id, plan, interval, endTrial, orgSlug);
+		return this.billingService.changeOrgSubscriptionPlan(
+			org.id,
+			plan,
+			interval,
+			endTrial,
+			orgSlug,
+		);
 	}
 
 	@Post(":orgSlug/cancel")
@@ -165,10 +180,14 @@ export class BillingController {
 			throw new BadRequestException("No active subscription to cancel");
 		}
 		if (sub.cancelAtPeriodEnd || sub.status === "canceled") {
-			throw new BadRequestException("Subscription is already canceled or canceling");
+			throw new BadRequestException(
+				"Subscription is already canceled or canceling",
+			);
 		}
 
-		await this.stripeService.cancelSubscriptionAtPeriodEnd(sub.stripeSubscriptionId);
+		await this.stripeService.cancelSubscriptionAtPeriodEnd(
+			sub.stripeSubscriptionId,
+		);
 		return { success: true };
 	}
 
@@ -213,7 +232,8 @@ export class BillingController {
 
 	private async requireMember(userId: string, orgId: string) {
 		const member = await this.billingService.getOrgMember(userId, orgId);
-		if (!member) throw new ForbiddenException("You are not a member of this organization");
+		if (!member)
+			throw new ForbiddenException("You are not a member of this organization");
 		return member;
 	}
 

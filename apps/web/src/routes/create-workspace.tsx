@@ -1,4 +1,8 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@orbit/ui/components/avatar";
+import {
+	Avatar,
+	AvatarFallback,
+	AvatarImage,
+} from "@orbit/ui/components/avatar";
 import { Button } from "@orbit/ui/components/button";
 import {
 	Card,
@@ -129,10 +133,10 @@ function RouteComponent() {
 							<DropdownMenuSeparator />
 							<DropdownMenuItem
 								onClick={() =>
-								signOut.mutate(undefined, {
-									onSuccess: () => router.navigate({ to: "/login" }),
-								})
-							}
+									signOut.mutate(undefined, {
+										onSuccess: () => router.navigate({ to: "/login" }),
+									})
+								}
 								className="text-destructive focus:text-destructive"
 							>
 								<LogOut className="size-4" />

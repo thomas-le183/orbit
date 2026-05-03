@@ -17,9 +17,9 @@ import {
 } from "@orbit/ui/components/field";
 import { Input } from "@orbit/ui/components/input";
 import { useRouter } from "@tanstack/react-router";
-import { toast } from "sonner";
 import { ImageIcon, Trash2Icon, UploadIcon } from "lucide-react";
 import { useId, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useDeleteOrganization, useUpdateOrganization } from "@/hooks/use-auth";
 import { SettingsPage } from "./settings-page";
 
@@ -118,11 +118,7 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 										}
 										const reader = new FileReader();
 										reader.onload = () =>
-											saveIf(
-												"logo",
-												String(reader.result ?? ""),
-												org.logo,
-											);
+											saveIf("logo", String(reader.result ?? ""), org.logo);
 										reader.readAsDataURL(file);
 										e.target.value = "";
 									}}
@@ -131,7 +127,7 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 							<FieldDescription>
 								We support your square PNGs, JPEGs and GIFs under 10MB
 							</FieldDescription>
-							</div>
+						</div>
 					</div>
 				</Field>
 

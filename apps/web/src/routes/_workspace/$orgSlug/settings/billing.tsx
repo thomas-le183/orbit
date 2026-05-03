@@ -35,7 +35,11 @@ import {
 export const Route = createFileRoute("/_workspace/$orgSlug/settings/billing")({
 	beforeLoad: async ({ context, params }) => {
 		const { authState, targetOrg } = context;
-		const role = await loadOrgRole(context.queryClient, targetOrg.id, authState.user?.id ?? "");
+		const role = await loadOrgRole(
+			context.queryClient,
+			targetOrg.id,
+			authState.user?.id ?? "",
+		);
 		if (role === "member" || role === null) {
 			throw redirect({ to: "/$orgSlug", params });
 		}
@@ -85,11 +89,17 @@ function BillingPage() {
 		cancelSubscription.mutate(undefined, {
 			onSuccess: () => {
 				setCancelModalOpen(false);
-				toast.success("Subscription canceled. You'll keep access until the end of your billing period.");
-				queryClient.resetQueries({ queryKey: ["billing", orgSlug, "subscription"] });
+				toast.success(
+					"Subscription canceled. You'll keep access until the end of your billing period.",
+				);
+				queryClient.resetQueries({
+					queryKey: ["billing", orgSlug, "subscription"],
+				});
 			},
 			onError: (e) =>
-				toast.error(e.message ?? "Could not cancel subscription. Please try again."),
+				toast.error(
+					e.message ?? "Could not cancel subscription. Please try again.",
+				),
 		});
 	}
 
@@ -114,8 +124,8 @@ function BillingPage() {
 				<Alert variant="destructive">
 					<AlertTriangle />
 					<AlertDescription>
-						Your last payment failed. Update your payment method to avoid service
-						interruption.{" "}
+						Your last payment failed. Update your payment method to avoid
+						service interruption.{" "}
 						<button
 							type="button"
 							className="underline underline-offset-2"
@@ -167,7 +177,10 @@ function BillingPage() {
 			)}
 
 			{sub && (
-				<Dialog open={cancelModalOpen} onOpenChange={(v) => !v && setCancelModalOpen(false)}>
+				<Dialog
+					open={cancelModalOpen}
+					onOpenChange={(v) => !v && setCancelModalOpen(false)}
+				>
 					<DialogContent className="max-w-md">
 						<DialogHeader>
 							<DialogTitle>Cancel subscription?</DialogTitle>
@@ -192,7 +205,9 @@ function BillingPage() {
 								onClick={handleCancel}
 								disabled={cancelSubscription.isPending}
 							>
-								{cancelSubscription.isPending ? "Canceling…" : "Cancel subscription"}
+								{cancelSubscription.isPending
+									? "Canceling…"
+									: "Cancel subscription"}
 							</Button>
 						</DialogFooter>
 					</DialogContent>

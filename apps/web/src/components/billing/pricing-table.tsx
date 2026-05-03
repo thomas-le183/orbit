@@ -8,7 +8,10 @@ import { Pricing } from "@orbit/ui/components/pricing";
 interface PricingTableProps {
 	currentPlan: SubscriptionPlan;
 	highlightPlan?: SubscriptionPlan;
-	onSelectPlan?: (plan: SubscriptionPlan, interval: "monthly" | "yearly") => void;
+	onSelectPlan?: (
+		plan: SubscriptionPlan,
+		interval: "monthly" | "yearly",
+	) => void;
 }
 
 const PLAN_ORDER: SubscriptionPlan[] = [
@@ -35,7 +38,8 @@ export function PricingTable({
 		const isHighlighted = plan === effectiveHighlight;
 		const isEnterprise = plan === SUBSCRIPTION_PLANS.ENTERPRISE;
 		const isPaid = meta.monthlyPriceUsd > 0 && !isEnterprise;
-		const prevLabel = index > 0 ? PLAN_METADATA[PLAN_ORDER[index - 1]].label : null;
+		const prevLabel =
+			index > 0 ? PLAN_METADATA[PLAN_ORDER[index - 1]].label : null;
 
 		return {
 			id: plan,
@@ -43,10 +47,14 @@ export function PricingTable({
 			description: meta.description,
 			price: meta.monthlyPriceUsd,
 			period: isEnterprise ? undefined : "per seat/month",
-			yearlyPrice: isPaid ? yearlyMonthlyPrice(meta.monthlyPriceUsd) : undefined,
+			yearlyPrice: isPaid
+				? yearlyMonthlyPrice(meta.monthlyPriceUsd)
+				: undefined,
 			badge: isHighlighted && !isEnterprise ? "Most popular" : undefined,
 			highlighted: isHighlighted && !isEnterprise,
-			featuresPrefix: prevLabel ? `Everything in ${prevLabel}, plus:` : undefined,
+			featuresPrefix: prevLabel
+				? `Everything in ${prevLabel}, plus:`
+				: undefined,
 			features: [...meta.features],
 			isEnterprise,
 			cta: isCurrent

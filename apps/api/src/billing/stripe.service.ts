@@ -120,14 +120,16 @@ export class StripeService {
 		if (!item) throw new Error("Subscription has no items");
 
 		const newPrice = await this.getPriceByLookupKey(newLookupKey);
-		if (!newPrice) throw new Error(`No price found for lookup key: ${newLookupKey}`);
+		if (!newPrice)
+			throw new Error(`No price found for lookup key: ${newLookupKey}`);
 
 		let isUpgrade: boolean;
 		if (newPlanTier !== currentPlanTier) {
 			isUpgrade = newPlanTier > currentPlanTier;
 		} else {
 			const currentInterval = item.price.recurring?.interval;
-			isUpgrade = currentInterval === "month" && newPrice.recurring?.interval === "year";
+			isUpgrade =
+				currentInterval === "month" && newPrice.recurring?.interval === "year";
 		}
 
 		return this.stripe.subscriptions.update(stripeSubscriptionId, {

@@ -303,7 +303,8 @@ export class MessagesService {
 						eq(schema.channelMember.userId, userId),
 					),
 				});
-				if (!membership) throw new ForbiddenException("Not a member of this channel");
+				if (!membership)
+					throw new ForbiddenException("Not a member of this channel");
 			}
 		}
 	}

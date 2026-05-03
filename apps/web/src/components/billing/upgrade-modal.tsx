@@ -26,10 +26,16 @@ export function UpgradeModal({
 	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
 	const checkout = useCheckout(orgSlug);
 
-	function handleSelectPlan(plan: SubscriptionPlan, interval: "monthly" | "yearly") {
+	function handleSelectPlan(
+		plan: SubscriptionPlan,
+		interval: "monthly" | "yearly",
+	) {
 		checkout.mutate(
 			{ plan, interval },
-			{ onError: () => toast.error("Could not start checkout. Please try again.") },
+			{
+				onError: () =>
+					toast.error("Could not start checkout. Please try again."),
+			},
 		);
 	}
 

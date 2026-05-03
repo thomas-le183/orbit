@@ -77,9 +77,7 @@ export function InviteMemberModal({
 										onChange={(e) => field.handleChange(e.target.value)}
 										required
 									/>
-									{isInvalid && (
-										<FieldError errors={field.state.meta.errors} />
-									)}
+									{isInvalid && <FieldError errors={field.state.meta.errors} />}
 								</Field>
 							);
 						}}
@@ -96,11 +94,15 @@ export function InviteMemberModal({
 									<SelectTrigger>
 										<SelectValue>
 											{(() => {
-												const role = ROLES.find(r => r.value === field.state.value);
+												const role = ROLES.find(
+													(r) => r.value === field.state.value,
+												);
 												return role ? (
 													<>
 														{role.label} —{" "}
-														<span className="text-muted-foreground">{role.description}</span>
+														<span className="text-muted-foreground">
+															{role.description}
+														</span>
 													</>
 												) : null;
 											})()}
