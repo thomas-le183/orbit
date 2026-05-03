@@ -7,6 +7,7 @@ import { DbModule } from "./db/db.module";
 import { EmailModule } from "./email/email.module";
 import { PreferencesModule } from "./preferences/preferences.module";
 import { StorageModule } from "./storage/storage.module";
+import { UploadsModule } from "./uploads/uploads.module";
 
 @Module({
 	imports: [
@@ -22,6 +23,7 @@ import { StorageModule } from "./storage/storage.module";
 		BillingModule,
 		ChatModule,
 		PreferencesModule,
+		UploadsModule,
 	],
 })
 export class AppModule {}
