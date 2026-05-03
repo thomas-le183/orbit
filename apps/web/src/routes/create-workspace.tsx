@@ -21,7 +21,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@orbit/ui/components/dropdown-menu";
-import { Field, FieldLabel } from "@orbit/ui/components/field";
+import { Field, FieldError, FieldLabel } from "@orbit/ui/components/field";
 import { Input } from "@orbit/ui/components/input";
 import { Spinner } from "@orbit/ui/components/spinner";
 import { useForm } from "@tanstack/react-form";
@@ -184,6 +184,7 @@ function RouteComponent() {
 											form.setFieldValue("slug", toSlug(e.target.value));
 										}}
 									/>
+									<FieldError errors={field.state.meta.errors} />
 								</Field>
 							)}
 						</form.Field>
@@ -215,6 +216,7 @@ function RouteComponent() {
 											onChange={(e) => field.handleChange(e.target.value)}
 										/>
 									</div>
+									<FieldError errors={field.state.meta.errors} />
 								</Field>
 							)}
 						</form.Field>
