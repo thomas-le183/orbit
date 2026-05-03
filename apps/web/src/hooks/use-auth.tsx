@@ -159,18 +159,13 @@ export function useUpdateOrganization() {
 	return useMutation({
 		mutationFn: async (input: {
 			organizationId: string;
-			data: { name?: string; slug?: string; logo?: string | null };
+			data: { name?: string; slug?: string; logo?: string };
 		}) => {
-			const { logo, ...rest } = input.data;
-			const { data, error } = await authClient.organization.update({
-				organizationId: input.organizationId,
-				data: { ...rest, ...(logo !== undefined ? { logo: logo ?? undefined } : {}) },
-			});
+			const { data, error } = await authClient.organization.update(input);
 			if (error) throw error;
 			return data;
 		},
 		onSuccess: (_, { organizationId }) => {
-			qc.invalidateQueries({ queryKey: authKeys.organizations });
 			qc.invalidateQueries({ queryKey: authKeys.org(organizationId) });
 		},
 	});

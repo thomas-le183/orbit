@@ -127,7 +127,12 @@ export function GeneralSettings({ org, isOwner }: GeneralSettingsProps) {
 									variant="outline"
 									size="sm"
 									disabled={!org.logo || uploading}
-									onClick={() => saveIf("logo", "", org.logo)}
+									onClick={() =>
+										update.mutate(
+											{ organizationId: org.id, data: { logo: "" } },
+											{ onSuccess: () => toast.success("Logo removed") },
+										)
+									}
 								>
 									<Trash2Icon />
 									Remove
