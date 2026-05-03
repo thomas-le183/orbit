@@ -2,6 +2,7 @@ import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import cookieParser from "cookie-parser";
 import { AppModule } from "./app.module";
+import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { LatencyInterceptor } from "./common/interceptors/latency.interceptor";
 
 async function bootstrap() {
@@ -11,6 +12,8 @@ async function bootstrap() {
 	});
 
 	app.setGlobalPrefix("api");
+
+	app.useGlobalFilters(new HttpExceptionFilter());
 
 	app.useGlobalPipes(
 		new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
