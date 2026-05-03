@@ -107,7 +107,7 @@ Local dev depends on PostgreSQL (port 5433), Redis (6379), RabbitMQ (5672), and 
 
 ### Settings pages
 
-Settings pages use `SettingsPage` as the outer shell, then `FieldGroup` + `Field` + `FieldContent` + `FieldLabel` + `FieldDescription` from `@orbit/ui/components/field` for layout. Do **not** use `SettingsSection` or `SettingsRow` — those are deprecated.
+Settings pages use `SettingsPage` as the outer shell, then `FieldGroup` + `Field` + `FieldContent` + `FieldLabel` + `FieldDescription` from `@orbit/ui/components/field` for layout.
 
 Use `@tanstack/react-form` to manage field state. For controls that save on change (selects, toggles), call both `field.handleChange` and the mutation inside `onValueChange`. When form defaults depend on async data, sync with a `useEffect` + `form.reset` once data first loads.
 

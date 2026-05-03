@@ -26,7 +26,6 @@ import {
 } from "@/hooks/use-auth";
 import { formatLastSeen, useOrgPresence } from "@/hooks/use-presence";
 import { SettingsPage } from "./settings-page";
-import { SettingsSection } from "./settings-section";
 
 type Member = {
 	id: string;
@@ -131,192 +130,198 @@ export function MembersTable({
 				</span>
 			</div>
 
-			<SettingsSection heading="Active members">
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead>Name</TableHead>
-							<TableHead>Email</TableHead>
-							<TableHead className="w-25">Role</TableHead>
-							<TableHead className="w-27.5">Joined</TableHead>
-							<TableHead className="w-32.5">Last seen</TableHead>
-							<TableHead className="w-9" />
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{filtered.map((m) => {
-							const presence = presenceMap.get(m.userId);
-							const isYou = m.userId === currentUserId;
-							return (
-								<TableRow key={m.id}>
-									<TableCell>
-										<div className="flex items-center gap-2.5">
-											<UserAvatar
-												size="sm"
-												colorSeed={m.user.id}
-												placeholder={m.user.name}
-												avatarUrl={m.user.image}
-											/>
-											<p>
-												{m.user.name}
-												{isYou && (
-													<span className="ml-1.5 rounded bg-muted px-1 py-px text-[9px] text-muted-foreground">
-														you
-													</span>
-												)}
-											</p>
-										</div>
-									</TableCell>
-									<TableCell className="text-muted-foreground">
-										{m.user.email}
-									</TableCell>
-									<TableCell>
-										<RolePill role={m.role} />
-									</TableCell>
-									<TableCell className="text-xs text-muted-foreground">
-										{new Date(m.createdAt).toLocaleDateString("en-US", {
-											month: "short",
-											day: "numeric",
-											year: "numeric",
-										})}
-									</TableCell>
-									<TableCell>
-										<span
-											className={cn(
-												"text-xs",
-												presence?.status === "online"
-													? "text-green-500"
-													: "text-muted-foreground",
-											)}
-										>
-											{formatLastSeen(presence)}
-										</span>
-									</TableCell>
-									<TableCell>
-										{canManage && !isYou && (
-											<DropdownMenu>
-												<DropdownMenuTrigger
-													render={
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-7 w-7"
-														>
-															<MoreHorizontalIcon className="size-4" />
-														</Button>
-													}
-												/>
-												<DropdownMenuContent align="end">
-													{(["admin", "member"] as const).map((r) => (
-														<DropdownMenuItem
-															key={r}
-															disabled={m.role === r}
-															onClick={() =>
-																updateRole.mutate({
-																	organizationId,
-																	memberId: m.id,
-																	role: r,
-																})
-															}
-														>
-															Change to {r}
-														</DropdownMenuItem>
-													))}
-													<DropdownMenuSeparator />
-													<DropdownMenuItem
-														variant="destructive"
-														onClick={() =>
-															removeMember.mutate({
-																organizationId,
-																memberIdOrEmail: m.id,
-															})
-														}
-													>
-														Remove from workspace
-													</DropdownMenuItem>
-												</DropdownMenuContent>
-											</DropdownMenu>
-										)}
-									</TableCell>
-								</TableRow>
-							);
-						})}
-					</TableBody>
-				</Table>
-			</SettingsSection>
-
-			{invitations.length > 0 && (
-				<SettingsSection heading="Pending invitations">
+			<section>
+				<h2 className="mb-2 capitalize text-foreground">Active members</h2>
+				<div className="rounded-lg border bg-card">
 					<Table>
 						<TableHeader>
 							<TableRow>
+								<TableHead>Name</TableHead>
 								<TableHead>Email</TableHead>
 								<TableHead className="w-25">Role</TableHead>
-								<TableHead className="w-32.5">Expires</TableHead>
+								<TableHead className="w-27.5">Joined</TableHead>
+								<TableHead className="w-32.5">Last seen</TableHead>
 								<TableHead className="w-9" />
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{invitations.map((inv) => {
-								const daysLeft = Math.ceil(
-									(new Date(inv.expiresAt).getTime() - Date.now()) / 86_400_000,
-								);
+							{filtered.map((m) => {
+								const presence = presenceMap.get(m.userId);
+								const isYou = m.userId === currentUserId;
 								return (
-									<TableRow key={inv.id}>
+									<TableRow key={m.id}>
 										<TableCell>
 											<div className="flex items-center gap-2.5">
-												<div className="flex h-7 w-7 items-center justify-center rounded-full border border-dashed bg-muted text-xs text-muted-foreground">
-													+
-												</div>
-												<p className="text-sm text-muted-foreground">
-													{inv.email}
+												<UserAvatar
+													size="sm"
+													colorSeed={m.user.id}
+													placeholder={m.user.name}
+													avatarUrl={m.user.image}
+												/>
+												<p>
+													{m.user.name}
+													{isYou && (
+														<span className="ml-1.5 rounded bg-muted px-1 py-px text-[9px] text-muted-foreground">
+															you
+														</span>
+													)}
 												</p>
 											</div>
 										</TableCell>
+										<TableCell className="text-muted-foreground">
+											{m.user.email}
+										</TableCell>
 										<TableCell>
-											<RolePill role={inv.role ?? "member"} />
+											<RolePill role={m.role} />
+										</TableCell>
+										<TableCell className="text-xs text-muted-foreground">
+											{new Date(m.createdAt).toLocaleDateString("en-US", {
+												month: "short",
+												day: "numeric",
+												year: "numeric",
+											})}
 										</TableCell>
 										<TableCell>
 											<span
 												className={cn(
 													"text-xs",
-													daysLeft <= 3
-														? "text-amber-500"
+													presence?.status === "online"
+														? "text-green-500"
 														: "text-muted-foreground",
 												)}
 											>
-												{daysLeft > 0 ? `${daysLeft}d` : "Expired"}
+												{formatLastSeen(presence)}
 											</span>
 										</TableCell>
 										<TableCell>
-											<DropdownMenu>
-												<DropdownMenuTrigger
-													render={
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-7 w-7"
+											{canManage && !isYou && (
+												<DropdownMenu>
+													<DropdownMenuTrigger
+														render={
+															<Button
+																variant="ghost"
+																size="icon"
+																className="h-7 w-7"
+															>
+																<MoreHorizontalIcon className="size-4" />
+															</Button>
+														}
+													/>
+													<DropdownMenuContent align="end">
+														{(["admin", "member"] as const).map((r) => (
+															<DropdownMenuItem
+																key={r}
+																disabled={m.role === r}
+																onClick={() =>
+																	updateRole.mutate({
+																		organizationId,
+																		memberId: m.id,
+																		role: r,
+																	})
+																}
+															>
+																Change to {r}
+															</DropdownMenuItem>
+														))}
+														<DropdownMenuSeparator />
+														<DropdownMenuItem
+															variant="destructive"
+															onClick={() =>
+																removeMember.mutate({
+																	organizationId,
+																	memberIdOrEmail: m.id,
+																})
+															}
 														>
-															<MoreHorizontalIcon className="size-4" />
-														</Button>
-													}
-												/>
-												<DropdownMenuContent align="end">
-													<DropdownMenuItem
-														variant="destructive"
-														onClick={() => cancelInvitation.mutate(inv.id)}
-													>
-														Revoke invitation
-													</DropdownMenuItem>
-												</DropdownMenuContent>
-											</DropdownMenu>
+															Remove from workspace
+														</DropdownMenuItem>
+													</DropdownMenuContent>
+												</DropdownMenu>
+											)}
 										</TableCell>
 									</TableRow>
 								);
 							})}
 						</TableBody>
 					</Table>
-				</SettingsSection>
+				</div>
+			</section>
+
+			{invitations.length > 0 && (
+				<section>
+					<h2 className="mb-2 capitalize text-foreground">Pending invitations</h2>
+					<div className="rounded-lg border bg-card">
+						<Table>
+							<TableHeader>
+								<TableRow>
+									<TableHead>Email</TableHead>
+									<TableHead className="w-25">Role</TableHead>
+									<TableHead className="w-32.5">Expires</TableHead>
+									<TableHead className="w-9" />
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{invitations.map((inv) => {
+									const daysLeft = Math.ceil(
+										(new Date(inv.expiresAt).getTime() - Date.now()) / 86_400_000,
+									);
+									return (
+										<TableRow key={inv.id}>
+											<TableCell>
+												<div className="flex items-center gap-2.5">
+													<div className="flex h-7 w-7 items-center justify-center rounded-full border border-dashed bg-muted text-xs text-muted-foreground">
+														+
+													</div>
+													<p className="text-sm text-muted-foreground">
+														{inv.email}
+													</p>
+												</div>
+											</TableCell>
+											<TableCell>
+												<RolePill role={inv.role ?? "member"} />
+											</TableCell>
+											<TableCell>
+												<span
+													className={cn(
+														"text-xs",
+														daysLeft <= 3
+															? "text-amber-500"
+															: "text-muted-foreground",
+													)}
+												>
+													{daysLeft > 0 ? `${daysLeft}d` : "Expired"}
+												</span>
+											</TableCell>
+											<TableCell>
+												<DropdownMenu>
+													<DropdownMenuTrigger
+														render={
+															<Button
+																variant="ghost"
+																size="icon"
+																className="h-7 w-7"
+															>
+																<MoreHorizontalIcon className="size-4" />
+															</Button>
+														}
+													/>
+													<DropdownMenuContent align="end">
+														<DropdownMenuItem
+															variant="destructive"
+															onClick={() => cancelInvitation.mutate(inv.id)}
+														>
+															Revoke invitation
+														</DropdownMenuItem>
+													</DropdownMenuContent>
+												</DropdownMenu>
+											</TableCell>
+										</TableRow>
+									);
+								})}
+							</TableBody>
+						</Table>
+					</div>
+				</section>
 			)}
 		</SettingsPage>
 	);
