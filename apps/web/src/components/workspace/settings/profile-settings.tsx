@@ -62,7 +62,10 @@ export function ProfileSettings() {
 		setUploading(true);
 		try {
 			const publicUrl = await upload(file, "avatar");
-			saveAvatar(publicUrl);
+			await update.mutateAsync(
+				{ image: publicUrl },
+				{ onSuccess: () => toast.success("Picture updated") },
+			);
 		} catch {
 			toast.error("Upload failed, please try again");
 		} finally {
