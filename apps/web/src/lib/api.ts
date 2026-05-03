@@ -10,9 +10,9 @@ export function isApiError(err: unknown): err is ApiError {
 	return (
 		typeof err === "object" &&
 		err !== null &&
-		"statusCode" in err &&
-		"message" in err &&
-		"code" in err
+		typeof (err as Record<string, unknown>).statusCode === "number" &&
+		typeof (err as Record<string, unknown>).message === "string" &&
+		typeof (err as Record<string, unknown>).code === "string"
 	);
 }
 
