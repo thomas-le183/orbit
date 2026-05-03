@@ -166,6 +166,7 @@ export function useUpdateOrganization() {
 			return data;
 		},
 		onSuccess: (_, { organizationId }) => {
+			qc.invalidateQueries({ queryKey: authKeys.organizations });
 			qc.invalidateQueries({ queryKey: authKeys.org(organizationId) });
 		},
 	});

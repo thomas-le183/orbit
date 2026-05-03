@@ -3,24 +3,44 @@ import {
 	BadRequestException,
 	Body,
 	Controller,
+	ForbiddenException,
+	Inject,
 	Post,
 	UseGuards,
 } from "@nestjs/common";
+import { and, eq } from "drizzle-orm";
 import type { User } from "../auth/auth.constants";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { AuthGuard } from "../common/guards/auth.guard";
+import { DB, type Db } from "../db/db.module";
+import * as schema from "../db/schema";
 import { StorageService } from "../storage/storage.service";
 import { PresignUploadDto } from "./uploads.dto";
 
 @UseGuards(AuthGuard)
 @Controller("uploads")
 export class UploadsController {
-	constructor(private readonly storage: StorageService) {}
+	constructor(
+		private readonly storage: StorageService,
+		@Inject(DB) private readonly db: Db,
+	) {}
 
 	@Post("presign")
 	async presign(@CurrentUser() user: User, @Body() body: PresignUploadDto) {
 		if (body.purpose === "logo" && !body.orgId) {
 			throw new BadRequestException("orgId is required for logo uploads");
+		}
+
+		if (body.purpose === "logo") {
+			const membership = await this.db.query.member.findFirst({
+				where: and(
+					eq(schema.member.userId, user.id),
+					eq(schema.member.organizationId, body.orgId!),
+				),
+			});
+			if (!membership) {
+				throw new ForbiddenException("Not a member of this organization");
+			}
 		}
 
 		const rawExt = body.fileName.includes(".")
