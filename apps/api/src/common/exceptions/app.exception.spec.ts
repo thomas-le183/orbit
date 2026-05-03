@@ -13,7 +13,7 @@ describe("AppException", () => {
     expect(ex.getStatus()).toBe(500);
   });
 
-  it("message is accessible via getMessage()", () => {
+  it("message property reflects the constructor message argument", () => {
     const ex = new AppException("FORBIDDEN", "No access", 403);
     expect(ex.message).toBe("No access");
   });
