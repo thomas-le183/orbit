@@ -87,9 +87,10 @@ describe("HttpExceptionFilter", () => {
       [500, "INTERNAL_SERVER_ERROR", new HttpException("server error", 500)],
       [418, "HTTP_418", new HttpException("teapot", 418)],
     ])("maps status %i to code %s", (statusCode, code, exception) => {
-      const ctx = makeContext(json);
+      const rowJson = jest.fn();
+      const ctx = makeContext(rowJson);
       filter.catch(exception, ctx);
-      expect(json).toHaveBeenCalledWith(
+      expect(rowJson).toHaveBeenCalledWith(
         expect.objectContaining({ statusCode, code }),
       );
     });
