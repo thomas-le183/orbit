@@ -25,6 +25,7 @@ describe("HttpExceptionFilter", () => {
   beforeEach(() => {
     filter = new HttpExceptionFilter();
     json = jest.fn();
+    // Access private logger for spy — intentional test-only pattern
     jest.spyOn(filter["logger"], "error").mockImplementation(() => {});
   });
 
@@ -76,16 +77,16 @@ describe("HttpExceptionFilter", () => {
 
   describe("HttpException — code fallback map", () => {
     it.each([
-      [new BadRequestException("bad"), 400, "BAD_REQUEST"],
-      [new UnauthorizedException("unauth"), 401, "UNAUTHORIZED"],
-      [new ForbiddenException("forbidden"), 403, "FORBIDDEN"],
-      [new NotFoundException("not found"), 404, "NOT_FOUND"],
-      [new HttpException("conflict", 409), 409, "CONFLICT"],
-      [new HttpException("unprocessable", 422), 422, "UNPROCESSABLE_ENTITY"],
-      [new HttpException("too many", 429), 429, "TOO_MANY_REQUESTS"],
-      [new HttpException("server error", 500), 500, "INTERNAL_SERVER_ERROR"],
-      [new HttpException("teapot", 418), 418, "HTTP_418"],
-    ])("maps status %s to code %s", (exception, statusCode, code) => {
+      [400, "BAD_REQUEST", new BadRequestException("bad")],
+      [401, "UNAUTHORIZED", new UnauthorizedException("unauth")],
+      [403, "FORBIDDEN", new ForbiddenException("forbidden")],
+      [404, "NOT_FOUND", new NotFoundException("not found")],
+      [409, "CONFLICT", new HttpException("conflict", 409)],
+      [422, "UNPROCESSABLE_ENTITY", new HttpException("unprocessable", 422)],
+      [429, "TOO_MANY_REQUESTS", new HttpException("too many", 429)],
+      [500, "INTERNAL_SERVER_ERROR", new HttpException("server error", 500)],
+      [418, "HTTP_418", new HttpException("teapot", 418)],
+    ])("maps status %i to code %s", (statusCode, code, exception) => {
       const ctx = makeContext(json);
       filter.catch(exception, ctx);
       expect(json).toHaveBeenCalledWith(
