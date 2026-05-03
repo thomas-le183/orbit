@@ -36,4 +36,9 @@ export {
 	type SubscriptionResponse,
 } from "./types/billing.js";
 
+export {
+	API_ERROR_CODES,
+	type ApiErrorCode,
+} from "./types/error-codes.js";
+
 export { cn, getInitials } from "./utils/index.js";
