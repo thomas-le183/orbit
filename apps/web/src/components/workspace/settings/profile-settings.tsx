@@ -12,13 +12,16 @@ import { ImageIcon, Trash2Icon, UploadIcon } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSession, useUpdateUser } from "@/hooks/use-auth";
+import { useUploadFile } from "@/hooks/use-upload-file";
 import { DeleteAccountDialog } from "./delete-account-dialog";
 import { SettingsPage } from "./settings-page";
 
 export function ProfileSettings() {
 	const { data: session } = useSession();
 	const update = useUpdateUser();
+	const { upload } = useUploadFile();
 	const [deleteOpen, setDeleteOpen] = useState(false);
+	const [uploading, setUploading] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const avatarId = useId();
 	const nameId = useId();
@@ -37,18 +40,34 @@ export function ProfileSettings() {
 		);
 	}
 
-	function saveAvatar(value: string) {
+	function saveAvatar(value: string | null) {
 		if (!user) return;
-		const next = value.trim();
-		const prev = (user.image ?? "").trim();
-		if (next === prev) return;
 		update.mutate(
-			{ image: next === "" ? null : next },
+			{ image: value },
 			{
 				onSuccess: () =>
-					toast.success(next === "" ? "Picture removed" : "Picture updated"),
+					toast.success(value ? "Picture updated" : "Picture removed"),
 			},
 		);
+	}
+
+	async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+		const file = e.target.files?.[0];
+		e.target.value = "";
+		if (!file) return;
+		if (file.size > 10 * 1024 * 1024) {
+			toast.error("Image must be under 10 MB");
+			return;
+		}
+		setUploading(true);
+		try {
+			const publicUrl = await upload(file, "avatar");
+			saveAvatar(publicUrl);
+		} catch {
+			toast.error("Upload failed, please try again");
+		} finally {
+			setUploading(false);
+		}
 	}
 
 	return (
@@ -63,7 +82,8 @@ export function ProfileSettings() {
 						<button
 							type="button"
 							onClick={() => fileInputRef.current?.click()}
-							className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+							disabled={uploading}
+							className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
 							aria-label="Upload picture"
 						>
 							{user.image ? (
@@ -81,16 +101,17 @@ export function ProfileSettings() {
 								<Button
 									variant="outline"
 									size="sm"
+									disabled={uploading}
 									onClick={() => fileInputRef.current?.click()}
 								>
 									<UploadIcon />
-									Upload
+									{uploading ? "Uploading…" : "Upload"}
 								</Button>
 								<Button
 									variant="outline"
 									size="sm"
-									disabled={!user.image}
-									onClick={() => saveAvatar("")}
+									disabled={!user.image || uploading}
+									onClick={() => saveAvatar(null)}
 								>
 									<Trash2Icon />
 									Remove
@@ -99,26 +120,13 @@ export function ProfileSettings() {
 									ref={fileInputRef}
 									id={avatarId}
 									type="file"
-									accept="image/png,image/jpeg,image/gif"
+									accept="image/png,image/jpeg,image/gif,image/webp"
 									className="hidden"
-									onChange={(e) => {
-										const file = e.target.files?.[0];
-										if (!file) return;
-										if (file.size > 10 * 1024 * 1024) {
-											toast.error("Image must be under 10 MB");
-											e.target.value = "";
-											return;
-										}
-										const reader = new FileReader();
-										reader.onload = () =>
-											saveAvatar(String(reader.result ?? ""));
-										reader.readAsDataURL(file);
-										e.target.value = "";
-									}}
+									onChange={handleFileChange}
 								/>
 							</div>
 							<FieldDescription>
-								We support your square PNGs, JPEGs and GIFs under 10MB
+								We support your square PNGs, JPEGs, GIFs and WebPs under 10MB
 							</FieldDescription>
 						</div>
 					</div>
