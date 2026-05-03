@@ -1,21 +1,9 @@
 import axios from "axios";
+import type { ApiError } from "./api-types";
 import { router } from "./router";
 
-export type ApiError = {
-	statusCode: number;
-	message: string;
-	code: string;
-};
-
-export function isApiError(err: unknown): err is ApiError {
-	return (
-		typeof err === "object" &&
-		err !== null &&
-		typeof (err as Record<string, unknown>).statusCode === "number" &&
-		typeof (err as Record<string, unknown>).message === "string" &&
-		typeof (err as Record<string, unknown>).code === "string"
-	);
-}
+export type { ApiError } from "./api-types";
+export { isApiError } from "./api-types";
 
 export const api = axios.create({
 	baseURL: `${import.meta.env.VITE_API_BASE_URL}/api`,
