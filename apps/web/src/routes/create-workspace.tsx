@@ -28,6 +28,7 @@ import { useForm } from "@tanstack/react-form";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, LogOut } from "lucide-react";
 import { toast } from "sonner";
+import { isApiError } from "@/lib/api";
 import {
 	loadAuthState,
 	useCreateOrganization,
@@ -88,9 +89,9 @@ function RouteComponent() {
 					await setActive.mutateAsync(org.id);
 					router.navigate({ to: "/$orgSlug", params: { orgSlug: org.slug } });
 				}
-			} catch (err: any) {
+			} catch (err: unknown) {
 				toast.error(
-					err.message ?? "Failed to create workspace. Please try again.",
+					isApiError(err) ? err.message : "Failed to create workspace. Please try again.",
 				);
 			}
 		},

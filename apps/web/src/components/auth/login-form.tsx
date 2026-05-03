@@ -14,6 +14,7 @@ import { useForm } from "@tanstack/react-form";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { GalleryVerticalEndIcon } from "lucide-react";
 import { toast } from "sonner";
+import { isApiError } from "@/lib/api";
 import { useSignIn } from "@/hooks/use-auth";
 
 export function LoginForm({
@@ -32,8 +33,8 @@ export function LoginForm({
 					password: value.password,
 				});
 				await navigate({ to: "/" });
-			} catch (err: any) {
-				toast.error(err.message ?? "Failed to sign in");
+			} catch (err: unknown) {
+				toast.error(isApiError(err) ? err.message : "Failed to sign in");
 			}
 		},
 	});
