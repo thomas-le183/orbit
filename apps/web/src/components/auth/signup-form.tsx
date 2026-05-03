@@ -15,7 +15,7 @@ import { Link } from "@tanstack/react-router";
 import { GalleryVerticalEndIcon, MailIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { isApiError } from "@/lib/api";
+import { getErrorMessage } from "@/lib/api";
 import { useSendVerificationEmail, useSignUp } from "@/hooks/use-auth";
 
 export function SignupForm({
@@ -37,7 +37,7 @@ export function SignupForm({
 				});
 				setVerifyEmail(value.email);
 			} catch (err: unknown) {
-				toast.error(isApiError(err) ? err.message : "Failed to create account");
+				toast.error(getErrorMessage(err, "Failed to create account"));
 			}
 		},
 	});
@@ -66,7 +66,7 @@ export function SignupForm({
 								await sendVerification.mutateAsync(verifyEmail);
 								toast.success("Verification email resent");
 							} catch (err: unknown) {
-								toast.error(isApiError(err) ? err.message : "Failed to resend email");
+								toast.error(getErrorMessage(err, "Failed to resend email"));
 							}
 						}}
 					>

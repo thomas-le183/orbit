@@ -14,10 +14,10 @@ export {
 } from "./schemas/index.js";
 
 export {
-	type ApiError,
 	type ApiResponse,
+	type ApiResponseError,
 	type ApiSuccess,
-	isApiError,
+	isApiResponseError,
 	isApiSuccess,
 	type PaginatedData,
 	type PaginatedResponse,

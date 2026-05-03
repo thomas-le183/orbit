@@ -3,7 +3,7 @@ import type { ApiError } from "./api-types";
 import { router } from "./router";
 
 export type { ApiError } from "./api-types";
-export { isApiError } from "./api-types";
+export { getErrorMessage, isApiError } from "./api-types";
 
 export const api = axios.create({
 	baseURL: `${import.meta.env.VITE_API_BASE_URL}/api`,
