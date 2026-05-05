@@ -5,9 +5,7 @@ import {
 	Get,
 	Post,
 } from "@nestjs/common";
-import type { Session, User } from "../../auth/types";
-import { CurrentSession } from "../../common/decorators/current-session.decorator";
-import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { Session, type UserSession } from "@thallesp/nestjs-better-auth";
 import { FindOrCreateConversationDto } from "./conversations.dto";
 import { ConversationsService } from "./conversations.service";
 
@@ -16,15 +14,14 @@ export class ConversationsController {
 	constructor(private readonly conversationsService: ConversationsService) {}
 
 	@Get()
-	async list(@CurrentUser() user: User, @CurrentSession() session: Session) {
+	async list(@Session() { user, session }: UserSession) {
 		const orgId = this.requireOrgId(session);
 		return this.conversationsService.listConversations(orgId, user.id);
 	}
 
 	@Post()
 	async findOrCreate(
-		@CurrentUser() user: User,
-		@CurrentSession() session: Session,
+		@Session() { user, session }: UserSession,
 		@Body() body: FindOrCreateConversationDto,
 	) {
 		const orgId = this.requireOrgId(session);
@@ -35,7 +32,7 @@ export class ConversationsController {
 		);
 	}
 
-	private requireOrgId(session: Session): string {
+	private requireOrgId(session: { activeOrganizationId?: string | null }): string {
 		if (!session.activeOrganizationId) {
 			throw new ForbiddenException("No active organization");
 		}

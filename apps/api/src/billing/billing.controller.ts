@@ -16,8 +16,7 @@ import type {
 	SubscriptionResponse,
 } from "@orbit/shared";
 import { PLAN_METADATA } from "@orbit/shared";
-import type { User } from "../auth/types";
-import { CurrentUser } from "../common/decorators/current-user.decorator";
+import { Session, type UserSession } from "@thallesp/nestjs-better-auth";
 import { BillingService } from "./billing.service";
 import { StripeService } from "./stripe.service";
 
@@ -36,12 +35,12 @@ export class BillingController {
 	@Get(":orgSlug/subscription")
 	async getSubscription(
 		@Param("orgSlug") orgSlug: string,
-		@CurrentUser() user: User,
+		@Session() session: UserSession,
 	): Promise<SubscriptionResponse> {
 		const org = await this.billingService.getOrgBySlug(orgSlug);
 		if (!org) throw new NotFoundException("Organization not found");
 
-		await this.requireMember(user.id, org.id);
+		await this.requireMember(session.user.id, org.id);
 
 		const plan = await this.billingService.getOrgSubscriptionPlan(org.id);
 		const subscription = await this.billingService.getSubscription(org.id);
@@ -74,7 +73,7 @@ export class BillingController {
 	async createCheckout(
 		@Param("orgSlug") orgSlug: string,
 		@Body() body: { plan: SubscriptionPlan; interval: "monthly" | "yearly" },
-		@CurrentUser() user: User,
+		@Session() { user }: UserSession,
 	): Promise<CheckoutResponse> {
 		const { plan, interval } = body;
 		if (plan === "free" || plan === "enterprise") {
@@ -139,7 +138,7 @@ export class BillingController {
 			interval: "monthly" | "yearly";
 			endTrial?: boolean;
 		},
-		@CurrentUser() user: User,
+		@Session() { user }: UserSession,
 	): Promise<{ success: boolean; url?: string } | { url: string }> {
 		const { plan, interval, endTrial } = body;
 		if (plan === "free" || plan === "enterprise") {
@@ -165,7 +164,7 @@ export class BillingController {
 	@Post(":orgSlug/cancel")
 	async cancelSubscription(
 		@Param("orgSlug") orgSlug: string,
-		@CurrentUser() user: User,
+		@Session() { user }: UserSession,
 	): Promise<{ success: boolean }> {
 		const org = await this.billingService.getOrgBySlug(orgSlug);
 		if (!org) throw new NotFoundException("Organization not found");
@@ -191,7 +190,7 @@ export class BillingController {
 	@Post(":orgSlug/start-trial")
 	async startTrial(
 		@Param("orgSlug") orgSlug: string,
-		@CurrentUser() user: User,
+		@Session() { user }: UserSession,
 	): Promise<{ status: string }> {
 		const org = await this.billingService.getOrgBySlug(orgSlug);
 		if (!org) throw new NotFoundException("Organization not found");
@@ -205,7 +204,7 @@ export class BillingController {
 	@Post(":orgSlug/portal")
 	async createPortal(
 		@Param("orgSlug") orgSlug: string,
-		@CurrentUser() user: User,
+		@Session() { user }: UserSession,
 	): Promise<PortalResponse> {
 		const org = await this.billingService.getOrgBySlug(orgSlug);
 		if (!org) throw new NotFoundException("Organization not found");

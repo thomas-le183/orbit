@@ -5,9 +5,7 @@ import {
 	Param,
 	Query,
 } from "@nestjs/common";
-import type { Session, User } from "../../auth/types";
-import { CurrentSession } from "../../common/decorators/current-session.decorator";
-import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { Session, type UserSession } from "@thallesp/nestjs-better-auth";
 import { MessagesService } from "./messages.service";
 
 @Controller()
@@ -17,8 +15,7 @@ export class MessagesController {
 	@Get("channels/:id/messages")
 	async channelMessages(
 		@Param("id") channelId: string,
-		@CurrentUser() user: User,
-		@CurrentSession() session: Session,
+		@Session() { user, session }: UserSession,
 		@Query("beforeId") beforeId?: string,
 	) {
 		const orgId = this.requireOrgId(session);
@@ -33,7 +30,7 @@ export class MessagesController {
 	@Get("conversations/:id/messages")
 	async conversationMessages(
 		@Param("id") conversationId: string,
-		@CurrentUser() user: User,
+		@Session() { user }: UserSession,
 		@Query("beforeId") beforeId?: string,
 	) {
 		return this.messagesService.getConversationMessages(
@@ -46,12 +43,12 @@ export class MessagesController {
 	@Get("messages/:id/thread")
 	async threadMessages(
 		@Param("id") messageId: string,
-		@CurrentUser() user: User,
+		@Session() { user }: UserSession,
 	) {
 		return this.messagesService.getThreadMessages(messageId, user.id);
 	}
 
-	private requireOrgId(session: Session): string {
+	private requireOrgId(session: { activeOrganizationId?: string | null }): string {
 		if (!session.activeOrganizationId) {
 			throw new ForbiddenException("No active organization");
 		}

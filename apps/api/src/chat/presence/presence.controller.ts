@@ -5,9 +5,7 @@ import {
 	Get,
 	Patch,
 } from "@nestjs/common";
-import type { Session, User } from "../../auth/types";
-import { CurrentSession } from "../../common/decorators/current-session.decorator";
-import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { Session, type UserSession } from "@thallesp/nestjs-better-auth";
 import { UpdatePresenceDto } from "./presence.dto";
 import { PresenceService } from "./presence.service";
 
@@ -16,7 +14,7 @@ export class PresenceController {
 	constructor(private readonly presenceService: PresenceService) {}
 
 	@Get()
-	async getOrgPresence(@CurrentSession() session: Session) {
+	async getOrgPresence(@Session() { session }: UserSession) {
 		if (!session.activeOrganizationId) {
 			throw new ForbiddenException("No active organization");
 		}
@@ -25,8 +23,7 @@ export class PresenceController {
 
 	@Patch()
 	async update(
-		@CurrentUser() user: User,
-		@CurrentSession() session: Session,
+		@Session() { user, session }: UserSession,
 		@Body() body: UpdatePresenceDto,
 	) {
 		if (!session.activeOrganizationId) {

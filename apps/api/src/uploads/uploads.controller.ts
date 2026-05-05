@@ -7,9 +7,8 @@ import {
 	Inject,
 	Post,
 } from "@nestjs/common";
+import { Session, type UserSession } from "@thallesp/nestjs-better-auth";
 import { and, eq } from "drizzle-orm";
-import type { User } from "../auth/types";
-import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { DB, type Db } from "../db/db.module";
 import * as schema from "../db/schema";
 import { StorageService } from "../storage/storage.service";
@@ -23,7 +22,7 @@ export class UploadsController {
 	) {}
 
 	@Post("presign")
-	async presign(@CurrentUser() user: User, @Body() body: PresignUploadDto) {
+	async presign(@Session() { user }: UserSession, @Body() body: PresignUploadDto) {
 		if (body.purpose === "logo" && !body.orgId) {
 			throw new BadRequestException("orgId is required for logo uploads");
 		}

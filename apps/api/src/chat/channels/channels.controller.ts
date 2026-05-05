@@ -8,9 +8,7 @@ import {
 	Patch,
 	Post,
 } from "@nestjs/common";
-import type { Session, User } from "../../auth/types";
-import { CurrentSession } from "../../common/decorators/current-session.decorator";
-import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { Session, type UserSession } from "@thallesp/nestjs-better-auth";
 import {
 	AddChannelMemberDto,
 	CreateChannelDto,
@@ -23,15 +21,14 @@ export class ChannelsController {
 	constructor(private readonly channelsService: ChannelsService) {}
 
 	@Get()
-	async list(@CurrentUser() user: User, @CurrentSession() session: Session) {
+	async list(@Session() { user, session }: UserSession) {
 		const orgId = this.requireOrgId(session);
 		return this.channelsService.listChannels(orgId, user.id);
 	}
 
 	@Post()
 	async create(
-		@CurrentUser() user: User,
-		@CurrentSession() session: Session,
+		@Session() { user, session }: UserSession,
 		@Body() body: CreateChannelDto,
 	) {
 		const orgId = this.requireOrgId(session);
@@ -41,8 +38,7 @@ export class ChannelsController {
 	@Patch(":id")
 	async update(
 		@Param("id") channelId: string,
-		@CurrentUser() user: User,
-		@CurrentSession() session: Session,
+		@Session() { user, session }: UserSession,
 		@Body() body: UpdateChannelDto,
 	) {
 		const orgId = this.requireOrgId(session);
@@ -58,8 +54,7 @@ export class ChannelsController {
 	@Delete(":id")
 	async remove(
 		@Param("id") channelId: string,
-		@CurrentUser() user: User,
-		@CurrentSession() session: Session,
+		@Session() { user, session }: UserSession,
 	) {
 		const orgId = this.requireOrgId(session);
 		const orgRole = await this.channelsService.getOrgRole(user.id, orgId);
@@ -70,8 +65,7 @@ export class ChannelsController {
 	@Post(":id/members")
 	async addMember(
 		@Param("id") channelId: string,
-		@CurrentUser() user: User,
-		@CurrentSession() session: Session,
+		@Session() { user, session }: UserSession,
 		@Body() body: AddChannelMemberDto,
 	) {
 		const orgId = this.requireOrgId(session);
@@ -88,8 +82,7 @@ export class ChannelsController {
 	async removeMember(
 		@Param("id") channelId: string,
 		@Param("userId") targetUserId: string,
-		@CurrentUser() user: User,
-		@CurrentSession() session: Session,
+		@Session() { user, session }: UserSession,
 	) {
 		const orgId = this.requireOrgId(session);
 		const orgRole = await this.channelsService.getOrgRole(user.id, orgId);
@@ -102,7 +95,7 @@ export class ChannelsController {
 		return { removed: true };
 	}
 
-	private requireOrgId(session: Session): string {
+	private requireOrgId(session: { activeOrganizationId?: string | null }): string {
 		if (!session.activeOrganizationId) {
 			throw new ForbiddenException("No active organization");
 		}
