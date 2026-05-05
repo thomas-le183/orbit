@@ -46,8 +46,9 @@ export const auth = betterAuth({
 	}),
 	advanced: {
 		cookiePrefix: "orbit",
+		database: { generateId: "uuid" },
 	},
-
+	experimental: { joins: true },
 	emailVerification: {
 		sendVerificationEmail: async ({ user, url }) => {
 			void sendEmail(user.email, verifyEmailTemplate(user.name, url));

@@ -4,7 +4,6 @@ import { AuthModule } from "./auth/auth.module";
 import { BillingModule } from "./billing/billing.module";
 import { ChatModule } from "./chat/chat.module";
 import { DbModule } from "./db/db.module";
-import { EmailModule } from "./email/email.module";
 import { PreferencesModule } from "./preferences/preferences.module";
 import { StorageModule } from "./storage/storage.module";
 import { UploadsModule } from "./uploads/uploads.module";
@@ -18,7 +17,6 @@ import { UploadsModule } from "./uploads/uploads.module";
 		}),
 		DbModule,
 		StorageModule,
-		EmailModule,
 		AuthModule,
 		BillingModule,
 		ChatModule,
