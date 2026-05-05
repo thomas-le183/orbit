@@ -8,7 +8,7 @@ const DEFAULT_PREFERENCES = {
 	theme: "system",
 	language: "en",
 	dateFormat: "DD/MM/YYYY",
-weekStart: 0,
+	weekStart: 0,
 } as const;
 
 @Controller("preferences")

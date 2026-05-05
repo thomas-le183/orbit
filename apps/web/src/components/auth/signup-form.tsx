@@ -15,8 +15,8 @@ import { Link } from "@tanstack/react-router";
 import { GalleryVerticalEndIcon, MailIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { getErrorMessage } from "@/lib/api";
 import { useSendVerificationEmail, useSignUp } from "@/hooks/use-auth";
+import { getErrorMessage } from "@/lib/api";
 
 export function SignupForm({
 	className,

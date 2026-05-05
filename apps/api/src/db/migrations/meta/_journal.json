@@ -1,62 +1,62 @@
 {
-  "version": "7",
-  "dialect": "postgresql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1775058206873,
-      "tag": "0000_careful_lionheart",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1775464319610,
-      "tag": "0001_cute_unus",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1775481454880,
-      "tag": "0002_perpetual_forgotten_one",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1775844449078,
-      "tag": "0003_funny_hercules",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1745539200000,
-      "tag": "0004_rename_subscription_tier_to_plan",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1777357225108,
-      "tag": "0005_tidy_toro",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1777791361808,
-      "tag": "0006_ancient_sumo",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1777793188792,
-      "tag": "0007_damp_medusa",
-      "breakpoints": true
-    }
-  ]
+	"version": "7",
+	"dialect": "postgresql",
+	"entries": [
+		{
+			"idx": 0,
+			"version": "7",
+			"when": 1775058206873,
+			"tag": "0000_careful_lionheart",
+			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "7",
+			"when": 1775464319610,
+			"tag": "0001_cute_unus",
+			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "7",
+			"when": 1775481454880,
+			"tag": "0002_perpetual_forgotten_one",
+			"breakpoints": true
+		},
+		{
+			"idx": 3,
+			"version": "7",
+			"when": 1775844449078,
+			"tag": "0003_funny_hercules",
+			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "7",
+			"when": 1745539200000,
+			"tag": "0004_rename_subscription_tier_to_plan",
+			"breakpoints": true
+		},
+		{
+			"idx": 5,
+			"version": "7",
+			"when": 1777357225108,
+			"tag": "0005_tidy_toro",
+			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "7",
+			"when": 1777791361808,
+			"tag": "0006_ancient_sumo",
+			"breakpoints": true
+		},
+		{
+			"idx": 7,
+			"version": "7",
+			"when": 1777793188792,
+			"tag": "0007_damp_medusa",
+			"breakpoints": true
+		}
+	]
 }

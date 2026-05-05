@@ -21,8 +21,7 @@ expand(dotenv.config({ path: path.resolve(__dirname, "../../../../.env") }));
 const db = drizzle(process.env.DATABASE_URL!, { schema });
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
-const emailFrom =
-	process.env.EMAIL_FROM ?? "Orbit <onboarding@resend.dev>";
+const emailFrom = process.env.EMAIL_FROM ?? "Orbit <onboarding@resend.dev>";
 const appUrl = process.env.APP_URL ?? "http://localhost:5173";
 
 async function sendEmail(

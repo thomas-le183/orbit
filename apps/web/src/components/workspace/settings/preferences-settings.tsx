@@ -105,7 +105,8 @@ function PreferencesForm({ prefs }: { prefs: UserPreferences }) {
 			theme: prefs.theme as "light" | "dark" | "system",
 			language: prefs.language,
 			dateFormat: prefs.dateFormat,
-			timezone: prefs.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+			timezone:
+				prefs.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
 			weekStart: String(prefs.weekStart),
 		},
 		onSubmit: () => {},
