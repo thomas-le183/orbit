@@ -9,15 +9,12 @@ import {
 	WebSocketServer,
 	WsException,
 } from "@nestjs/websockets";
+import { AuthService } from "@thallesp/nestjs-better-auth";
 import { fromNodeHeaders } from "better-auth/node";
 import { and, eq } from "drizzle-orm";
 import type { Server, Socket } from "socket.io";
-import {
-	AUTH,
-	type Auth,
-	type Session,
-	type User,
-} from "../auth/auth.constants";
+import { auth } from "../auth/auth";
+import type { Session, User } from "../auth/types";
 import { DB, type Db } from "../db/db.module";
 import * as schema from "../db/schema";
 import { MessagesService } from "./messages/messages.service";
@@ -40,7 +37,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@WebSocketServer() private readonly server!: Server;
 
 	constructor(
-		@Inject(AUTH) private readonly auth: Auth,
+		private readonly authService: AuthService<typeof auth>,
 		@Inject(DB) private readonly db: Db,
 		private readonly messagesService: MessagesService,
 		private readonly presenceService: PresenceService,
@@ -49,7 +46,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	// ── Lifecycle ──────────────────────────────────────────────────────────────
 
 	async handleConnection(socket: AuthenticatedSocket) {
-		const result = await this.auth.api.getSession({
+		const result = await this.authService.api.getSession({
 			headers: fromNodeHeaders(socket.handshake.headers),
 		});
 
