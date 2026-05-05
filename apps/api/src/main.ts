@@ -7,6 +7,7 @@ import { LatencyInterceptor } from "./common/interceptors/latency.interceptor";
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, {
+		bodyParser: false,
 		rawBody: true,
 		logger: ["error", "warn", "log", "debug", "verbose"],
 	});
