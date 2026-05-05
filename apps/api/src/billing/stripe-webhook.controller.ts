@@ -7,6 +7,7 @@ import {
 	Post,
 	RawBody,
 } from "@nestjs/common";
+import { AllowAnonymous } from "@thallesp/nestjs-better-auth";
 import { BillingService } from "./billing.service";
 import { StripeService } from "./stripe.service";
 
@@ -24,6 +25,7 @@ interface InvoicePayload {
 	subscription: string | { id: string } | null;
 }
 
+@AllowAnonymous()
 @Controller("billing/webhook")
 export class StripeWebhookController {
 	private readonly logger = new Logger(StripeWebhookController.name);
