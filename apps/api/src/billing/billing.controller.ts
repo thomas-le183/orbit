@@ -7,7 +7,6 @@ import {
 	NotFoundException,
 	Param,
 	Post,
-	UseGuards,
 } from "@nestjs/common";
 import type {
 	CheckoutResponse,
@@ -17,14 +16,12 @@ import type {
 	SubscriptionResponse,
 } from "@orbit/shared";
 import { PLAN_METADATA } from "@orbit/shared";
-import type { User } from "../auth/auth.constants";
+import type { User } from "../auth/types";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
-import { AuthGuard } from "../common/guards/auth.guard";
 import { BillingService } from "./billing.service";
 import { StripeService } from "./stripe.service";
 
 @Controller("billing")
-@UseGuards(AuthGuard)
 export class BillingController {
 	constructor(
 		private readonly billingService: BillingService,

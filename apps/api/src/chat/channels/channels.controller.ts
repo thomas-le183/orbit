@@ -7,12 +7,10 @@ import {
 	Param,
 	Patch,
 	Post,
-	UseGuards,
 } from "@nestjs/common";
-import type { Session, User } from "../../auth/auth.constants";
+import type { Session, User } from "../../auth/types";
 import { CurrentSession } from "../../common/decorators/current-session.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
-import { AuthGuard } from "../../common/guards/auth.guard";
 import {
 	AddChannelMemberDto,
 	CreateChannelDto,
@@ -20,7 +18,6 @@ import {
 } from "./channels.dto";
 import { ChannelsService } from "./channels.service";
 
-@UseGuards(AuthGuard)
 @Controller("channels")
 export class ChannelsController {
 	constructor(private readonly channelsService: ChannelsService) {}

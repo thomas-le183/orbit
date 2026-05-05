@@ -6,18 +6,15 @@ import {
 	ForbiddenException,
 	Inject,
 	Post,
-	UseGuards,
 } from "@nestjs/common";
 import { and, eq } from "drizzle-orm";
-import type { User } from "../auth/auth.constants";
+import type { User } from "../auth/types";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
-import { AuthGuard } from "../common/guards/auth.guard";
 import { DB, type Db } from "../db/db.module";
 import * as schema from "../db/schema";
 import { StorageService } from "../storage/storage.service";
 import { PresignUploadDto } from "./uploads.dto";
 
-@UseGuards(AuthGuard)
 @Controller("uploads")
 export class UploadsController {
 	constructor(

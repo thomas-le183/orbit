@@ -1,12 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { Body, Controller, Post, UseGuards } from "@nestjs/common";
-import type { User } from "../../auth/auth.constants";
+import { Body, Controller, Post } from "@nestjs/common";
+import type { User } from "../../auth/types";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
-import { AuthGuard } from "../../common/guards/auth.guard";
 import { StorageService } from "../../storage/storage.service";
 import { PresignDto } from "./attachments.dto";
 
-@UseGuards(AuthGuard)
 @Controller("attachments")
 export class AttachmentsController {
 	constructor(private readonly storageService: StorageService) {}

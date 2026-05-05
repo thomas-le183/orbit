@@ -4,15 +4,12 @@ import {
 	Get,
 	Param,
 	Query,
-	UseGuards,
 } from "@nestjs/common";
-import type { Session, User } from "../../auth/auth.constants";
+import type { Session, User } from "../../auth/types";
 import { CurrentSession } from "../../common/decorators/current-session.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
-import { AuthGuard } from "../../common/guards/auth.guard";
 import { MessagesService } from "./messages.service";
 
-@UseGuards(AuthGuard)
 @Controller()
 export class MessagesController {
 	constructor(private readonly messagesService: MessagesService) {}

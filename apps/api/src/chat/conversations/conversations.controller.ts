@@ -4,16 +4,13 @@ import {
 	ForbiddenException,
 	Get,
 	Post,
-	UseGuards,
 } from "@nestjs/common";
-import type { Session, User } from "../../auth/auth.constants";
+import type { Session, User } from "../../auth/types";
 import { CurrentSession } from "../../common/decorators/current-session.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
-import { AuthGuard } from "../../common/guards/auth.guard";
 import { FindOrCreateConversationDto } from "./conversations.dto";
 import { ConversationsService } from "./conversations.service";
 
-@UseGuards(AuthGuard)
 @Controller("conversations")
 export class ConversationsController {
 	constructor(private readonly conversationsService: ConversationsService) {}
