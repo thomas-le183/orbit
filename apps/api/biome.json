@@ -6,6 +6,12 @@
 			"style": {
 				"noNonNullAssertion": "off",
 				"useImportType": "off"
+			},
+			"suspicious": {
+				"noExplicitAny": "off"
+			},
+			"complexity": {
+				"useLiteralKeys": "off"
 			}
 		}
 	},
