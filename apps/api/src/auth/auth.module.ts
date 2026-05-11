@@ -1,9 +1,11 @@
+import { stripe } from "@better-auth/stripe";
 import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth } from "better-auth/minimal";
 import { organization } from "better-auth/plugins";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import Stripe from "stripe";
 import { DB, type Db } from "../db/db.module";
 import * as schema from "../db/schema";
 import { EmailModule } from "../email/email.module";
@@ -18,6 +20,12 @@ import { AuthController } from "./auth.controller";
 			provide: AUTH,
 			useFactory: (db: Db, config: ConfigService, email: EmailService) => {
 				const appUrl = config.get<string>("APP_URL") ?? "http://localhost:5173";
+				const webBaseUrl =
+					config.get<string>("WEB_BASE_URL") ?? "http://localhost:5173";
+
+				const stripeKey = config.getOrThrow<string>("STRIPE_SECRET_KEY");
+				// biome-ignore lint/suspicious/noExplicitAny: stripe CJS/ESM type mismatch
+				const stripeClient = new Stripe(stripeKey) as any;
 
 				return betterAuth({
 					secret: config.getOrThrow<string>("BETTER_AUTH_SECRET"),
@@ -31,7 +39,10 @@ import { AuthController } from "./auth.controller";
 					}),
 					advanced: {
 						cookiePrefix: "orbit",
+						database: { generateId: "uuid" },
 					},
+
+					experimental: { joins: true },
 
 					emailVerification: {
 						sendVerificationEmail: async ({ user, url }) => {
@@ -44,6 +55,7 @@ import { AuthController } from "./auth.controller";
 
 					emailAndPassword: {
 						enabled: true,
+						autoSignIn: true,
 						requireEmailVerification: true,
 						sendResetPassword: async ({ user, url }) => {
 							void email.sendResetPassword(user.email, user.name, url);
@@ -51,10 +63,70 @@ import { AuthController } from "./auth.controller";
 					},
 
 					user: {
-						deleteUser: { enabled: true },
+						deleteUser: {
+							enabled: true,
+							sendDeleteAccountVerification: async ({ user, url }) => {
+								void email.sendDeleteAccount(user.email, user.name, url);
+							},
+						},
+						changeEmail: {
+							enabled: true,
+							sendChangeEmailVerification: async ({ user, newEmail, url }) => {
+								void email.sendChangeEmail(user.email, user.name, newEmail, url);
+							},
+						},
 					},
 
+					account: { encryptOAuthTokens: true },
+
 					plugins: [
+						stripe({
+							stripeClient,
+							stripeWebhookSecret: config.getOrThrow<string>(
+								"STRIPE_WEBHOOK_SECRET",
+							),
+							organization: { enabled: true },
+							subscription: {
+								enabled: true,
+								requireEmailVerification: true,
+								plans: [
+									{
+										name: "basic",
+										lookupKey: "basic_monthly",
+										annualDiscountLookupKey: "basic_yearly",
+									},
+									{
+										name: "business",
+										lookupKey: "business_monthly",
+										annualDiscountLookupKey: "business_yearly",
+										freeTrial: { days: 7 },
+									},
+								],
+								authorizeReference: async ({ user, referenceId, action }) => {
+									const member = await db.query.member.findFirst({
+										where: and(
+											eq(schema.member.userId, user.id),
+											eq(schema.member.organizationId, referenceId),
+										),
+									});
+									if (!member) return false;
+									if (action === "list-subscription") return true;
+									return member.role === "owner" || member.role === "admin";
+								},
+								getCheckoutSessionParams: async ({ subscription }) => {
+									const org = await db.query.organization.findFirst({
+										where: eq(schema.organization.id, subscription.referenceId),
+									});
+									const orgSlug = org?.slug ?? subscription.referenceId;
+									return {
+										params: {
+											success_url: `${webBaseUrl}/${orgSlug}/settings/billing?checkout=success`,
+											cancel_url: `${webBaseUrl}/${orgSlug}/settings/billing?checkout=canceled`,
+										},
+									};
+								},
+							},
+						}),
 						organization({
 							allowUserToCreateOrganization: true,
 							teams: {
@@ -100,34 +172,19 @@ import { AuthController } from "./auth.controller";
 									}
 								},
 
-								beforeCreateInvitation: async () => {},
 								afterCreateInvitation: async () => {},
-								beforeCancelInvitation: async () => {},
 								afterCancelInvitation: async () => {},
-								beforeRejectInvitation: async () => {},
 								afterRejectInvitation: async () => {},
-								beforeCreateOrganization: async () => {},
-								beforeUpdateOrganization: async () => {},
 								afterUpdateOrganization: async () => {},
-								beforeDeleteOrganization: async () => {},
 								afterDeleteOrganization: async () => {},
-								beforeCreateTeam: async () => {},
 								afterCreateTeam: async () => {},
-								beforeUpdateTeam: async () => {},
 								afterUpdateTeam: async () => {},
-								beforeDeleteTeam: async () => {},
 								afterDeleteTeam: async () => {},
-								beforeAddMember: async () => {},
 								afterAddMember: async () => {},
-								beforeUpdateMemberRole: async () => {},
 								afterUpdateMemberRole: async () => {},
-								beforeRemoveMember: async () => {},
 								afterRemoveMember: async () => {},
-								beforeAddTeamMember: async () => {},
 								afterAddTeamMember: async () => {},
-								beforeRemoveTeamMember: async () => {},
 								afterRemoveTeamMember: async () => {},
-								beforeAcceptInvitation: async () => {},
 							},
 						}),
 					],

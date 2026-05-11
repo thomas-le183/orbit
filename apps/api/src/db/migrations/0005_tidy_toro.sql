@@ -1,1 +1,0 @@
-ALTER TABLE "organization_billing" ADD COLUMN "trial_used_at" timestamp;

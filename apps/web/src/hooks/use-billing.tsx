@@ -3,8 +3,9 @@ import type {
 	SubscriptionPlan,
 	SubscriptionResponse,
 } from "@orbit/shared";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
 
 export function usePlans() {
 	return useQuery({
@@ -29,7 +30,14 @@ export function useOrgSubscription(orgSlug: string) {
 	});
 }
 
+function useOrgId() {
+	const { data: session } = authClient.useSession();
+	return session?.session.activeOrganizationId ?? null;
+}
+
 export function useCheckout(orgSlug: string) {
+	const orgId = useOrgId();
+
 	return useMutation({
 		mutationFn: async ({
 			plan,
@@ -38,79 +46,98 @@ export function useCheckout(orgSlug: string) {
 			plan: SubscriptionPlan;
 			interval: "monthly" | "yearly";
 		}) => {
-			const { data } = await api.post<{ url: string }>(
-				`/billing/${orgSlug}/checkout`,
-				{ plan, interval },
-			);
+			if (!orgId) throw new Error("No active organization");
+			const { data, error } = await authClient.subscription.upgrade({
+				plan,
+				referenceId: orgId,
+				annual: interval === "yearly",
+				successUrl: `${window.location.origin}/${orgSlug}/settings/billing?checkout=success`,
+				cancelUrl: `${window.location.origin}/${orgSlug}/settings/billing?checkout=canceled`,
+			});
+			if (error) throw new Error(error.message);
 			return data;
 		},
 		onSuccess: (data) => {
-			if (data.url) {
-				window.location.href = data.url;
-			}
+			if (data?.url) window.location.href = data.url;
 		},
 	});
 }
 
 export function useStartTrial(orgSlug: string) {
-	return useMutation({
-		mutationFn: async () => {
-			const { data } = await api.post<{ status: string }>(
-				`/billing/${orgSlug}/start-trial`,
-			);
-			return data;
-		},
-	});
+	return useCheckout(orgSlug);
 }
 
 export function useChangePlan(orgSlug: string) {
+	const orgId = useOrgId();
+	const queryClient = useQueryClient();
+
 	return useMutation({
 		mutationFn: async ({
 			plan,
 			interval,
-			endTrial,
 		}: {
 			plan: SubscriptionPlan;
 			interval: "monthly" | "yearly";
-			endTrial?: boolean;
 		}) => {
-			const { data } = await api.post<{ success: boolean; url?: string }>(
-				`/billing/${orgSlug}/change-plan`,
-				{ plan, interval, endTrial },
-			);
+			if (!orgId) throw new Error("No active organization");
+			const { data, error } = await authClient.subscription.upgrade({
+				plan,
+				referenceId: orgId,
+				annual: interval === "yearly",
+				successUrl: `${window.location.origin}/${orgSlug}/settings/billing?checkout=success`,
+				cancelUrl: `${window.location.origin}/${orgSlug}/settings/billing?checkout=canceled`,
+			});
+			if (error) throw new Error(error.message);
 			return data;
 		},
 		onSuccess: (data) => {
-			if (data.url) {
+			if (data?.url) {
 				window.location.href = data.url;
+			} else {
+				void queryClient.invalidateQueries({
+					queryKey: ["billing", orgSlug, "subscription"],
+				});
 			}
 		},
 	});
 }
 
 export function useCancelSubscription(orgSlug: string) {
+	const orgId = useOrgId();
+	const queryClient = useQueryClient();
+
 	return useMutation({
 		mutationFn: async () => {
-			const { data } = await api.post<{ success: boolean }>(
-				`/billing/${orgSlug}/cancel`,
-			);
-			return data;
+			if (!orgId) throw new Error("No active organization");
+			const { error } = await authClient.subscription.cancel({
+				referenceId: orgId,
+				returnUrl: `${window.location.origin}/${orgSlug}/settings/billing`,
+			});
+			if (error) throw new Error(error.message);
+		},
+		onSuccess: () => {
+			void queryClient.invalidateQueries({
+				queryKey: ["billing", orgSlug, "subscription"],
+			});
 		},
 	});
 }
 
 export function usePortal(orgSlug: string) {
+	const orgId = useOrgId();
+
 	return useMutation({
 		mutationFn: async () => {
-			const { data } = await api.post<{ url: string }>(
-				`/billing/${orgSlug}/portal`,
-			);
+			if (!orgId) throw new Error("No active organization");
+			const { data, error } = await authClient.subscription.billingPortal({
+				referenceId: orgId,
+				returnUrl: `${window.location.origin}/${orgSlug}/settings/billing`,
+			});
+			if (error) throw new Error(error.message);
 			return data;
 		},
 		onSuccess: (data) => {
-			if (data.url) {
-				window.location.href = data.url;
-			}
+			if (data?.url) window.location.href = data.url;
 		},
 	});
 }

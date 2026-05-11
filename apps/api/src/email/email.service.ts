@@ -1,6 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { Resend } from "resend";
+import * as nodemailer from "nodemailer";
+import { changeEmailTemplate } from "./templates/change-email";
+import { deleteAccountEmail } from "./templates/delete-account";
 import {
 	type InvitationEmailData,
 	invitationEmail,
@@ -20,13 +22,23 @@ import {
 @Injectable()
 export class EmailService {
 	private readonly logger = new Logger(EmailService.name);
-	private readonly resend: Resend;
+	private readonly transporter: nodemailer.Transporter;
 	private readonly from: string;
 
 	constructor(readonly config: ConfigService) {
-		this.resend = new Resend(config.get<string>("RESEND_API_KEY"));
+		this.transporter = nodemailer.createTransport({
+			host: config.get<string>("SMTP_HOST") ?? "localhost",
+			port: config.get<number>("SMTP_PORT") ?? 1025,
+			secure: false,
+			auth: config.get<string>("SMTP_USER")
+				? {
+						user: config.get<string>("SMTP_USER"),
+						pass: config.get<string>("SMTP_PASS"),
+					}
+				: undefined,
+		});
 		this.from =
-			config.get<string>("EMAIL_FROM") ?? "Orbit <onboarding@resend.dev>";
+			config.get<string>("EMAIL_FROM") ?? "Orbit <orbit@localhost>";
 	}
 
 	async sendVerifyEmail(to: string, name: string, url: string): Promise<void> {
@@ -63,18 +75,34 @@ export class EmailService {
 		await this.send(to, memberJoinedEmail(data));
 	}
 
+	async sendChangeEmail(
+		to: string,
+		name: string,
+		newEmail: string,
+		url: string,
+	): Promise<void> {
+		await this.send(to, changeEmailTemplate(name, newEmail, url));
+	}
+
+	async sendDeleteAccount(to: string, name: string, url: string): Promise<void> {
+		await this.send(to, deleteAccountEmail(name, url));
+	}
+
 	private async send(
 		to: string,
 		template: { subject: string; html: string },
 	): Promise<void> {
-		const { error } = await this.resend.emails.send({
-			from: this.from,
-			to: [to],
-			subject: template.subject,
-			html: template.html,
-		});
-		if (error) {
-			this.logger.error(`Failed to send email to ${to}: ${error.message}`);
+		try {
+			await this.transporter.sendMail({
+				from: this.from,
+				to,
+				subject: template.subject,
+				html: template.html,
+			});
+		} catch (err) {
+			this.logger.error(
+				`Failed to send email to ${to}: ${err instanceof Error ? err.message : String(err)}`,
+			);
 		}
 	}
 }

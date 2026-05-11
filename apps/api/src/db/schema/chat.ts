@@ -6,6 +6,7 @@ import {
 	primaryKey,
 	text,
 	timestamp,
+	uuid,
 } from "drizzle-orm/pg-core";
 import { organization, user } from "./auth";
 
@@ -13,13 +14,13 @@ import { organization, user } from "./auth";
 
 export const channel = pgTable("channel", {
 	id: text("id").primaryKey(),
-	organizationId: text("organization_id")
+	organizationId: uuid("organization_id")
 		.notNull()
 		.references(() => organization.id, { onDelete: "cascade" }),
 	name: text("name").notNull(),
 	description: text("description"),
 	isPrivate: boolean("is_private").notNull().default(false),
-	createdBy: text("created_by")
+	createdBy: uuid("created_by")
 		.notNull()
 		.references(() => user.id),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -31,7 +32,7 @@ export const channelMember = pgTable("channel_member", {
 	channelId: text("channel_id")
 		.notNull()
 		.references(() => channel.id, { onDelete: "cascade" }),
-	userId: text("user_id")
+	userId: uuid("user_id")
 		.notNull()
 		.references(() => user.id, { onDelete: "cascade" }),
 	role: text("role").notNull().default("member"),
@@ -40,7 +41,7 @@ export const channelMember = pgTable("channel_member", {
 
 export const conversation = pgTable("conversation", {
 	id: text("id").primaryKey(),
-	organizationId: text("organization_id")
+	organizationId: uuid("organization_id")
 		.notNull()
 		.references(() => organization.id, { onDelete: "cascade" }),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -51,7 +52,7 @@ export const conversationParticipant = pgTable("conversation_participant", {
 	conversationId: text("conversation_id")
 		.notNull()
 		.references(() => conversation.id, { onDelete: "cascade" }),
-	userId: text("user_id")
+	userId: uuid("user_id")
 		.notNull()
 		.references(() => user.id, { onDelete: "cascade" }),
 	joinedAt: timestamp("joined_at").notNull().defaultNow(),
@@ -65,7 +66,7 @@ export const message = pgTable("message", {
 	conversationId: text("conversation_id").references(() => conversation.id, {
 		onDelete: "cascade",
 	}),
-	senderId: text("sender_id")
+	senderId: uuid("sender_id")
 		.notNull()
 		.references(() => user.id),
 	content: text("content").notNull(),
@@ -92,7 +93,7 @@ export const messageReaction = pgTable("message_reaction", {
 	messageId: text("message_id")
 		.notNull()
 		.references(() => message.id, { onDelete: "cascade" }),
-	userId: text("user_id")
+	userId: uuid("user_id")
 		.notNull()
 		.references(() => user.id, { onDelete: "cascade" }),
 	emoji: text("emoji").notNull(),
@@ -102,10 +103,10 @@ export const messageReaction = pgTable("message_reaction", {
 export const userPresence = pgTable(
 	"user_presence",
 	{
-		userId: text("user_id")
+		userId: uuid("user_id")
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
-		organizationId: text("organization_id")
+		organizationId: uuid("organization_id")
 			.notNull()
 			.references(() => organization.id, { onDelete: "cascade" }),
 		status: text("status").notNull().default("offline"),

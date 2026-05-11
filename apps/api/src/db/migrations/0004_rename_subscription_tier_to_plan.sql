@@ -1,1 +1,0 @@
-ALTER TABLE "subscription" RENAME COLUMN "subscription_tier" TO "subscription_plan";

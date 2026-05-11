@@ -252,10 +252,10 @@ export function SubscriptionSection({
 	function handleSubscribeNow() {
 		if (currentPlan !== "basic" && currentPlan !== "business") return;
 		changePlan.mutate(
-			{ plan: currentPlan, interval: "monthly", endTrial: true },
+			{ plan: currentPlan, interval: "monthly" },
 			{
 				onSuccess: (data) => {
-					if (data.url) return; // hook redirects
+					if (data?.url) return; // hook redirects
 					toast.success("Plan activated successfully.");
 					invalidateSub();
 				},
@@ -279,14 +279,10 @@ export function SubscriptionSection({
 	function confirmSwitchYearly() {
 		if (currentPlan !== "basic" && currentPlan !== "business") return;
 		changePlan.mutate(
-			{
-				plan: currentPlan,
-				interval: "yearly",
-				endTrial: sub?.status === "trialing",
-			},
+			{ plan: currentPlan, interval: "yearly" },
 			{
 				onSuccess: (data) => {
-					if (data.url) return; // hook redirects
+					if (data?.url) return; // hook redirects
 					setSwitchYearlyModalOpen(false);
 					toast.success("Switched to yearly billing.");
 					invalidateSub();
@@ -341,15 +337,13 @@ export function SubscriptionSection({
 	}
 
 	function handleStartTrial() {
-		startTrial.mutate(undefined, {
-			onSuccess: () => {
-				setTrialModalOpen(false);
-				toast.success("Your 7-day Business trial has started!");
-				invalidateSub();
+		startTrial.mutate(
+			{ plan: "business", interval: "monthly" },
+			{
+				onError: (e) =>
+					toast.error(e.message ?? "Could not start trial. Please try again."),
 			},
-			onError: (e) =>
-				toast.error(e.message ?? "Could not start trial. Please try again."),
-		});
+		);
 	}
 
 	return (

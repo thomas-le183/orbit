@@ -1,16 +1,14 @@
 import { ConfigService } from "@nestjs/config";
 import { Test } from "@nestjs/testing";
-import { Resend } from "resend";
+import * as nodemailer from "nodemailer";
 import { EmailService } from "./email.service";
 
-jest.mock("resend");
+jest.mock("nodemailer");
 
-const mockSend = jest
-	.fn()
-	.mockResolvedValue({ data: { id: "test-id" }, error: null });
-(Resend as jest.MockedClass<typeof Resend>).mockImplementation(
-	() => ({ emails: { send: mockSend } }) as unknown as Resend,
-);
+const mockSendMail = jest.fn().mockResolvedValue({ messageId: "test-id" });
+(nodemailer.createTransport as jest.Mock).mockReturnValue({
+	sendMail: mockSendMail,
+});
 
 describe("EmailService", () => {
 	let service: EmailService;
@@ -23,7 +21,8 @@ describe("EmailService", () => {
 					provide: ConfigService,
 					useValue: {
 						get: (key: string) => {
-							if (key === "RESEND_API_KEY") return "re_test";
+							if (key === "SMTP_HOST") return "localhost";
+							if (key === "SMTP_PORT") return 1025;
 							if (key === "EMAIL_FROM") return "Orbit <noreply@test.com>";
 							return undefined;
 						},
@@ -32,42 +31,42 @@ describe("EmailService", () => {
 			],
 		}).compile();
 		service = module.get(EmailService);
-		mockSend.mockClear();
+		mockSendMail.mockClear();
 	});
 
-	it("sendVerifyEmail calls resend with verify subject", async () => {
+	it("sendVerifyEmail sends with verify subject", async () => {
 		await service.sendVerifyEmail(
 			"user@example.com",
 			"Alice",
 			"https://example.com/verify?token=abc",
 		);
-		expect(mockSend).toHaveBeenCalledWith(
+		expect(mockSendMail).toHaveBeenCalledWith(
 			expect.objectContaining({
-				to: ["user@example.com"],
+				to: "user@example.com",
 				subject: "Verify your Orbit email address",
 			}),
 		);
 	});
 
-	it("sendWelcome calls resend with welcome subject", async () => {
+	it("sendWelcome sends with welcome subject", async () => {
 		await service.sendWelcome("user@example.com", "Alice");
-		expect(mockSend).toHaveBeenCalledWith(
+		expect(mockSendMail).toHaveBeenCalledWith(
 			expect.objectContaining({
-				to: ["user@example.com"],
+				to: "user@example.com",
 				subject: "Welcome to Orbit!",
 			}),
 		);
 	});
 
-	it("sendResetPassword calls resend with reset subject", async () => {
+	it("sendResetPassword sends with reset subject", async () => {
 		await service.sendResetPassword(
 			"user@example.com",
 			"Alice",
 			"https://example.com/reset?token=abc",
 		);
-		expect(mockSend).toHaveBeenCalledWith(
+		expect(mockSendMail).toHaveBeenCalledWith(
 			expect.objectContaining({
-				to: ["user@example.com"],
+				to: "user@example.com",
 				subject: "Reset your Orbit password",
 			}),
 		);
@@ -79,9 +78,9 @@ describe("EmailService", () => {
 			organizationName: "Acme",
 			inviteUrl: "http://localhost:5173/invite/abc123",
 		});
-		expect(mockSend).toHaveBeenCalledWith(
+		expect(mockSendMail).toHaveBeenCalledWith(
 			expect.objectContaining({
-				to: ["invitee@example.com"],
+				to: "invitee@example.com",
 				subject: expect.stringContaining("Bob"),
 			}),
 		);
@@ -93,7 +92,7 @@ describe("EmailService", () => {
 			organizationName: "My Co",
 			workspaceUrl: "http://localhost:5173/my-co",
 		});
-		expect(mockSend).toHaveBeenCalledWith(
+		expect(mockSendMail).toHaveBeenCalledWith(
 			expect.objectContaining({
 				subject: expect.stringContaining("My Co"),
 			}),
@@ -107,18 +106,44 @@ describe("EmailService", () => {
 			organizationName: "Acme",
 			workspaceUrl: "http://localhost:5173/acme",
 		});
-		expect(mockSend).toHaveBeenCalledWith(
+		expect(mockSendMail).toHaveBeenCalledWith(
 			expect.objectContaining({
 				subject: expect.stringContaining("Dave"),
 			}),
 		);
 	});
 
-	it("does not throw when resend returns an error", async () => {
-		mockSend.mockResolvedValueOnce({
-			data: null,
-			error: { message: "bad key" },
-		});
+	it("sendChangeEmail sends with new email in subject", async () => {
+		await service.sendChangeEmail(
+			"user@example.com",
+			"Alice",
+			"new@example.com",
+			"https://example.com/verify-change?token=abc",
+		);
+		expect(mockSendMail).toHaveBeenCalledWith(
+			expect.objectContaining({
+				to: "user@example.com",
+				subject: "Verify your new Orbit email address",
+			}),
+		);
+	});
+
+	it("sendDeleteAccount sends with deletion subject", async () => {
+		await service.sendDeleteAccount(
+			"user@example.com",
+			"Alice",
+			"https://example.com/confirm-delete?token=abc",
+		);
+		expect(mockSendMail).toHaveBeenCalledWith(
+			expect.objectContaining({
+				to: "user@example.com",
+				subject: "Confirm your Orbit account deletion",
+			}),
+		);
+	});
+
+	it("does not throw when sendMail rejects", async () => {
+		mockSendMail.mockRejectedValueOnce(new Error("connection refused"));
 		await expect(
 			service.sendWelcome("user@example.com", "Alice"),
 		).resolves.not.toThrow();

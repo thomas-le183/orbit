@@ -64,6 +64,19 @@ The frontend (`apps/web`) talks to the API exclusively via **Axios** (`apps/web/
 - **Route guards**: TanStack Router `beforeLoad` hooks use `loadAuthState()` and `resolveAuthenticatedLanding()` (from `use-auth.tsx`) to redirect unauthenticated users or users with incomplete onboarding
 - **API guard**: `apps/api/src/common/guards/auth.guard.ts` validates sessions; use `@CurrentUser()` / `@CurrentSession()` decorators in controllers
 
+#### Dual better-auth instances — strict sync rule
+
+There are two `betterAuth(...)` calls in this repo:
+
+| File | Purpose |
+| --- | --- |
+| `apps/api/src/auth/auth.ts` | Thin instance for `@better-auth/cli generate` (runs outside NestJS DI) |
+| `apps/api/src/auth/auth.module.ts` | Full runtime instance — injected via `AUTH` token |
+
+**Rule**: `auth.ts` must contain every option that affects the database schema (plugins list, `emailAndPassword.enabled`, `user.changeEmail`, `user.deleteUser`, etc.). Runtime-only callbacks (`sendVerificationEmail`, `sendResetPassword`, org hooks, etc.) belong only in `auth.module.ts`.
+
+Whenever you add or remove a plugin, enable/disable a feature, or change any option that adds/removes DB columns or tables, **update both files**. If they diverge on schema-affecting config, generated migrations will be wrong. Always diff the two files when touching auth config.
+
 ### Routing structure
 
 `apps/web/src/routes/` uses file-based routing via the TanStack Router Vite plugin:
