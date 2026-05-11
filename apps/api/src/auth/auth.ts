@@ -59,7 +59,7 @@ export const auth = betterAuth({
 					},
 				],
 				getCheckoutSessionParams: async () => {
-					return { params: { customer_update: { address: "auto", name: "auto" } } };
+					return { params: {} };
 				},
 			},
 		}),

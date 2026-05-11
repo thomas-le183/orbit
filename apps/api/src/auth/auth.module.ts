@@ -122,9 +122,7 @@ import { AuthController } from "./auth.controller";
 								},
 								getCheckoutSessionParams: async () => {
 									return {
-										params: {
-											customer_update: { address: "auto", name: "auto" },
-										},
+										params: {},
 									};
 								},
 							},
