@@ -73,9 +73,11 @@ There are two `betterAuth(...)` calls in this repo:
 | `apps/api/src/auth/auth.ts` | Thin instance for `@better-auth/cli generate` (runs outside NestJS DI) |
 | `apps/api/src/auth/auth.module.ts` | Full runtime instance — injected via `AUTH` token |
 
-**Rule**: `auth.ts` must contain every option that affects the database schema (plugins list, `emailAndPassword.enabled`, `user.changeEmail`, `user.deleteUser`, etc.). Runtime-only callbacks (`sendVerificationEmail`, `sendResetPassword`, org hooks, etc.) belong only in `auth.module.ts`.
+**Rule**: Every structural option must be identical in both files. `auth.module.ts` may *add* runtime callbacks (`sendVerificationEmail`, `sendResetPassword`, `sendDeleteAccountVerification`, `sendChangeEmailVerification`, `sendInvitationEmail`, `organizationHooks`, `authorizeReference`, `getCheckoutSessionParams`, `afterEmailVerification`) but must never omit or change any non-callback property that exists in `auth.ts`.
 
-Whenever you add or remove a plugin, enable/disable a feature, or change any option that adds/removes DB columns or tables, **update both files**. If they diverge on schema-affecting config, generated migrations will be wrong. Always diff the two files when touching auth config.
+Properties that must stay in sync: `advanced`, `experimental`, `emailAndPassword` (minus callbacks), `emailVerification` (minus callbacks), `user.deleteUser.enabled`, `user.changeEmail.enabled`, `account`, `session`, `databaseHooks`, `hooks`, and every plugin in `plugins[]` with its structural config (plugin presence, `enabled` flags, `plans`, `teams`, etc.).
+
+Whenever you touch either file, diff the two and verify all non-callback properties match. Divergence causes wrong migrations or silent runtime/schema mismatches.
 
 ### Routing structure
 
