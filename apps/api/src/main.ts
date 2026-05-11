@@ -8,6 +8,8 @@ import { LatencyInterceptor } from "./common/interceptors/latency.interceptor";
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, {
 		rawBody: true,
+		// This is required for Better Auth to handle raw bodies correctly
+		bodyParser: false,
 		logger: ["error", "warn", "log", "debug", "verbose"],
 	});
 

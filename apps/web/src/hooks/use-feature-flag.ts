@@ -25,7 +25,8 @@ export function useFeatureFlag(flag: keyof PlanFlags): {
 		return { enabled: true, requiredPlan: SUBSCRIPTION_PLANS.FREE };
 	}
 
-	const enabled = PLAN_METADATA[data.plan].flags[flag];
+	const plan = (data?.subscription?.plan ?? "free") as SubscriptionPlan;
+	const enabled = PLAN_METADATA[plan].flags[flag];
 	const requiredPlan =
 		PLAN_ORDER.find((p) => PLAN_METADATA[p].flags[flag]) ??
 		SUBSCRIPTION_PLANS.ENTERPRISE;

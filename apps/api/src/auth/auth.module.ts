@@ -19,9 +19,7 @@ import { AuthController } from "./auth.controller";
 		{
 			provide: AUTH,
 			useFactory: (db: Db, config: ConfigService, email: EmailService) => {
-				const appUrl = config.get<string>("APP_URL") ?? "http://localhost:5173";
-				const webBaseUrl =
-					config.get<string>("WEB_BASE_URL") ?? "http://localhost:5173";
+				const appUrl = config.get<string>("APP_URL")!;
 
 				const stripeKey = config.getOrThrow<string>("STRIPE_SECRET_KEY");
 				// biome-ignore lint/suspicious/noExplicitAny: stripe CJS/ESM type mismatch
@@ -83,7 +81,10 @@ import { AuthController } from "./auth.controller";
 						},
 					},
 
+					session: {},
 					account: { encryptOAuthTokens: true },
+					databaseHooks: {},
+					hooks: {},
 
 					plugins: [
 						stripe({
@@ -119,15 +120,10 @@ import { AuthController } from "./auth.controller";
 									if (action === "list-subscription") return true;
 									return member.role === "owner" || member.role === "admin";
 								},
-								getCheckoutSessionParams: async ({ subscription }) => {
-									const org = await db.query.organization.findFirst({
-										where: eq(schema.organization.id, subscription.referenceId),
-									});
-									const orgSlug = org?.slug ?? subscription.referenceId;
+								getCheckoutSessionParams: async () => {
 									return {
 										params: {
-											success_url: `${webBaseUrl}/${orgSlug}/settings/billing?checkout=success`,
-											cancel_url: `${webBaseUrl}/${orgSlug}/settings/billing?checkout=canceled`,
+											customer_update: { address: "auto", name: "auto" },
 										},
 									};
 								},

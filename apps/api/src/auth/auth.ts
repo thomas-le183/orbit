@@ -58,6 +58,9 @@ export const auth = betterAuth({
 						freeTrial: { days: 7 },
 					},
 				],
+				getCheckoutSessionParams: async () => {
+					return { params: { customer_update: { address: "auto", name: "auto" } } };
+				},
 			},
 		}),
 		organization({

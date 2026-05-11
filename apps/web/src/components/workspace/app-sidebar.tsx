@@ -1,3 +1,4 @@
+import { PLAN_METADATA, type SubscriptionPlan } from "@orbit/shared";
 import { Button } from "@orbit/ui/components/button";
 import {
 	Collapsible,
@@ -183,7 +184,7 @@ function WorkspaceSwitcher({ orgSlug }: { orgSlug: string }) {
 									{subscription && (
 										<span className="flex items-center gap-1 truncate text-xs text-muted-foreground capitalize">
 											<CrownIcon className="size-3 shrink-0" />
-											{subscription.planLabel}
+											{PLAN_METADATA[(subscription?.subscription?.plan ?? "free") as SubscriptionPlan].label}
 										</span>
 									)}
 								</div>

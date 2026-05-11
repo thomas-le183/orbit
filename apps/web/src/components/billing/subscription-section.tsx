@@ -1,4 +1,4 @@
-import { PLAN_METADATA } from "@orbit/shared";
+import { PLAN_METADATA, type SubscriptionPlan } from "@orbit/shared";
 import {
 	Alert,
 	AlertDescription,
@@ -83,14 +83,12 @@ function TrialModal({
 	open,
 	onClose,
 	onStartTrial,
-	onTryWithCard,
 	isStartingTrial,
 	isCheckingOut,
 }: {
 	open: boolean;
 	onClose: () => void;
 	onStartTrial: () => void;
-	onTryWithCard: () => void;
 	isStartingTrial: boolean;
 	isCheckingOut: boolean;
 }) {
@@ -119,19 +117,6 @@ function TrialModal({
 						<span className="text-sm text-muted-foreground">
 							No credit card required. Full Business access for 7 days, then
 							automatically reverts to Hobby.
-						</span>
-					</button>
-
-					<button
-						type="button"
-						onClick={onTryWithCard}
-						disabled={isStartingTrial || isCheckingOut}
-						className="group flex flex-col gap-1 rounded-lg border border-border-strong bg-card p-4 text-left transition-colors hover:border-primary hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50"
-					>
-						<span className="font-medium">30-day free trial</span>
-						<span className="text-sm text-muted-foreground">
-							Credit card required. 30 days free, then billed monthly. Cancel
-							anytime before the trial ends.
 						</span>
 					</button>
 				</div>
@@ -201,9 +186,9 @@ export function SubscriptionSection({
 		return <div className="h-36 animate-pulse rounded-lg bg-muted" />;
 	}
 
-	const currentPlan = data.plan;
+	const currentPlan = (data?.subscription?.plan ?? "free") as SubscriptionPlan;
 	const meta = PLAN_METADATA[currentPlan];
-	const sub = data.subscription;
+	const sub = data?.subscription ?? null;
 	const activeStatuses = new Set(["active", "trialing", "past_due"]);
 	const isActive = sub != null && activeStatuses.has(sub.status);
 
@@ -217,18 +202,18 @@ export function SubscriptionSection({
 	const isCanceled = sub?.status === "canceled";
 	const isCancelingAtEnd = sub?.cancelAtPeriodEnd && !isCanceled;
 	const isAccessEnding = isCanceled || isCancelingAtEnd;
-	const interval = sub
-		? getBillingInterval(sub.currentPeriodStart, sub.currentPeriodEnd)
-		: null;
+	const interval =
+		sub?.periodStart && sub?.periodEnd
+			? getBillingInterval(sub.periodStart, sub.periodEnd)
+			: null;
 	const renewalLabel = isAccessEnding ? "Access until" : "Renewal date";
 
 	const daysRemaining =
-		sub?.status === "trialing"
+		sub?.status === "trialing" && sub.periodEnd
 			? Math.max(
 					0,
 					Math.ceil(
-						(new Date(sub.currentPeriodEnd).getTime() - Date.now()) /
-							86_400_000,
+						(new Date(sub.periodEnd).getTime() - Date.now()) / 86_400_000,
 					),
 				)
 			: null;
@@ -236,7 +221,7 @@ export function SubscriptionSection({
 	const nextTier = NEXT_TIER[currentPlan];
 	const showSwitchYearly = isActive && interval === "monthly";
 	const showSubscribeNow = sub?.status === "trialing";
-	const showTrialCta = data.trialEligible && !sub && !showSubscribeNow;
+	const showTrialCta = !sub && !showSubscribeNow;
 	const showUpgrade =
 		nextTier != null &&
 		!showSubscribeNow &&
@@ -252,7 +237,11 @@ export function SubscriptionSection({
 	function handleSubscribeNow() {
 		if (currentPlan !== "basic" && currentPlan !== "business") return;
 		changePlan.mutate(
-			{ plan: currentPlan, interval: "monthly" },
+			{
+				plan: currentPlan,
+				interval: "monthly",
+				subscriptionId: sub?.stripeSubscriptionId,
+			},
 			{
 				onSuccess: (data) => {
 					if (data?.url) return; // hook redirects
@@ -279,7 +268,11 @@ export function SubscriptionSection({
 	function confirmSwitchYearly() {
 		if (currentPlan !== "basic" && currentPlan !== "business") return;
 		changePlan.mutate(
-			{ plan: currentPlan, interval: "yearly" },
+			{
+				plan: currentPlan,
+				interval: "yearly",
+				subscriptionId: sub?.stripeSubscriptionId,
+			},
 			{
 				onSuccess: (data) => {
 					if (data?.url) return; // hook redirects
@@ -309,7 +302,11 @@ export function SubscriptionSection({
 			);
 		} else {
 			changePlan.mutate(
-				{ plan: nextTier, interval: interval ?? "monthly" },
+				{
+					plan: nextTier,
+					interval: interval ?? "monthly",
+					subscriptionId: sub?.id,
+				},
 				{
 					onSuccess: () => {
 						toast.success("Plan upgraded successfully.");
@@ -322,18 +319,6 @@ export function SubscriptionSection({
 				},
 			);
 		}
-	}
-
-	function handleTryBusinessTrial() {
-		checkout.mutate(
-			{ plan: "business", interval: "monthly" },
-			{
-				onError: (e) =>
-					toast.error(
-						e.message ?? "Could not start checkout. Please try again.",
-					),
-			},
-		);
 	}
 
 	function handleStartTrial() {
@@ -372,7 +357,9 @@ export function SubscriptionSection({
 							{isCancelingAtEnd
 								? "Cancels on"
 								: "Canceled. Access continues until"}{" "}
-							<strong>{formatDate(sub.currentPeriodEnd)}</strong>
+							<strong>
+								{sub.periodEnd ? formatDate(sub.periodEnd) : "end of period"}
+							</strong>
 							{isCancelingAtEnd && ". You'll keep full access until then."}
 						</AlertDescription>
 					</Alert>
@@ -401,17 +388,17 @@ export function SubscriptionSection({
 						{sub && (
 							<>
 								<span className="text-muted-foreground">{renewalLabel}</span>
-								<span>{formatDate(sub.currentPeriodEnd)}</span>
+								<span>{sub.periodEnd ? formatDate(sub.periodEnd) : "—"}</span>
 							</>
 						)}
 
 						<span className="text-muted-foreground">Seats</span>
 						<span>
-							{data.usage.members.current}
-							{data.usage.members.limit !== -1 && (
+							{data?.memberCount ?? 0}
+							{meta.memberLimit !== -1 && (
 								<span className="text-muted-foreground">
 									{" "}
-									/ {data.usage.members.limit}
+									/ {meta.memberLimit}
 								</span>
 							)}
 						</span>
@@ -483,7 +470,6 @@ export function SubscriptionSection({
 				open={trialModalOpen}
 				onClose={() => setTrialModalOpen(false)}
 				onStartTrial={handleStartTrial}
-				onTryWithCard={handleTryBusinessTrial}
 				isStartingTrial={startTrial.isPending}
 				isCheckingOut={checkout.isPending}
 			/>

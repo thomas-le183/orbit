@@ -1,4 +1,4 @@
-import { PLAN_METADATA, type PlanFlags } from "@orbit/shared";
+import { PLAN_METADATA, type PlanFlags, type SubscriptionPlan } from "@orbit/shared";
 import {
 	Tooltip,
 	TooltipContent,
@@ -47,7 +47,7 @@ export function UpgradeGate({ flag, children, message }: UpgradeGateProps) {
 				open={modalOpen}
 				onOpenChange={setModalOpen}
 				highlightPlan={requiredPlan}
-				currentPlan={data?.plan ?? "free"}
+				currentPlan={(data?.subscription?.plan ?? "free") as SubscriptionPlan}
 			/>
 		</>
 	);

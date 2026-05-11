@@ -61,23 +61,25 @@ function BillingPage() {
 	const portal = usePortal(orgSlug);
 	const cancelSubscription = useCancelSubscription(orgSlug);
 	const [cancelModalOpen, setCancelModalOpen] = useState(false);
-
 	const sub = data?.subscription;
 	const isPastDue = sub?.status === "past_due";
 	const canCancel =
 		sub != null &&
-		["active", "past_due"].includes(sub.status) &&
+		["active", "trialing", "past_due"].includes(sub.status) &&
 		!sub.cancelAtPeriodEnd;
 
 	useEffect(() => {
 		if (!checkoutResult) return;
 		if (checkoutResult === "success") {
 			toast.success("Subscription activated! Welcome to your new plan.");
+			void queryClient.invalidateQueries({
+				queryKey: ["billing", orgSlug, "subscription"],
+			});
 		} else if (checkoutResult === "canceled") {
 			toast.info("Checkout canceled. No changes were made.");
 		}
 		navigate({ to: ".", search: (prev) => ({ ...prev, checkout: undefined }) });
-	}, [checkoutResult, navigate]);
+	}, [checkoutResult, navigate, queryClient, orgSlug]);
 
 	function handlePortal() {
 		portal.mutate(undefined, {
@@ -103,8 +105,8 @@ function BillingPage() {
 		});
 	}
 
-	const periodEnd = sub?.currentPeriodEnd
-		? new Date(sub.currentPeriodEnd).toLocaleDateString(undefined, {
+	const periodEnd = sub?.periodEnd
+		? new Date(sub.periodEnd).toLocaleDateString(undefined, {
 				month: "short",
 				day: "numeric",
 				year: "numeric",
