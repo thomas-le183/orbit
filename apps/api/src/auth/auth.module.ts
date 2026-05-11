@@ -45,6 +45,7 @@ import { AuthController } from "./auth.controller";
 					experimental: { joins: true },
 
 					emailVerification: {
+						autoSignInAfterVerification: true,
 						sendVerificationEmail: async ({ user, url }) => {
 							void email.sendVerifyEmail(user.email, user.name, url);
 						},
@@ -72,7 +73,12 @@ import { AuthController } from "./auth.controller";
 						changeEmail: {
 							enabled: true,
 							sendChangeEmailVerification: async ({ user, newEmail, url }) => {
-								void email.sendChangeEmail(user.email, user.name, newEmail, url);
+								void email.sendChangeEmail(
+									user.email,
+									user.name,
+									newEmail,
+									url,
+								);
 							},
 						},
 					},
