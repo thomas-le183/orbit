@@ -12,6 +12,7 @@ import { EmailModule } from "../email/email.module";
 import { EmailService } from "../email/email.service";
 import { AUTH } from "./auth.constants";
 import { AuthController } from "./auth.controller";
+import { createOrganizationHooks } from "./organization-billing-hooks";
 
 @Module({
 	imports: [EmailModule],
@@ -19,11 +20,12 @@ import { AuthController } from "./auth.controller";
 		{
 			provide: AUTH,
 			useFactory: (db: Db, config: ConfigService, email: EmailService) => {
-				const appUrl = config.get<string>("APP_URL")!;
+				const appUrl = config.get<string>("WEB_BASE_URL")!;
 
 				const stripeKey = config.getOrThrow<string>("STRIPE_SECRET_KEY");
+				const stripeClient = new Stripe(stripeKey);
 				// biome-ignore lint/suspicious/noExplicitAny: stripe CJS/ESM type mismatch
-				const stripeClient = new Stripe(stripeKey) as any;
+				const betterAuthStripeClient = stripeClient as any;
 
 				return betterAuth({
 					secret: config.getOrThrow<string>("BETTER_AUTH_SECRET"),
@@ -38,6 +40,17 @@ import { AuthController } from "./auth.controller";
 					advanced: {
 						cookiePrefix: "orbit",
 						database: { generateId: "uuid" },
+					},
+
+					socialProviders: {
+						google: {
+							clientId: config.getOrThrow<string>("GOOGLE_CLIENT_ID"),
+							clientSecret: config.getOrThrow<string>("GOOGLE_CLIENT_SECRET"),
+							mapProfileToUser: (profile) => ({
+								name: profile.name,
+								image: profile.picture,
+							}),
+						},
 					},
 
 					experimental: { joins: true },
@@ -88,7 +101,7 @@ import { AuthController } from "./auth.controller";
 
 					plugins: [
 						stripe({
-							stripeClient,
+							stripeClient: betterAuthStripeClient,
 							stripeWebhookSecret: config.getOrThrow<string>(
 								"STRIPE_WEBHOOK_SECRET",
 							),
@@ -142,50 +155,12 @@ import { AuthController } from "./auth.controller";
 								});
 							},
 
-							organizationHooks: {
-								afterCreateOrganization: async ({
-									organization: org,
-									user: owner,
-								}) => {
-									void email.sendWorkspaceCreated(owner.email, {
-										ownerName: owner.name,
-										organizationName: org.name,
-										workspaceUrl: `${appUrl}/${org.slug}`,
-									});
-								},
-
-								afterAcceptInvitation: async ({
-									invitation,
-									user: newMember,
-									organization: org,
-								}) => {
-									const inviter = await db.query.user.findFirst({
-										where: eq(schema.user.id, invitation.inviterId),
-									});
-									if (inviter) {
-										void email.sendMemberJoined(inviter.email, {
-											newMemberName: newMember.name,
-											newMemberEmail: newMember.email,
-											organizationName: org.name,
-											workspaceUrl: `${appUrl}/${org.slug}`,
-										});
-									}
-								},
-
-								afterCreateInvitation: async () => {},
-								afterCancelInvitation: async () => {},
-								afterRejectInvitation: async () => {},
-								afterUpdateOrganization: async () => {},
-								afterDeleteOrganization: async () => {},
-								afterCreateTeam: async () => {},
-								afterUpdateTeam: async () => {},
-								afterDeleteTeam: async () => {},
-								afterAddMember: async () => {},
-								afterUpdateMemberRole: async () => {},
-								afterRemoveMember: async () => {},
-								afterAddTeamMember: async () => {},
-								afterRemoveTeamMember: async () => {},
-							},
+							organizationHooks: createOrganizationHooks({
+								db,
+								email,
+								appUrl,
+								stripeClient,
+							}),
 						}),
 					],
 				});

@@ -28,6 +28,16 @@ export const auth = betterAuth({
 		requireEmailVerification: true,
 	},
 	emailVerification: { autoSignInAfterVerification: true },
+	socialProviders: {
+		google: {
+			clientId: process.env.GOOGLE_CLIENT_ID!,
+			clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+			mapProfileToUser: (profile) => ({
+				name: profile.name,
+				image: profile.picture,
+			}),
+		},
+	},
 	experimental: { joins: true },
 	databaseHooks: {},
 	hooks: {},
