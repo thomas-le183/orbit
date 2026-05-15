@@ -97,11 +97,13 @@ export async function syncStripeSeatQuantity({
 export function createOrganizationHooks({
 	db,
 	emailQueue,
+	notificationQueue,
 	appUrl,
 	stripeClient,
 }: {
 	db: Db;
 	emailQueue: Queue;
+	notificationQueue: Queue;
 	appUrl: string;
 	stripeClient: StripeClientForSeatBilling;
 }) {
@@ -139,6 +141,14 @@ export function createOrganizationHooks({
 						organizationName: org.name,
 						workspaceUrl: `${appUrl}/${org.slug}`,
 					},
+				});
+
+				void notificationQueue.add("member_joined", {
+					type: "member_joined",
+					recipientId: inviter.id,
+					actorName: newMember.name,
+					orgName: org.name,
+					orgSlug: org.slug,
 				});
 			}
 

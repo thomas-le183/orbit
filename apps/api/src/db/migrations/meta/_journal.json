@@ -8,6 +8,13 @@
       "when": 1778501938095,
       "tag": "0000_robust_maverick",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778837108230,
+      "tag": "0001_pale_bruce_banner",
+      "breakpoints": true
     }
   ]
 }

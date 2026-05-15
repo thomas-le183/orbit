@@ -77,9 +77,11 @@ describe("per-seat billing organization hooks", () => {
 		});
 		const stripe = createStripeMock();
 		const emailQueue = { add: jest.fn() };
+		const notificationQueue = { add: jest.fn() };
 		const hooks = createOrganizationHooks({
 			db: db as never,
 			emailQueue: emailQueue as never,
+			notificationQueue: notificationQueue as never,
 			appUrl: "https://app.example.com",
 			stripeClient: stripe as never,
 		});
@@ -117,6 +119,7 @@ describe("per-seat billing organization hooks", () => {
 		const hooks = createOrganizationHooks({
 			db: db as never,
 			emailQueue: { add: jest.fn() } as never,
+			notificationQueue: { add: jest.fn() } as never,
 			appUrl: "https://app.example.com",
 			stripeClient: stripe as never,
 		});

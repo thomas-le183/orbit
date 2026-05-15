@@ -4,6 +4,11 @@ export const QUEUES = {
 	NOTIFICATION: "notification",
 } as const;
 
+export const NOTIFICATION_JOBS = {
+	MEMBER_JOINED: "member_joined",
+	CHANNEL_ADDED: "channel_added",
+} as const;
+
 export const EMAIL_JOBS = {
 	SEND_VERIFY_EMAIL: "send-verify-email",
 	SEND_WELCOME: "send-welcome",

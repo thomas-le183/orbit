@@ -1,19 +1,25 @@
 import { randomUUID } from "node:crypto";
+import { InjectQueue } from "@nestjs/bullmq";
 import {
 	ForbiddenException,
 	Inject,
 	Injectable,
 	NotFoundException,
 } from "@nestjs/common";
+import type { Queue } from "bullmq";
 import { and, asc, eq } from "drizzle-orm";
 import { DB, type Db } from "../../db/db.module";
 import * as schema from "../../db/schema";
+import { QUEUES } from "../../queue/queue.constants";
 
 type OrgRole = "owner" | "admin" | "member";
 
 @Injectable()
 export class ChannelsService {
-	constructor(@Inject(DB) private readonly db: Db) {}
+	constructor(
+		@Inject(DB) private readonly db: Db,
+		@InjectQueue(QUEUES.NOTIFICATION) private readonly notificationQueue: Queue,
+	) {}
 
 	// ── Queries ────────────────────────────────────────────────────────────────
 
@@ -163,6 +169,21 @@ export class ChannelsService {
 			joinedAt: new Date(),
 		};
 		await this.db.insert(schema.channelMember).values(record);
+
+		const [actor, org] = await Promise.all([
+			this.db.query.user.findFirst({ where: eq(schema.user.id, userId) }),
+			this.db.query.organization.findFirst({ where: eq(schema.organization.id, ch.organizationId) }),
+		]);
+		if (actor && org) {
+			void this.notificationQueue.add("channel_added", {
+				type: "channel_added",
+				recipientId: targetUserId,
+				channelName: ch.name,
+				addedByName: actor.name,
+				orgSlug: org.slug,
+			});
+		}
+
 		return record;
 	}
 
