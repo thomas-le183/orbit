@@ -49,11 +49,20 @@ export class BillingController {
 		const memberCount = await this.billingService.getMemberCount(org.id);
 		const metadata = PLAN_METADATA[plan];
 		const trialEligible = await this.billingService.isTrialEligible(org.id);
+		const hasSeatBilling = plan === "basic" || plan === "business";
+		const billingInterval = hasSeatBilling
+			? await this.billingService.getSubscriptionBillingInterval(subscription)
+			: null;
+		const pricePerSeat = hasSeatBilling
+			? await this.billingService.getPricePerSeat(plan, billingInterval)
+			: null;
 
 		return {
 			plan,
 			planLabel: metadata.label,
 			trialEligible,
+			pricePerSeat,
+			billingInterval,
 			usage: {
 				members: {
 					current: memberCount,

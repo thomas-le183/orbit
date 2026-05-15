@@ -1,6 +1,7 @@
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import cookieParser from "cookie-parser";
+import * as express from "express";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { LatencyInterceptor } from "./common/interceptors/latency.interceptor";
@@ -14,6 +15,13 @@ async function bootstrap() {
 	});
 
 	app.setGlobalPrefix("api");
+
+	// Better Auth's toNodeHandler reads the raw body stream, so /api/auth/* must
+	// stay unparsed. All other routes need express.json() to populate req.body.
+	app.use((req: express.Request, _res: express.Response, next: express.NextFunction) => {
+		if (req.path.startsWith("/api/auth/")) return next();
+		express.json()(req, _res, next);
+	});
 
 	app.useGlobalFilters(new HttpExceptionFilter());
 

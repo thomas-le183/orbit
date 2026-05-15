@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { InviteMemberModal } from "@/components/workspace/settings/invite-member-modal";
 import { MembersTable } from "@/components/workspace/settings/members-table";
 import { loadOrgRole, useOrgMembers, useSession } from "@/hooks/use-auth";
+import { useBillingSummary } from "@/hooks/use-billing";
 
 export const Route = createFileRoute("/_workspace/$orgSlug/settings/members")({
 	beforeLoad: async ({ context, params }) => {
@@ -19,11 +20,13 @@ export const Route = createFileRoute("/_workspace/$orgSlug/settings/members")({
 });
 
 function MembersPage() {
+	const { orgSlug } = Route.useParams();
 	const { targetOrg } = Route.useRouteContext() as {
 		targetOrg: { id: string };
 	};
 	const { data: org, isLoading } = useOrgMembers(targetOrg.id);
 	const { data: session } = useSession();
+	const { data: billingSummary } = useBillingSummary(orgSlug);
 
 	if (isLoading || !org || !session) return null;
 
@@ -39,7 +42,14 @@ function MembersPage() {
 			organizationId={targetOrg.id}
 			currentUserId={session.user.id}
 			currentRole={currentRole}
-			inviteSlot={<InviteMemberModal organizationId={targetOrg.id} />}
+			inviteSlot={
+				<InviteMemberModal
+					organizationId={targetOrg.id}
+					plan={billingSummary?.plan ?? null}
+					pricePerSeat={billingSummary?.pricePerSeat ?? null}
+					billingInterval={billingSummary?.billingInterval ?? null}
+				/>
+			}
 		/>
 	);
 }

@@ -3,8 +3,10 @@ import {
 	type PlanResponse,
 	SUBSCRIPTION_PLANS,
 	type SubscriptionPlan,
+	type SubscriptionResponse,
 } from "@orbit/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 
 export function usePlans() {
@@ -66,6 +68,19 @@ export function useOrgSubscription(orgSlug: string) {
 			};
 		},
 		enabled: !!orgId,
+	});
+}
+
+export function useBillingSummary(orgSlug: string) {
+	return useQuery({
+		queryKey: ["billing", orgSlug, "subscription-summary"],
+		queryFn: async () => {
+			const { data } = await api.get<SubscriptionResponse>(
+				`/billing/${orgSlug}/subscription`,
+			);
+			return data;
+		},
+		enabled: orgSlug.length > 0,
 	});
 }
 

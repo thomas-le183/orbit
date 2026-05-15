@@ -12,6 +12,7 @@ import { EmailModule } from "../email/email.module";
 import { EmailService } from "../email/email.service";
 import { AUTH } from "./auth.constants";
 import { AuthController } from "./auth.controller";
+import { InviteController } from "./invite.controller";
 import { createOrganizationHooks } from "./organization-billing-hooks";
 
 @Module({
@@ -168,7 +169,7 @@ import { createOrganizationHooks } from "./organization-billing-hooks";
 			inject: [DB, ConfigService, EmailService],
 		},
 	],
-	controllers: [AuthController],
+	controllers: [AuthController, InviteController],
 	exports: [AUTH],
 })
 export class AuthModule {}

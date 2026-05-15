@@ -19,10 +19,17 @@ import { useSignIn } from "@/hooks/use-auth";
 import { getErrorMessage } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 
+type InvitePreview = {
+	organizationName: string;
+	organizationLogo: string | null;
+};
+
 export function LoginForm({
 	className,
+	redirectTo,
+	invitePreview,
 	...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & { redirectTo?: string; invitePreview?: InvitePreview }) {
 	const navigate = useNavigate();
 	const signIn = useSignIn();
 	const [googlePending, setGooglePending] = useState(false);
@@ -35,7 +42,7 @@ export function LoginForm({
 					email: value.email,
 					password: value.password,
 				});
-				await navigate({ to: "/" });
+				await navigate({ to: redirectTo ?? "/" });
 			} catch (err: unknown) {
 				toast.error(getErrorMessage(err, "Failed to sign in"));
 			}
@@ -64,6 +71,14 @@ export function LoginForm({
 								</Link>
 							</FieldDescription>
 						</div>
+
+						{invitePreview && (
+							<div className="rounded-md border bg-muted/50 px-3 py-2.5 text-sm">
+								You've been invited to join{" "}
+								<span className="font-medium">{invitePreview.organizationName}</span>.
+								Sign in to accept.
+							</div>
+						)}
 
 						<form.Field
 							name="email"

@@ -8,6 +8,8 @@ export const SUBSCRIPTION_PLANS = {
 export type SubscriptionPlan =
 	(typeof SUBSCRIPTION_PLANS)[keyof typeof SUBSCRIPTION_PLANS];
 
+export type BillingInterval = "monthly" | "yearly";
+
 export interface PlanMetadata {
 	id: SubscriptionPlan;
 	label: string;
@@ -32,6 +34,8 @@ export interface SubscriptionResponse {
 	plan: SubscriptionPlan;
 	planLabel: string;
 	trialEligible: boolean;
+	pricePerSeat: number | null;
+	billingInterval: BillingInterval | null;
 	usage: {
 		members: {
 			current: number;

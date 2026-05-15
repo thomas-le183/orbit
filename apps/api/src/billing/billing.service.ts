@@ -1,6 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
+	type BillingInterval,
 	PLAN_METADATA,
 	type PlanResponse,
 	SUBSCRIPTION_PLANS,
@@ -10,24 +11,17 @@ import { and, count, eq, isNotNull } from "drizzle-orm";
 import Stripe from "stripe";
 import { DB, type Db } from "../db/db.module";
 import * as schema from "../db/schema";
+import {
+	getPlanLookupKey,
+	getStripePriceByLookupKey,
+	inferBillingIntervalFromStripeSubscription,
+	normalizeBillingInterval,
+	PLAN_LOOKUP_KEYS,
+} from "./stripe-seat-billing";
 
 @Injectable()
 export class BillingService {
 	private readonly stripe: InstanceType<typeof Stripe>;
-
-	private readonly LOOKUP_KEYS: Record<string, SubscriptionPlan> = {
-		basic_monthly: "basic",
-		basic_yearly: "basic",
-		business_monthly: "business",
-		business_yearly: "business",
-	};
-
-	private readonly PLAN_LOOKUP_KEYS: Partial<
-		Record<SubscriptionPlan, { monthly: string; yearly: string }>
-	> = {
-		basic: { monthly: "basic_monthly", yearly: "basic_yearly" },
-		business: { monthly: "business_monthly", yearly: "business_yearly" },
-	};
 
 	constructor(
 		@Inject(DB) private readonly db: Db,
@@ -42,9 +36,15 @@ export class BillingService {
 		});
 	}
 
-	async getOrgSubscriptionPlan(organizationId: string): Promise<SubscriptionPlan> {
+	async getOrgSubscriptionPlan(
+		organizationId: string,
+	): Promise<SubscriptionPlan> {
 		const sub = await this.getSubscription(organizationId);
-		if (!sub || sub.status === "unpaid" || sub.status === "incomplete_expired") {
+		if (
+			!sub ||
+			sub.status === "unpaid" ||
+			sub.status === "incomplete_expired"
+		) {
 			return "free";
 		}
 		if (
@@ -84,8 +84,42 @@ export class BillingService {
 		return sub == null;
 	}
 
+	async getSubscriptionBillingInterval(
+		subscription: typeof schema.subscription.$inferSelect | null | undefined,
+	): Promise<BillingInterval | null> {
+		if (!subscription) return null;
+
+		const storedInterval = normalizeBillingInterval(
+			subscription.billingInterval,
+		);
+		if (storedInterval) return storedInterval;
+		if (!subscription.stripeSubscriptionId) return null;
+
+		const stripeSubscription = await this.stripe.subscriptions.retrieve(
+			subscription.stripeSubscriptionId,
+		);
+		return inferBillingIntervalFromStripeSubscription(
+			stripeSubscription,
+			subscription.plan as SubscriptionPlan,
+		);
+	}
+
+	async getPricePerSeat(
+		plan: SubscriptionPlan,
+		billingInterval: BillingInterval | null,
+	): Promise<number | null> {
+		const lookupKey = getPlanLookupKey(plan, billingInterval);
+		if (!lookupKey) return null;
+
+		const price = await getStripePriceByLookupKey(this.stripe, lookupKey);
+		return price?.unit_amount != null ? price.unit_amount / 100 : null;
+	}
+
 	async getPlans(): Promise<PlanResponse[]> {
-		const allLookupKeys = Object.keys(this.LOOKUP_KEYS);
+		const allLookupKeys = Object.values(PLAN_LOOKUP_KEYS).flatMap((keys) => [
+			keys.monthly,
+			keys.yearly,
+		]);
 		const prices = await this.stripe.prices.list({
 			lookup_keys: allLookupKeys,
 			limit: allLookupKeys.length,
@@ -100,7 +134,7 @@ export class BillingService {
 			.map((key) => SUBSCRIPTION_PLANS[key])
 			.map((plan) => {
 				const meta = PLAN_METADATA[plan];
-				const keys = this.PLAN_LOOKUP_KEYS[plan];
+				const keys = PLAN_LOOKUP_KEYS[plan];
 				const isEnterprise = plan === SUBSCRIPTION_PLANS.ENTERPRISE;
 				const monthlyAmount = keys ? priceMap[keys.monthly] : null;
 				const yearlyAmount = keys ? priceMap[keys.yearly] : null;

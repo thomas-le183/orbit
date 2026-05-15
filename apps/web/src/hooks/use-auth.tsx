@@ -268,6 +268,37 @@ export function useOrgRole(organizationId: string | undefined) {
 	return member?.role ?? null;
 }
 
+export function useGetInvitation(invitationId: string) {
+	return useQuery({
+		queryKey: ["auth", "invitation", invitationId],
+		queryFn: async () => {
+			const { data, error } = await authClient.organization.getInvitation({
+				query: { id: invitationId },
+			});
+			if (error) throw error;
+			return data;
+		},
+		enabled: !!invitationId,
+		retry: false,
+	});
+}
+
+export function useAcceptInvitation() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async (invitationId: string) => {
+			const { data, error } =
+				await authClient.organization.acceptInvitation({ invitationId });
+			if (error) throw error;
+			return data;
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: authKeys.organizations });
+			qc.invalidateQueries({ queryKey: authKeys.session });
+		},
+	});
+}
+
 export function useCancelInvitation() {
 	const qc = useQueryClient();
 	return useMutation({

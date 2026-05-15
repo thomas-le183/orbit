@@ -14,6 +14,7 @@ import { Route as CreateWorkspaceRouteImport } from './routes/create-workspace'
 import { Route as WorkspaceRouteImport } from './routes/_workspace'
 import { Route as PublicRouteImport } from './routes/_public'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as InviteInvitationIdRouteImport } from './routes/invite.$invitationId'
 import { Route as WorkspaceOrgSlugRouteImport } from './routes/_workspace/$orgSlug'
 import { Route as PublicSignupRouteImport } from './routes/_public/signup'
 import { Route as PublicLoginRouteImport } from './routes/_public/login'
@@ -64,6 +65,11 @@ const PublicRoute = PublicRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteInvitationIdRoute = InviteInvitationIdRouteImport.update({
+  id: '/invite/$invitationId',
+  path: '/invite/$invitationId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WorkspaceOrgSlugRoute = WorkspaceOrgSlugRouteImport.update({
@@ -230,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof PublicLoginRoute
   '/signup': typeof PublicSignupRoute
   '/$orgSlug': typeof WorkspaceOrgSlugRouteWithChildren
+  '/invite/$invitationId': typeof InviteInvitationIdRoute
   '/$orgSlug/activity': typeof WorkspaceOrgSlugActivityRoute
   '/$orgSlug/ai': typeof WorkspaceOrgSlugAiRoute
   '/$orgSlug/chat': typeof WorkspaceOrgSlugChatRoute
@@ -262,6 +269,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
   '/signup': typeof PublicSignupRoute
+  '/invite/$invitationId': typeof InviteInvitationIdRoute
   '/$orgSlug/activity': typeof WorkspaceOrgSlugActivityRoute
   '/$orgSlug/ai': typeof WorkspaceOrgSlugAiRoute
   '/$orgSlug/chat': typeof WorkspaceOrgSlugChatRoute
@@ -296,6 +304,7 @@ export interface FileRoutesById {
   '/_public/login': typeof PublicLoginRoute
   '/_public/signup': typeof PublicSignupRoute
   '/_workspace/$orgSlug': typeof WorkspaceOrgSlugRouteWithChildren
+  '/invite/$invitationId': typeof InviteInvitationIdRoute
   '/_workspace/$orgSlug/activity': typeof WorkspaceOrgSlugActivityRoute
   '/_workspace/$orgSlug/ai': typeof WorkspaceOrgSlugAiRoute
   '/_workspace/$orgSlug/chat': typeof WorkspaceOrgSlugChatRoute
@@ -331,6 +340,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/$orgSlug'
+    | '/invite/$invitationId'
     | '/$orgSlug/activity'
     | '/$orgSlug/ai'
     | '/$orgSlug/chat'
@@ -363,6 +373,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/signup'
+    | '/invite/$invitationId'
     | '/$orgSlug/activity'
     | '/$orgSlug/ai'
     | '/$orgSlug/chat'
@@ -396,6 +407,7 @@ export interface FileRouteTypes {
     | '/_public/login'
     | '/_public/signup'
     | '/_workspace/$orgSlug'
+    | '/invite/$invitationId'
     | '/_workspace/$orgSlug/activity'
     | '/_workspace/$orgSlug/ai'
     | '/_workspace/$orgSlug/chat'
@@ -428,6 +440,7 @@ export interface RootRouteChildren {
   WorkspaceRoute: typeof WorkspaceRouteWithChildren
   CreateWorkspaceRoute: typeof CreateWorkspaceRoute
   OnboardingRoute: typeof OnboardingRoute
+  InviteInvitationIdRoute: typeof InviteInvitationIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -465,6 +478,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite/$invitationId': {
+      id: '/invite/$invitationId'
+      path: '/invite/$invitationId'
+      fullPath: '/invite/$invitationId'
+      preLoaderRoute: typeof InviteInvitationIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_workspace/$orgSlug': {
@@ -791,6 +811,7 @@ const rootRouteChildren: RootRouteChildren = {
   WorkspaceRoute: WorkspaceRouteWithChildren,
   CreateWorkspaceRoute: CreateWorkspaceRoute,
   OnboardingRoute: OnboardingRoute,
+  InviteInvitationIdRoute: InviteInvitationIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -24,6 +24,7 @@ export {
 } from "./types/api.js";
 
 export {
+	type BillingInterval,
 	type CheckoutResponse,
 	PLAN_METADATA,
 	type PlanFlags,
