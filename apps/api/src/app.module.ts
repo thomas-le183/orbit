@@ -6,6 +6,7 @@ import { ChatModule } from "./chat/chat.module";
 import { DbModule } from "./db/db.module";
 import { EmailModule } from "./email/email.module";
 import { PreferencesModule } from "./preferences/preferences.module";
+import { QueueModule } from "./queue/queue.module";
 import { StorageModule } from "./storage/storage.module";
 import { UploadsModule } from "./uploads/uploads.module";
 
@@ -17,6 +18,7 @@ import { UploadsModule } from "./uploads/uploads.module";
 			envFilePath: [".env", "../../.env"],
 		}),
 		DbModule,
+		QueueModule,
 		StorageModule,
 		EmailModule,
 		AuthModule,

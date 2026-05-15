@@ -44,7 +44,8 @@ export class ChannelsService {
 					eq(schema.channel.isPrivate, true),
 				),
 			)
-			.orderBy(asc(schema.channel.name));
+			.orderBy(asc(schema.channel.name))
+			.$withCache({ tag: `private-channels:${userId}:${orgId}`, config: { ex: 300 } });
 
 		return [...publicChannels, ...privateRows.map((r) => r.channel)];
 	}

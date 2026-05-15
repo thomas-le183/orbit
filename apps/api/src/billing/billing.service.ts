@@ -61,7 +61,8 @@ export class BillingService {
 		const result = await this.db
 			.select({ value: count() })
 			.from(schema.member)
-			.where(eq(schema.member.organizationId, organizationId));
+			.where(eq(schema.member.organizationId, organizationId))
+			.$withCache({ tag: `member-count:${organizationId}`, config: { ex: 300 } });
 		return result[0]?.value ?? 0;
 	}
 

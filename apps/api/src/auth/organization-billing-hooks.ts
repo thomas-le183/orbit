@@ -1,5 +1,6 @@
 import { Logger } from "@nestjs/common";
 import type { SubscriptionPlan } from "@orbit/shared";
+import type { Queue } from "bullmq";
 import { count, eq } from "drizzle-orm";
 import {
 	getPlanLookupKey,
@@ -13,7 +14,6 @@ import {
 } from "../billing/stripe-seat-billing";
 import type { Db } from "../db/db.module";
 import * as schema from "../db/schema";
-import type { EmailService } from "../email/email.service";
 
 const seatBillingLogger = new Logger("PerSeatBilling");
 
@@ -96,21 +96,25 @@ export async function syncStripeSeatQuantity({
 
 export function createOrganizationHooks({
 	db,
-	email,
+	emailQueue,
 	appUrl,
 	stripeClient,
 }: {
 	db: Db;
-	email: EmailService;
+	emailQueue: Queue;
 	appUrl: string;
 	stripeClient: StripeClientForSeatBilling;
 }) {
 	return {
 		afterCreateOrganization: async ({ organization: org, user: owner }) => {
-			void email.sendWorkspaceCreated(owner.email, {
-				ownerName: owner.name,
-				organizationName: org.name,
-				workspaceUrl: `${appUrl}/${org.slug}`,
+			void emailQueue.add("send-workspace-created", {
+				type: "send-workspace-created",
+				to: owner.email,
+				data: {
+					ownerName: owner.name,
+					organizationName: org.name,
+					workspaceUrl: `${appUrl}/${org.slug}`,
+				},
 			});
 		},
 
@@ -119,15 +123,22 @@ export function createOrganizationHooks({
 			user: newMember,
 			organization: org,
 		}) => {
+			// better-auth wrote the new member row directly — invalidate our cache manually
+			void db.$cache?.invalidate({ tags: [`member-count:${org.id}`] });
+
 			const inviter = await db.query.user.findFirst({
 				where: eq(schema.user.id, invitation.inviterId),
 			});
 			if (inviter) {
-				void email.sendMemberJoined(inviter.email, {
-					newMemberName: newMember.name,
-					newMemberEmail: newMember.email,
-					organizationName: org.name,
-					workspaceUrl: `${appUrl}/${org.slug}`,
+				void emailQueue.add("send-member-joined", {
+					type: "send-member-joined",
+					to: inviter.email,
+					data: {
+						newMemberName: newMember.name,
+						newMemberEmail: newMember.email,
+						organizationName: org.name,
+						workspaceUrl: `${appUrl}/${org.slug}`,
+					},
 				});
 			}
 
@@ -150,6 +161,8 @@ export function createOrganizationHooks({
 		afterAddMember: async () => {},
 		afterUpdateMemberRole: async () => {},
 		afterRemoveMember: async ({ organization: org }) => {
+			void db.$cache?.invalidate({ tags: [`member-count:${org.id}`] });
+
 			await syncStripeSeatQuantity({
 				db,
 				stripeClient,

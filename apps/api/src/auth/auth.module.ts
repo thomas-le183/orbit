@@ -1,15 +1,17 @@
 import { stripe } from "@better-auth/stripe";
+import { getQueueToken } from "@nestjs/bullmq";
 import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth } from "better-auth/minimal";
 import { organization } from "better-auth/plugins";
+import type { Queue } from "bullmq";
 import { and, eq } from "drizzle-orm";
 import Stripe from "stripe";
 import { DB, type Db } from "../db/db.module";
 import * as schema from "../db/schema";
 import { EmailModule } from "../email/email.module";
-import { EmailService } from "../email/email.service";
+import { QUEUES } from "../queue/queue.constants";
 import { AUTH } from "./auth.constants";
 import { AuthController } from "./auth.controller";
 import { InviteController } from "./invite.controller";
@@ -20,7 +22,7 @@ import { createOrganizationHooks } from "./organization-billing-hooks";
 	providers: [
 		{
 			provide: AUTH,
-			useFactory: (db: Db, config: ConfigService, email: EmailService) => {
+			useFactory: (db: Db, config: ConfigService, emailQueue: Queue) => {
 				const appUrl = config.get<string>("WEB_BASE_URL")!;
 
 				const stripeKey = config.getOrThrow<string>("STRIPE_SECRET_KEY");
@@ -59,10 +61,19 @@ import { createOrganizationHooks } from "./organization-billing-hooks";
 					emailVerification: {
 						autoSignInAfterVerification: true,
 						sendVerificationEmail: async ({ user, url }) => {
-							void email.sendVerifyEmail(user.email, user.name, url);
+							void emailQueue.add("send-verify-email", {
+								type: "send-verify-email",
+								to: user.email,
+								name: user.name,
+								url,
+							});
 						},
 						afterEmailVerification: async (user) => {
-							void email.sendWelcome(user.email, user.name);
+							void emailQueue.add("send-welcome", {
+								type: "send-welcome",
+								to: user.email,
+								name: user.name,
+							});
 						},
 					},
 
@@ -71,7 +82,12 @@ import { createOrganizationHooks } from "./organization-billing-hooks";
 						autoSignIn: true,
 						requireEmailVerification: true,
 						sendResetPassword: async ({ user, url }) => {
-							void email.sendResetPassword(user.email, user.name, url);
+							void emailQueue.add("send-reset-password", {
+								type: "send-reset-password",
+								to: user.email,
+								name: user.name,
+								url,
+							});
 						},
 					},
 
@@ -79,18 +95,24 @@ import { createOrganizationHooks } from "./organization-billing-hooks";
 						deleteUser: {
 							enabled: true,
 							sendDeleteAccountVerification: async ({ user, url }) => {
-								void email.sendDeleteAccount(user.email, user.name, url);
+								void emailQueue.add("send-delete-account", {
+									type: "send-delete-account",
+									to: user.email,
+									name: user.name,
+									url,
+								});
 							},
 						},
 						changeEmail: {
 							enabled: true,
 							sendChangeEmailVerification: async ({ user, newEmail, url }) => {
-								void email.sendChangeEmail(
-									user.email,
-									user.name,
+								void emailQueue.add("send-change-email", {
+									type: "send-change-email",
+									to: user.email,
+									name: user.name,
 									newEmail,
 									url,
-								);
+								});
 							},
 						},
 					},
@@ -149,16 +171,20 @@ import { createOrganizationHooks } from "./organization-billing-hooks";
 							},
 
 							sendInvitationEmail: async (data) => {
-								void email.sendInvitation(data.email, {
-									inviterName: data.inviter.user.name,
-									organizationName: data.organization.name,
-									inviteUrl: `${appUrl}/invite/${data.id}`,
+								void emailQueue.add("send-invitation", {
+									type: "send-invitation",
+									to: data.email,
+									data: {
+										inviterName: data.inviter.user.name,
+										organizationName: data.organization.name,
+										inviteUrl: `${appUrl}/invite/${data.id}`,
+									},
 								});
 							},
 
 							organizationHooks: createOrganizationHooks({
 								db,
-								email,
+								emailQueue,
 								appUrl,
 								stripeClient,
 							}),
@@ -166,7 +192,7 @@ import { createOrganizationHooks } from "./organization-billing-hooks";
 					],
 				});
 			},
-			inject: [DB, ConfigService, EmailService],
+			inject: [DB, ConfigService, getQueueToken(QUEUES.EMAIL)],
 		},
 	],
 	controllers: [AuthController, InviteController],
