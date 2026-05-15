@@ -39,7 +39,7 @@ async function bootstrap() {
 	app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
 
 	if (process.env.NODE_ENV === "development") {
-		// Logs response latency for every request to help spot slow endpoints during development
+		// Adds artificial delay to every request to simulate real-world network latency in development
 		app.useGlobalInterceptors(new LatencyInterceptor());
 
 		// Bull Board: mounts a queue dashboard at /admin/queues so you can inspect
