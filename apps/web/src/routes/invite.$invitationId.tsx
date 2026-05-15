@@ -97,6 +97,27 @@ function InvitePage() {
 		);
 	}
 
+	if (session?.user && !session.user.emailVerified) {
+		return (
+			<div className="flex min-h-svh items-center justify-center p-4">
+				<Card className="w-full max-w-sm text-center">
+					<CardHeader>
+						<CardTitle>Verify your email first</CardTitle>
+						<CardDescription>
+							You need to verify your email address before you can accept an
+							invitation. Check your inbox for a verification link.
+						</CardDescription>
+					</CardHeader>
+					<CardFooter className="justify-center">
+						<Button variant="outline" onClick={() => navigate({ to: "/" })}>
+							Go home
+						</Button>
+					</CardFooter>
+				</Card>
+			</div>
+		);
+	}
+
 	if (error || !invitation) {
 		return (
 			<div className="flex min-h-svh items-center justify-center p-4">

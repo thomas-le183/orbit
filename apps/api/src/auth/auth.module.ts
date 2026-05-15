@@ -165,6 +165,7 @@ import { createOrganizationHooks } from "./organization-billing-hooks";
 						}),
 						organization({
 							allowUserToCreateOrganization: true,
+							requireEmailVerificationOnInvitation: true,
 							teams: {
 								enabled: true,
 								defaultTeam: { enabled: false },
