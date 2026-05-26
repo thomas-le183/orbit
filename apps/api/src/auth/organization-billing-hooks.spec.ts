@@ -80,7 +80,6 @@ describe("autoStartTrial", () => {
     const call = stripe.subscriptions.create.mock.calls[0][0];
     expect(call.items).toEqual([{ price: "price_biz_monthly", quantity: 1 }]);
     expect(call.trial_end).toBeGreaterThanOrEqual(before + 14 * 24 * 60 * 60);
-    expect(call.payment_settings.payment_method_collection).toBe("if_required");
     expect(call.metadata.referenceId).toBe("org_1");
   });
 

@@ -2,7 +2,7 @@ import { Logger } from "@nestjs/common";
 import type { SubscriptionPlan } from "@orbit/shared";
 import type { Queue } from "bullmq";
 import { count, eq } from "drizzle-orm";
-import type Stripe from "stripe";
+import Stripe from "stripe";
 import {
 	getPlanLookupKey,
 	getStripePriceByLookupKey,
@@ -99,7 +99,7 @@ export async function syncStripeSeatQuantity({
 export async function autoStartTrial(
 	orgId: string,
 	db: Db,
-	stripeClient: Stripe,
+	stripeClient: InstanceType<typeof Stripe>,
 ): Promise<void> {
 	try {
 		// Idempotency: skip if trial already exists
@@ -145,7 +145,6 @@ export async function autoStartTrial(
 			customer: customerId,
 			items: [{ price: price.id, quantity: 1 }],
 			trial_end: trialEndUnix,
-			payment_settings: { payment_method_collection: "if_required" },
 			metadata: { referenceId: orgId, referenceType: "organization" },
 		});
 
@@ -185,7 +184,7 @@ export function createOrganizationHooks({
 	emailQueue: Queue;
 	notificationQueue: Queue;
 	appUrl: string;
-	stripeClient: Stripe;
+	stripeClient: InstanceType<typeof Stripe>;
 }) {
 	return {
 		afterCreateOrganization: async ({ organization: org, user: owner }) => {
