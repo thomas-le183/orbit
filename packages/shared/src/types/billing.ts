@@ -47,6 +47,8 @@ export interface SubscriptionResponse {
 		currentPeriodStart: Date;
 		currentPeriodEnd: Date;
 		cancelAtPeriodEnd: boolean;
+		plan: SubscriptionPlan;
+		wasTrial: boolean;
 	} | null;
 }
 

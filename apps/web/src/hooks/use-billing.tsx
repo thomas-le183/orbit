@@ -123,36 +123,6 @@ export function useCheckout(orgSlug: string) {
 	});
 }
 
-export function useStartTrial(orgSlug: string) {
-	const orgId = useOrgId();
-
-	return useMutation({
-		mutationFn: async ({
-			plan,
-			interval,
-		}: {
-			plan: SubscriptionPlan;
-			interval: "monthly" | "yearly";
-		}) => {
-			if (!orgId) throw new Error("No active organization");
-			const { data, error } = await authClient.subscription.upgrade({
-				plan,
-				referenceId: orgId,
-				annual: interval === "yearly",
-				customerType: "organization",
-				metadata: { noCard: "true" },
-				successUrl: `${import.meta.env.VITE_WEB_BASE_URL}/${orgSlug}/settings/billing?checkout=success`,
-				cancelUrl: `${import.meta.env.VITE_WEB_BASE_URL}/${orgSlug}/settings/billing?checkout=canceled`,
-			});
-			if (error) throw new Error(error.message);
-			return data;
-		},
-		onSuccess: (data) => {
-			if (data?.url) window.location.href = data.url;
-		},
-	});
-}
-
 export function useChangePlan(orgSlug: string) {
 	const orgId = useOrgId();
 	const queryClient = useQueryClient();
@@ -203,24 +173,6 @@ export function useCancelSubscription(orgSlug: string) {
 			void queryClient.invalidateQueries({
 				queryKey: ["billing", orgSlug, "subscription"],
 			});
-		},
-	});
-}
-
-export function useActivateTrial(orgSlug: string) {
-	return useMutation({
-		mutationFn: async () => {
-			const { data } = await api.post<{ url: string }>(
-				`/billing/${orgSlug}/activate-trial`,
-				{
-					successUrl: `${import.meta.env.VITE_WEB_BASE_URL}/${orgSlug}/settings/billing?checkout=success`,
-					cancelUrl: `${import.meta.env.VITE_WEB_BASE_URL}/${orgSlug}/settings/billing?checkout=canceled`,
-				},
-			);
-			return data;
-		},
-		onSuccess: (data) => {
-			if (data?.url) window.location.href = data.url;
 		},
 	});
 }

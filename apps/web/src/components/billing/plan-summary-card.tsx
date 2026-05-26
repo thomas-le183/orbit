@@ -6,21 +6,11 @@ import {
 } from "@orbit/ui/components/alert";
 import { Badge } from "@orbit/ui/components/badge";
 import { Button } from "@orbit/ui/components/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@orbit/ui/components/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { AlertTriangle, Zap } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
 import {
-  useActivateTrial,
   useBillingSummary,
   useChangePlan,
   useCheckout,
@@ -104,54 +94,14 @@ export function deriveShowActions({
   };
 }
 
-function ConfirmSwitchYearlyModal({
-  open,
-  onClose,
-  onConfirm,
-  isPending,
-  monthlyPriceAnnual,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  isPending: boolean;
-  monthlyPriceAnnual: number;
-}) {
-  return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Switch to yearly billing?</DialogTitle>
-          <DialogDescription>
-            Your trial period will end and you will be charged{" "}
-            {formatCurrency(monthlyPriceAnnual)} per user per month, billed
-            annually. A pro-rata adjustment will be applied.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="ghost" size="sm" onClick={onClose} disabled={isPending}>
-            Cancel
-          </Button>
-          <Button size="sm" onClick={onConfirm} disabled={isPending}>
-            {isPending ? "Switching…" : "Confirm switch"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) {
   const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
   const queryClient = useQueryClient();
-  const [switchYearlyModalOpen, setSwitchYearlyModalOpen] = useState(false);
-  const [activateTrialModalOpen, setActivateTrialModalOpen] = useState(false);
 
   const { data, isLoading } = useOrgSubscription(orgSlug);
   const { data: summary, isLoading: isSummaryLoading } = useBillingSummary(orgSlug);
   const checkout = useCheckout(orgSlug);
   const changePlan = useChangePlan(orgSlug);
-  const activateTrial = useActivateTrial(orgSlug);
 
   if (isLoading || isSummaryLoading || !data) {
     return <div className="h-48 animate-pulse rounded-xl bg-muted" />;
@@ -196,13 +146,6 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
     queryClient.invalidateQueries({ queryKey: ["billing", orgSlug, "subscription"] });
   }
 
-  function confirmActivateTrial() {
-    activateTrial.mutate(undefined, {
-      onError: (e: { message?: string }) =>
-        toast.error(e.message ?? "Could not activate subscription. Please try again."),
-    });
-  }
-
   function confirmSwitchYearly() {
     if (currentPlan !== "basic" && currentPlan !== "business") return;
     changePlan.mutate(
@@ -210,7 +153,6 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
       {
         onSuccess: (data) => {
           if (data?.url) return;
-          setSwitchYearlyModalOpen(false);
           toast.success("Switched to yearly billing.");
           invalidateSub();
         },
@@ -221,10 +163,6 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
   }
 
   function handleSwitchYearly() {
-    if (sub?.status === "trialing") {
-      setSwitchYearlyModalOpen(true);
-      return;
-    }
     confirmSwitchYearly();
   }
 
@@ -279,91 +217,27 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
     );
   }
 
-  // Trial state renders a distinct banner instead of the summary card
+  // Trial state renders a read-only countdown banner instead of the summary card
   if (sub?.status === "trialing" || showConvertCanceled) {
     return (
-      <>
-        <div className="overflow-hidden rounded-xl border border-violet-300 bg-linear-to-br from-violet-50 to-purple-50 dark:border-violet-700 dark:from-violet-950/40 dark:to-purple-950/40">
-          <div className="flex items-center justify-between p-5">
-            <div>
-              <div className="flex items-center gap-2 font-semibold">
-                <Zap className="size-4 text-violet-600 dark:text-violet-400" />
-                Trial
-                {daysRemaining !== null && (
-                  <span className="text-sm font-normal text-muted-foreground">
-                    · {daysRemaining} day{daysRemaining !== 1 ? "s" : ""} left
-                  </span>
-                )}
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {showConvertCanceled
-                  ? "Business features active · checkout incomplete"
-                  : "Business features active · no card on file"}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              {showSwitchYearly && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSwitchYearly}
-                  disabled={changePlan.isPending || isPastDue}
-                >
-                  Switch to yearly
-                </Button>
-              )}
-              {showConvertCanceled && (
-                <Button
-                  size="sm"
-                  onClick={handleConvertTrial}
-                  disabled={activateTrial.isPending || checkout.isPending}
-                >
-                  Subscribe now
-                </Button>
+      <div className="overflow-hidden rounded-xl border border-violet-300 bg-linear-to-br from-violet-50 to-purple-50 dark:border-violet-700 dark:from-violet-950/40 dark:to-purple-950/40">
+        <div className="flex items-center p-5">
+          <div>
+            <div className="flex items-center gap-2 font-semibold">
+              <Zap className="size-4 text-violet-600 dark:text-violet-400" />
+              Trial
+              {daysRemaining !== null && (
+                <span className="text-sm font-normal text-muted-foreground">
+                  · {daysRemaining} day{daysRemaining !== 1 ? "s" : ""} left
+                </span>
               )}
             </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Business features active
+            </p>
           </div>
         </div>
-        <ConfirmSwitchYearlyModal
-          open={switchYearlyModalOpen}
-          onClose={() => setSwitchYearlyModalOpen(false)}
-          onConfirm={confirmSwitchYearly}
-          isPending={changePlan.isPending}
-          monthlyPriceAnnual={((summary?.pricePerSeat ?? meta.monthlyPriceUsd) * 10) / 12}
-        />
-        <Dialog
-          open={activateTrialModalOpen}
-          onOpenChange={(v) => !v && setActivateTrialModalOpen(false)}
-        >
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>End trial and subscribe?</DialogTitle>
-              <DialogDescription>
-                Your trial will be canceled immediately. You'll be taken to
-                checkout to add a payment method and your{" "}
-                <strong>{meta.label}</strong> subscription will start today.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setActivateTrialModalOpen(false)}
-                disabled={activateTrial.isPending}
-              >
-                Keep trial
-              </Button>
-              <Button
-                size="sm"
-                onClick={confirmActivateTrial}
-                disabled={activateTrial.isPending}
-              >
-                {activateTrial.isPending ? "Redirecting…" : "Subscribe now"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </>
+      </div>
     );
   }
 
