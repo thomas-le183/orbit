@@ -68,6 +68,7 @@ describe("autoStartTrial", () => {
     await autoStartTrial("org_1", db as never, stripe as never);
 
     expect(stripe.customers.create).not.toHaveBeenCalled();
+    expect(stripe.subscriptions.create.mock.calls[0][0].customer).toBe("cus_existing");
   });
 
   it("creates a trialing Stripe subscription with 14-day trial_end", async () => {
@@ -88,13 +89,13 @@ describe("autoStartTrial", () => {
 
     await autoStartTrial("org_1", db as never, stripe as never);
 
-    const inserted = db.insert.mock.calls[0];
-    expect(inserted).toBeDefined();
-    const values = db.insert().values.mock.calls[0][0];
+    expect(db.insert).toHaveBeenCalled();
+    const values = db.insert.mock.results[0].value.values.mock.calls[0][0];
     expect(values.plan).toBe("business");
     expect(values.status).toBe("trialing");
     expect(values.referenceId).toBe("org_1");
     expect(values.stripeSubscriptionId).toBe("sub_abc");
     expect(values.seats).toBe(1);
+    expect(values.billingInterval).toBe("monthly");
   });
 });

@@ -129,7 +129,7 @@ export async function autoStartTrial(
 
 		// Resolve Business monthly price
 		const price = await getStripePriceByLookupKey(
-			stripeClient as unknown as StripeClientForSeatBilling,
+			stripeClient as StripeClientForSeatBilling,
 			PLAN_LOOKUP_KEYS.business!.monthly,
 		);
 		if (!price) {
@@ -163,6 +163,7 @@ export async function autoStartTrial(
 			trialStart: now,
 			trialEnd: periodEnd,
 			seats: 1,
+			billingInterval: "monthly",
 			cancelAtPeriodEnd: false,
 		});
 	} catch (error) {
