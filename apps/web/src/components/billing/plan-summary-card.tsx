@@ -8,7 +8,6 @@ import { Badge } from "@orbit/ui/components/badge";
 import { Button } from "@orbit/ui/components/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -17,7 +16,7 @@ import {
 } from "@orbit/ui/components/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
-import { AlertTriangle, Zap } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -26,7 +25,6 @@ import {
   useChangePlan,
   useCheckout,
   useOrgSubscription,
-  useStartTrial,
 } from "@/hooks/use-billing";
 
 const STATUS_BADGE: Record<
@@ -62,20 +60,17 @@ export function deriveShowActions({
   subStatus,
   currentPlan,
   billingInterval,
-  trialEligible,
   rawSub,
 }: {
   subStatus: string | null;
   currentPlan: string;
   billingInterval: "monthly" | "yearly" | null;
-  trialEligible: boolean;
   rawSub: { plan: SubscriptionPlan; wasTrial: boolean } | null;
 }) {
   const nextTier = NEXT_TIER[currentPlan as SubscriptionPlan] ?? null;
   const isActive =
     subStatus != null &&
     ["active", "trialing", "past_due"].includes(subStatus);
-  const showSubscribeNow = subStatus === "trialing";
 
   // Trial canceled mid-period (abandoned checkout) — still has future access
   const showConvertCanceled =
@@ -94,20 +89,13 @@ export function deriveShowActions({
     !showResubscribe &&
     !showConvertCanceled &&
     nextTier != null &&
-    !showSubscribeNow &&
+    subStatus !== "trialing" &&
     (isActive || subStatus == null);
   const showSwitchYearly = isActive && billingInterval === "monthly";
-  const showTrialCta =
-    subStatus == null &&
-    !showConvertTrial &&
-    !showResubscribe &&
-    trialEligible;
 
   return {
     showUpgrade,
     showSwitchYearly,
-    showTrialCta,
-    showSubscribeNow,
     showConvertTrial,
     showConvertCanceled,
     showResubscribe,
@@ -153,61 +141,9 @@ function ConfirmSwitchYearlyModal({
   );
 }
 
-function TrialModal({
-  open,
-  onClose,
-  onStartTrial,
-  isStartingTrial,
-  isCheckingOut,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onStartTrial: () => void;
-  isStartingTrial: boolean;
-  isCheckingOut: boolean;
-}) {
-  return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Zap className="size-5 text-primary" />
-            Try Business for free
-          </DialogTitle>
-          <DialogDescription>
-            Start a 7-day free trial with no credit card required.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-3 py-2">
-          <button
-            type="button"
-            onClick={onStartTrial}
-            disabled={isStartingTrial || isCheckingOut}
-            className="group flex flex-col gap-1 rounded-lg border border-border-strong bg-card p-4 text-left transition-colors hover:border-primary hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50"
-          >
-            <span className="font-medium">7-day free trial</span>
-            <span className="text-sm text-muted-foreground">
-              No credit card required. Full Business access for 7 days, then
-              automatically reverts to Hobby.
-            </span>
-          </button>
-        </div>
-        <DialogFooter>
-          <DialogClose>
-            <Button variant="ghost" size="sm">
-              Maybe later
-            </Button>
-          </DialogClose>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) {
   const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
   const queryClient = useQueryClient();
-  const [trialModalOpen, setTrialModalOpen] = useState(false);
   const [switchYearlyModalOpen, setSwitchYearlyModalOpen] = useState(false);
   const [activateTrialModalOpen, setActivateTrialModalOpen] = useState(false);
 
@@ -215,7 +151,6 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
   const { data: summary, isLoading: isSummaryLoading } = useBillingSummary(orgSlug);
   const checkout = useCheckout(orgSlug);
   const changePlan = useChangePlan(orgSlug);
-  const startTrial = useStartTrial(orgSlug);
   const activateTrial = useActivateTrial(orgSlug);
 
   if (isLoading || isSummaryLoading || !data) {
@@ -245,8 +180,6 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
   const {
     showUpgrade,
     showSwitchYearly,
-    showTrialCta,
-    showSubscribeNow,
     showConvertTrial,
     showConvertCanceled,
     showResubscribe,
@@ -256,16 +189,11 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
     subStatus: sub?.status ?? null,
     currentPlan,
     billingInterval,
-    trialEligible: summary?.trialEligible ?? false,
     rawSub: summary?.subscription ?? null,
   });
 
   function invalidateSub() {
     queryClient.invalidateQueries({ queryKey: ["billing", orgSlug, "subscription"] });
-  }
-
-  function handleSubscribeNow() {
-    setActivateTrialModalOpen(true);
   }
 
   function confirmActivateTrial() {
@@ -329,16 +257,6 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
     }
   }
 
-  function handleStartTrial() {
-    startTrial.mutate(
-      { plan: "business", interval: "monthly" },
-      {
-        onError: (e) =>
-          toast.error(e.message ?? "Could not start trial. Please try again."),
-      },
-    );
-  }
-
   function handleConvertTrial() {
     if (!rawSub) return;
     checkout.mutate(
@@ -394,10 +312,10 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
                   Switch to yearly
                 </Button>
               )}
-              {(showSubscribeNow || showConvertCanceled) && (
+              {showConvertCanceled && (
                 <Button
                   size="sm"
-                  onClick={showConvertCanceled ? handleConvertTrial : handleSubscribeNow}
+                  onClick={handleConvertTrial}
                   disabled={activateTrial.isPending || checkout.isPending}
                 >
                   Subscribe now
@@ -576,7 +494,7 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
         </div>
 
         {/* Actions */}
-        {(showUpgrade || showSwitchYearly || showTrialCta || showConvertTrial || showResubscribe || showConvertCanceled) && (
+        {(showUpgrade || showSwitchYearly || showConvertTrial || showResubscribe || showConvertCanceled) && (
           <div className="flex flex-wrap gap-2 border-t px-5 py-3">
             {showConvertCanceled && rawSub && (
               <Button
@@ -624,28 +542,10 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
                 Switch to yearly · save 17%
               </Button>
             )}
-            {showTrialCta && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setTrialModalOpen(true)}
-                disabled={isPastDue}
-              >
-                <Zap className="size-3.5" />
-                Try Business free
-              </Button>
-            )}
           </div>
         )}
       </div>
 
-      <TrialModal
-        open={trialModalOpen}
-        onClose={() => setTrialModalOpen(false)}
-        onStartTrial={handleStartTrial}
-        isStartingTrial={startTrial.isPending}
-        isCheckingOut={checkout.isPending}
-      />
     </>
   );
 }
