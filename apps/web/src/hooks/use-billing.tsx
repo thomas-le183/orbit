@@ -58,8 +58,8 @@ export function useOrgSubscription(orgSlug: string) {
 			if (orgResult.error) throw new Error(orgResult.error.message);
 
 			const activeSubscription =
-				subsResult.data?.find(
-					(sub) => sub.status === "active" || sub.status === "trialing",
+				subsResult.data?.find((sub) =>
+					["active", "trialing", "past_due"].includes(sub.status),
 				) ?? null;
 
 			return {
