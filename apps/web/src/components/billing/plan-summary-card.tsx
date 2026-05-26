@@ -45,7 +45,8 @@ const NEXT_TIER: Partial<Record<SubscriptionPlan, "basic" | "business">> = {
 };
 
 export function formatCurrency(amount: number): string {
-  return amount % 1 === 0 ? `$${amount}` : `$${amount.toFixed(2)}`;
+  const rounded = Math.round(amount * 100) / 100;
+  return rounded % 1 === 0 ? `$${rounded}` : `$${rounded.toFixed(2)}`;
 }
 
 export function formatDateShort(date: Date | string): string {
@@ -76,8 +77,7 @@ export function deriveShowActions({
     nextTier != null &&
     !showSubscribeNow &&
     (isActive || subStatus == null);
-  const showSwitchYearly =
-    isActive && billingInterval === "monthly" && !showSubscribeNow;
+  const showSwitchYearly = isActive && billingInterval === "monthly";
   const showTrialCta =
     subStatus == null && !showSubscribeNow && trialEligible;
   return { showUpgrade, showSwitchYearly, showTrialCta, showSubscribeNow, nextTier };
@@ -216,7 +216,7 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
     });
 
   function invalidateSub() {
-    queryClient.resetQueries({ queryKey: ["billing", orgSlug, "subscription"] });
+    queryClient.invalidateQueries({ queryKey: ["billing", orgSlug, "subscription"] });
   }
 
   function handleSubscribeNow() {
@@ -517,13 +517,6 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
         onStartTrial={handleStartTrial}
         isStartingTrial={startTrial.isPending}
         isCheckingOut={checkout.isPending}
-      />
-      <ConfirmSwitchYearlyModal
-        open={switchYearlyModalOpen}
-        onClose={() => setSwitchYearlyModalOpen(false)}
-        onConfirm={confirmSwitchYearly}
-        isPending={changePlan.isPending}
-        monthlyPriceAnnual={((summary?.pricePerSeat ?? meta.monthlyPriceUsd) * 10) / 12}
       />
     </>
   );

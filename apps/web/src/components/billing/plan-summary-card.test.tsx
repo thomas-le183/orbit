@@ -64,4 +64,10 @@ describe("deriveShowActions", () => {
     expect(r.showSubscribeNow).toBe(true);
     expect(r.showUpgrade).toBe(false);
   });
+
+  it("shows switch-to-yearly when trialing and monthly", () => {
+    const r = deriveShowActions({ subStatus: "trialing", currentPlan: "business", billingInterval: "monthly", trialEligible: false });
+    expect(r.showSwitchYearly).toBe(true);
+    expect(r.showSubscribeNow).toBe(true);
+  });
 });
