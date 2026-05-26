@@ -65,7 +65,6 @@ export const auth = betterAuth({
 						name: "business",
 						lookupKey: "business_monthly",
 						annualDiscountLookupKey: "business_yearly",
-						freeTrial: { days: 7 },
 					},
 				],
 				getCheckoutSessionParams: async () => {

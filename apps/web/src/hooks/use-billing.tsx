@@ -57,10 +57,19 @@ export function useOrgSubscription(orgSlug: string) {
 			if (subsResult.error) throw new Error(subsResult.error.message);
 			if (orgResult.error) throw new Error(orgResult.error.message);
 
+			const now = Date.now();
 			const activeSubscription =
-				subsResult.data?.find((sub) =>
-					["active", "trialing", "past_due"].includes(sub.status),
-				) ?? null;
+				subsResult.data?.find((sub) => {
+					if (["active", "trialing", "past_due"].includes(sub.status)) return true;
+					// Canceled but still within access window (e.g. trial canceled before checkout)
+					if (
+						sub.status === "canceled" &&
+						sub.periodEnd &&
+						new Date(sub.periodEnd).getTime() > now
+					)
+						return true;
+					return false;
+				}) ?? null;
 
 			return {
 				subscription: activeSubscription,
@@ -101,8 +110,8 @@ export function useCheckout(orgSlug: string) {
 				referenceId: orgId,
 				annual: interval === "yearly",
 				customerType: "organization",
-				successUrl: `${window.location.origin}/${orgSlug}/settings/billing?checkout=success`,
-				cancelUrl: `${window.location.origin}/${orgSlug}/settings/billing?checkout=canceled`,
+				successUrl: `${import.meta.env.VITE_WEB_BASE_URL}/${orgSlug}/settings/billing?checkout=success`,
+				cancelUrl: `${import.meta.env.VITE_WEB_BASE_URL}/${orgSlug}/settings/billing?checkout=canceled`,
 			});
 
 			if (error) throw new Error(error.message);
@@ -132,8 +141,8 @@ export function useStartTrial(orgSlug: string) {
 				annual: interval === "yearly",
 				customerType: "organization",
 				metadata: { noCard: "true" },
-				successUrl: `${window.location.origin}/${orgSlug}/settings/billing?checkout=success`,
-				cancelUrl: `${window.location.origin}/${orgSlug}/settings/billing?checkout=canceled`,
+				successUrl: `${import.meta.env.VITE_WEB_BASE_URL}/${orgSlug}/settings/billing?checkout=success`,
+				cancelUrl: `${import.meta.env.VITE_WEB_BASE_URL}/${orgSlug}/settings/billing?checkout=canceled`,
 			});
 			if (error) throw new Error(error.message);
 			return data;
@@ -165,8 +174,8 @@ export function useChangePlan(orgSlug: string) {
 				customerType: "organization",
 				annual: interval === "yearly",
 				...(subscriptionId ? { subscriptionId } : {}),
-				successUrl: `${window.location.origin}/${orgSlug}/settings/billing?checkout=success`,
-				cancelUrl: `${window.location.origin}/${orgSlug}/settings/billing?checkout=canceled`,
+				successUrl: `${import.meta.env.VITE_WEB_BASE_URL}/${orgSlug}/settings/billing?checkout=success`,
+				cancelUrl: `${import.meta.env.VITE_WEB_BASE_URL}/${orgSlug}/settings/billing?checkout=canceled`,
 			});
 			if (error) throw new Error(error.message);
 			return data;
@@ -184,23 +193,34 @@ export function useChangePlan(orgSlug: string) {
 }
 
 export function useCancelSubscription(orgSlug: string) {
-	const orgId = useOrgId();
 	const queryClient = useQueryClient();
 
 	return useMutation({
 		mutationFn: async () => {
-			if (!orgId) throw new Error("No active organization");
-			const { error } = await authClient.subscription.cancel({
-				referenceId: orgId,
-				returnUrl: `${window.location.origin}/${orgSlug}/settings/billing`,
-				customerType: "organization",
-			});
-			if (error) throw new Error(error.message);
+			await api.post(`/billing/${orgSlug}/cancel`);
 		},
 		onSuccess: () => {
 			void queryClient.invalidateQueries({
 				queryKey: ["billing", orgSlug, "subscription"],
 			});
+		},
+	});
+}
+
+export function useActivateTrial(orgSlug: string) {
+	return useMutation({
+		mutationFn: async () => {
+			const { data } = await api.post<{ url: string }>(
+				`/billing/${orgSlug}/activate-trial`,
+				{
+					successUrl: `${import.meta.env.VITE_WEB_BASE_URL}/${orgSlug}/settings/billing?checkout=success`,
+					cancelUrl: `${import.meta.env.VITE_WEB_BASE_URL}/${orgSlug}/settings/billing?checkout=canceled`,
+				},
+			);
+			return data;
+		},
+		onSuccess: (data) => {
+			if (data?.url) window.location.href = data.url;
 		},
 	});
 }
@@ -213,7 +233,7 @@ export function usePortal(orgSlug: string) {
 			if (!orgId) throw new Error("No active organization");
 			const { data, error } = await authClient.subscription.billingPortal({
 				referenceId: orgId,
-				returnUrl: `${window.location.origin}/${orgSlug}/settings/billing`,
+				returnUrl: `${import.meta.env.VITE_WEB_BASE_URL}/${orgSlug}/settings/billing`,
 				customerType: "organization",
 			});
 			if (error) throw new Error(error.message);

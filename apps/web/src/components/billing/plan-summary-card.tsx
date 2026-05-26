@@ -21,6 +21,7 @@ import { AlertTriangle, Zap } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
+  useActivateTrial,
   useBillingSummary,
   useChangePlan,
   useCheckout,
@@ -62,25 +63,57 @@ export function deriveShowActions({
   currentPlan,
   billingInterval,
   trialEligible,
+  rawSub,
 }: {
   subStatus: string | null;
   currentPlan: string;
   billingInterval: "monthly" | "yearly" | null;
   trialEligible: boolean;
+  rawSub: { plan: SubscriptionPlan; wasTrial: boolean } | null;
 }) {
   const nextTier = NEXT_TIER[currentPlan as SubscriptionPlan] ?? null;
   const isActive =
     subStatus != null &&
     ["active", "trialing", "past_due"].includes(subStatus);
   const showSubscribeNow = subStatus === "trialing";
+
+  // Trial canceled mid-period (abandoned checkout) — still has future access
+  const showConvertCanceled =
+    subStatus === "canceled" && rawSub?.wasTrial === true;
+
+  // Plan reverted to free after sub expired
+  const showConvertTrial =
+    !showConvertCanceled &&
+    currentPlan === "free" &&
+    rawSub?.wasTrial === true;
+  const showResubscribe =
+    currentPlan === "free" && rawSub?.wasTrial === false;
+
   const showUpgrade =
+    !showConvertTrial &&
+    !showResubscribe &&
+    !showConvertCanceled &&
     nextTier != null &&
     !showSubscribeNow &&
     (isActive || subStatus == null);
   const showSwitchYearly = isActive && billingInterval === "monthly";
   const showTrialCta =
-    subStatus == null && !showSubscribeNow && trialEligible;
-  return { showUpgrade, showSwitchYearly, showTrialCta, showSubscribeNow, nextTier };
+    subStatus == null &&
+    !showConvertTrial &&
+    !showResubscribe &&
+    trialEligible;
+
+  return {
+    showUpgrade,
+    showSwitchYearly,
+    showTrialCta,
+    showSubscribeNow,
+    showConvertTrial,
+    showConvertCanceled,
+    showResubscribe,
+    nextTier,
+    rawSub,
+  };
 }
 
 function ConfirmSwitchYearlyModal({
@@ -176,14 +209,16 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
   const queryClient = useQueryClient();
   const [trialModalOpen, setTrialModalOpen] = useState(false);
   const [switchYearlyModalOpen, setSwitchYearlyModalOpen] = useState(false);
+  const [activateTrialModalOpen, setActivateTrialModalOpen] = useState(false);
 
   const { data, isLoading } = useOrgSubscription(orgSlug);
-  const { data: summary } = useBillingSummary(orgSlug);
+  const { data: summary, isLoading: isSummaryLoading } = useBillingSummary(orgSlug);
   const checkout = useCheckout(orgSlug);
   const changePlan = useChangePlan(orgSlug);
   const startTrial = useStartTrial(orgSlug);
+  const activateTrial = useActivateTrial(orgSlug);
 
-  if (isLoading || !data) {
+  if (isLoading || isSummaryLoading || !data) {
     return <div className="h-48 animate-pulse rounded-xl bg-muted" />;
   }
 
@@ -207,32 +242,37 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
       ? Math.max(0, Math.ceil((new Date(sub.periodEnd).getTime() - Date.now()) / 86_400_000))
       : null;
 
-  const { showUpgrade, showSwitchYearly, showTrialCta, showSubscribeNow, nextTier } =
-    deriveShowActions({
-      subStatus: sub?.status ?? null,
-      currentPlan,
-      billingInterval,
-      trialEligible: summary?.trialEligible ?? false,
-    });
+  const {
+    showUpgrade,
+    showSwitchYearly,
+    showTrialCta,
+    showSubscribeNow,
+    showConvertTrial,
+    showConvertCanceled,
+    showResubscribe,
+    nextTier,
+    rawSub,
+  } = deriveShowActions({
+    subStatus: sub?.status ?? null,
+    currentPlan,
+    billingInterval,
+    trialEligible: summary?.trialEligible ?? false,
+    rawSub: summary?.subscription ?? null,
+  });
 
   function invalidateSub() {
     queryClient.invalidateQueries({ queryKey: ["billing", orgSlug, "subscription"] });
   }
 
   function handleSubscribeNow() {
-    if (currentPlan !== "basic" && currentPlan !== "business") return;
-    changePlan.mutate(
-      { plan: currentPlan, interval: billingInterval ?? "monthly", subscriptionId: sub?.stripeSubscriptionId },
-      {
-        onSuccess: (data) => {
-          if (data?.url) return;
-          toast.success("Plan activated successfully.");
-          invalidateSub();
-        },
-        onError: (e: { message?: string }) =>
-          toast.error(e.message ?? "Could not activate plan. Please try again."),
-      },
-    );
+    setActivateTrialModalOpen(true);
+  }
+
+  function confirmActivateTrial() {
+    activateTrial.mutate(undefined, {
+      onError: (e: { message?: string }) =>
+        toast.error(e.message ?? "Could not activate subscription. Please try again."),
+    });
   }
 
   function confirmSwitchYearly() {
@@ -299,11 +339,33 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
     );
   }
 
+  function handleConvertTrial() {
+    if (!rawSub) return;
+    checkout.mutate(
+      { plan: rawSub.plan, interval: "monthly" },
+      {
+        onError: (e) =>
+          toast.error(e.message ?? "Could not start checkout. Please try again."),
+      },
+    );
+  }
+
+  function handleResubscribe() {
+    if (!rawSub) return;
+    checkout.mutate(
+      { plan: rawSub.plan, interval: "monthly" },
+      {
+        onError: (e) =>
+          toast.error(e.message ?? "Could not start checkout. Please try again."),
+      },
+    );
+  }
+
   // Trial state renders a distinct banner instead of the summary card
-  if (sub?.status === "trialing") {
+  if (sub?.status === "trialing" || showConvertCanceled) {
     return (
       <>
-        <div className="overflow-hidden rounded-xl border border-violet-300 bg-gradient-to-br from-violet-50 to-purple-50 dark:border-violet-700 dark:from-violet-950/40 dark:to-purple-950/40">
+        <div className="overflow-hidden rounded-xl border border-violet-300 bg-linear-to-br from-violet-50 to-purple-50 dark:border-violet-700 dark:from-violet-950/40 dark:to-purple-950/40">
           <div className="flex items-center justify-between p-5">
             <div>
               <div className="flex items-center gap-2 font-semibold">
@@ -316,7 +378,9 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
                 )}
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
-                Business features active · no card on file
+                {showConvertCanceled
+                  ? "Business features active · checkout incomplete"
+                  : "Business features active · no card on file"}
               </p>
             </div>
             <div className="flex gap-2">
@@ -330,11 +394,11 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
                   Switch to yearly
                 </Button>
               )}
-              {showSubscribeNow && (
+              {(showSubscribeNow || showConvertCanceled) && (
                 <Button
                   size="sm"
-                  onClick={handleSubscribeNow}
-                  disabled={changePlan.isPending || isPastDue}
+                  onClick={showConvertCanceled ? handleConvertTrial : handleSubscribeNow}
+                  disabled={activateTrial.isPending || checkout.isPending}
                 >
                   Subscribe now
                 </Button>
@@ -349,6 +413,38 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
           isPending={changePlan.isPending}
           monthlyPriceAnnual={((summary?.pricePerSeat ?? meta.monthlyPriceUsd) * 10) / 12}
         />
+        <Dialog
+          open={activateTrialModalOpen}
+          onOpenChange={(v) => !v && setActivateTrialModalOpen(false)}
+        >
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>End trial and subscribe?</DialogTitle>
+              <DialogDescription>
+                Your trial will be canceled immediately. You'll be taken to
+                checkout to add a payment method and your{" "}
+                <strong>{meta.label}</strong> subscription will start today.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setActivateTrialModalOpen(false)}
+                disabled={activateTrial.isPending}
+              >
+                Keep trial
+              </Button>
+              <Button
+                size="sm"
+                onClick={confirmActivateTrial}
+                disabled={activateTrial.isPending}
+              >
+                {activateTrial.isPending ? "Redirecting…" : "Subscribe now"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </>
     );
   }
@@ -358,29 +454,34 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
       {/* Canceling / canceled alert */}
       {isAccessEnding && sub && (
         <Alert
-          variant={isCanceled ? "destructive" : undefined}
+          variant={isCanceled && !showConvertCanceled ? "destructive" : undefined}
           className={
             isCancelingAtEnd
               ? "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400"
-              : undefined
+              : showConvertCanceled
+                ? "border-violet-300 bg-violet-50 text-violet-800 dark:border-violet-700 dark:bg-violet-950/40 dark:text-violet-300"
+                : undefined
           }
         >
           <AlertTriangle />
           <AlertTitle>
-            Subscription {isCanceled ? "canceled" : "canceling"}
+            {showConvertCanceled ? "Trial checkout incomplete" : `Subscription ${isCanceled ? "canceled" : "canceling"}`}
           </AlertTitle>
           <AlertDescription
             className={
               isCancelingAtEnd
                 ? "text-amber-700 dark:text-amber-400"
-                : undefined
+                : showConvertCanceled
+                  ? "text-violet-800 dark:text-violet-300"
+                  : undefined
             }
           >
-            {isCancelingAtEnd ? "Cancels on" : "Canceled. Access continues until"}{" "}
-            <strong>
-              {sub.periodEnd ? formatDateShort(sub.periodEnd) : "end of period"}
-            </strong>
-            {isCancelingAtEnd && ". You'll keep full access until then."}
+            {showConvertCanceled
+              ? <>Your trial is still active until <strong>{sub.periodEnd ? formatDateShort(sub.periodEnd) : "end of period"}</strong>. Subscribe now to keep Business features after that.</>
+              : isCancelingAtEnd
+                ? <>Cancels on <strong>{sub.periodEnd ? formatDateShort(sub.periodEnd) : "end of period"}</strong>. You'll keep full access until then.</>
+                : <>Canceled. Access continues until <strong>{sub.periodEnd ? formatDateShort(sub.periodEnd) : "end of period"}</strong>.</>
+            }
           </AlertDescription>
         </Alert>
       )}
@@ -475,8 +576,35 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
         </div>
 
         {/* Actions */}
-        {(showUpgrade || showSwitchYearly || showTrialCta) && (
+        {(showUpgrade || showSwitchYearly || showTrialCta || showConvertTrial || showResubscribe || showConvertCanceled) && (
           <div className="flex flex-wrap gap-2 border-t px-5 py-3">
+            {showConvertCanceled && rawSub && (
+              <Button
+                size="sm"
+                onClick={handleConvertTrial}
+                disabled={checkout.isPending}
+              >
+                Subscribe to {PLAN_METADATA[rawSub.plan].label}
+              </Button>
+            )}
+            {showConvertTrial && rawSub && (
+              <Button
+                size="sm"
+                onClick={handleConvertTrial}
+                disabled={checkout.isPending}
+              >
+                Subscribe to {PLAN_METADATA[rawSub.plan].label}
+              </Button>
+            )}
+            {showResubscribe && rawSub && (
+              <Button
+                size="sm"
+                onClick={handleResubscribe}
+                disabled={checkout.isPending}
+              >
+                Resubscribe to {PLAN_METADATA[rawSub.plan].label}
+              </Button>
+            )}
             {showUpgrade && nextTier && (
               <Button
                 size="sm"

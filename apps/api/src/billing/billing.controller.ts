@@ -1,10 +1,12 @@
 import {
+	Body,
 	Controller,
 	ForbiddenException,
 	Get,
 	Inject,
 	NotFoundException,
 	Param,
+	Post,
 	UseGuards,
 } from "@nestjs/common";
 import type { PlanResponse, SubscriptionResponse } from "@orbit/shared";
@@ -28,6 +30,45 @@ export class BillingController {
 	@Get("plans")
 	async getPlans(): Promise<PlanResponse[]> {
 		return this.billingService.getPlans();
+	}
+
+	@Post(":orgSlug/cancel")
+	async cancelSubscription(
+		@Param("orgSlug") orgSlug: string,
+		@CurrentUser() user: User,
+	): Promise<void> {
+		const org = await this.db.query.organization.findFirst({
+			where: eq(schema.organization.slug, orgSlug),
+		});
+		if (!org) throw new NotFoundException("Organization not found");
+
+		const member = await this.billingService.getOrgMember(user.id, org.id);
+		if (!member)
+			throw new ForbiddenException("You are not a member of this organization");
+
+		return this.billingService.cancelAtPeriodEnd(org.id);
+	}
+
+	@Post(":orgSlug/activate-trial")
+	async activateTrial(
+		@Param("orgSlug") orgSlug: string,
+		@Body() body: { successUrl: string; cancelUrl: string },
+		@CurrentUser() user: User,
+	): Promise<{ url: string }> {
+		const org = await this.db.query.organization.findFirst({
+			where: eq(schema.organization.slug, orgSlug),
+		});
+		if (!org) throw new NotFoundException("Organization not found");
+
+		const member = await this.billingService.getOrgMember(user.id, org.id);
+		if (!member)
+			throw new ForbiddenException("You are not a member of this organization");
+
+		return this.billingService.activateTrial(
+			org.id,
+			body.successUrl,
+			body.cancelUrl,
+		);
 	}
 
 	@Get(":orgSlug/subscription")
@@ -75,6 +116,8 @@ export class BillingController {
 						currentPeriodStart: subscription.periodStart ?? new Date(),
 						currentPeriodEnd: subscription.periodEnd ?? new Date(),
 						cancelAtPeriodEnd: subscription.cancelAtPeriodEnd ?? false,
+						plan: subscription.plan as import("@orbit/shared").SubscriptionPlan,
+						wasTrial: subscription.trialStart != null,
 					}
 				: null,
 		};

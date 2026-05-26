@@ -13,6 +13,7 @@ import {
 	FieldLegend,
 	FieldSet,
 } from "@orbit/ui/components/field";
+import { Skeleton } from "@orbit/ui/components/skeleton";
 import { useQueryClient } from "@tanstack/react-query";
 import {
 	createFileRoute,
@@ -57,12 +58,13 @@ function BillingPage() {
 	});
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
-	const { data } = useOrgSubscription(orgSlug);
+	const { data, isLoading } = useOrgSubscription(orgSlug);
 	const portal = usePortal(orgSlug);
 	const cancelSubscription = useCancelSubscription(orgSlug);
 	const [cancelModalOpen, setCancelModalOpen] = useState(false);
 	const sub = data?.subscription;
 	const isPastDue = sub?.status === "past_due";
+	const isTrialing = sub?.status === "trialing";
 	const canCancel =
 		sub != null &&
 		["active", "trialing", "past_due"].includes(sub.status) &&
@@ -92,7 +94,9 @@ function BillingPage() {
 			onSuccess: () => {
 				setCancelModalOpen(false);
 				toast.success(
-					"Subscription canceled. You'll keep access until the end of your billing period.",
+					isTrialing
+						? "Trial ending. You'll keep Business access until the trial expires."
+						: "Subscription canceled. You'll keep access until the end of your billing period.",
 				);
 				queryClient.resetQueries({
 					queryKey: ["billing", orgSlug, "subscription"],
@@ -141,30 +145,46 @@ function BillingPage() {
 
 			<PlanSummaryCard isPastDue={isPastDue} />
 
-			<FieldSet>
-				<FieldLegend>Manage billing information</FieldLegend>
-				<FieldDescription>
-					Update your payment method and billing details.
-				</FieldDescription>
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={handlePortal}
-					disabled={portal.isPending}
-					className={"max-w-min"}
-				>
-					<CreditCard />
-					Manage billing information
-				</Button>
-			</FieldSet>
-
-			{canCancel && (
+			{isLoading ? (
+				<div className="space-y-3">
+					<Skeleton className="h-4 w-40" />
+					<Skeleton className="h-4 w-72" />
+					<Skeleton className="h-8 w-44" />
+				</div>
+			) : (
 				<FieldSet>
-					<FieldLegend>Cancel your subscription</FieldLegend>
+					<FieldLegend>Manage billing information</FieldLegend>
 					<FieldDescription>
-						Your subscription will remain active until{" "}
-						{periodEnd ?? "the end of your billing period"}, then revert to the
-						free plan. You can resubscribe at any time.
+						Update your payment method and billing details.
+					</FieldDescription>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={handlePortal}
+						disabled={portal.isPending}
+						className={"max-w-min"}
+					>
+						<CreditCard />
+						Manage billing information
+					</Button>
+				</FieldSet>
+			)}
+
+			{isLoading ? (
+				<div className="space-y-3">
+					<Skeleton className="h-4 w-44" />
+					<Skeleton className="h-4 w-80" />
+					<Skeleton className="h-8 w-36" />
+				</div>
+			) : canCancel ? (
+				<FieldSet>
+					<FieldLegend>
+						{isTrialing ? "End your trial" : "Cancel your subscription"}
+					</FieldLegend>
+					<FieldDescription>
+						{isTrialing
+							? `Your trial will be marked for cancellation. You'll keep Business access until ${periodEnd ?? "the trial ends"}, then revert to the free plan.`
+							: `Your subscription will remain active until ${periodEnd ?? "the end of your billing period"}, then revert to the free plan. You can resubscribe at any time.`}
 					</FieldDescription>
 					<Button
 						variant="outline"
@@ -173,10 +193,10 @@ function BillingPage() {
 						onClick={() => setCancelModalOpen(true)}
 						disabled={cancelSubscription.isPending}
 					>
-						Cancel subscription
+						{isTrialing ? "End trial" : "Cancel subscription"}
 					</Button>
 				</FieldSet>
-			)}
+			) : null}
 
 			{sub && (
 				<Dialog
@@ -185,11 +205,23 @@ function BillingPage() {
 				>
 					<DialogContent className="max-w-md">
 						<DialogHeader>
-							<DialogTitle>Cancel subscription?</DialogTitle>
+							<DialogTitle>
+								{isTrialing ? "End your trial?" : "Cancel subscription?"}
+							</DialogTitle>
 							<DialogDescription>
-								Your subscription will remain active until{" "}
-								<strong>{periodEnd}</strong>, then revert to the free plan. You
-								can resubscribe at any time.
+								{isTrialing ? (
+									<>
+										Your trial will be marked for cancellation. You'll keep
+										Business access until <strong>{periodEnd}</strong>, then
+										your workspace will revert to the free plan.
+									</>
+								) : (
+									<>
+										Your subscription will remain active until{" "}
+										<strong>{periodEnd}</strong>, then revert to the free plan.
+										You can resubscribe at any time.
+									</>
+								)}
 							</DialogDescription>
 						</DialogHeader>
 						<DialogFooter>
@@ -199,7 +231,7 @@ function BillingPage() {
 								onClick={() => setCancelModalOpen(false)}
 								disabled={cancelSubscription.isPending}
 							>
-								Keep subscription
+								{isTrialing ? "Keep trial" : "Keep subscription"}
 							</Button>
 							<Button
 								variant="destructive"
@@ -209,7 +241,9 @@ function BillingPage() {
 							>
 								{cancelSubscription.isPending
 									? "Canceling…"
-									: "Cancel subscription"}
+									: isTrialing
+										? "End trial"
+										: "Cancel subscription"}
 							</Button>
 						</DialogFooter>
 					</DialogContent>

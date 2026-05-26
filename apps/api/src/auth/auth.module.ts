@@ -142,7 +142,6 @@ import { createOrganizationHooks } from "./organization-billing-hooks";
 										name: "business",
 										lookupKey: "business_monthly",
 										annualDiscountLookupKey: "business_yearly",
-										freeTrial: { days: 7 },
 									},
 								],
 								authorizeReference: async ({ user, referenceId, action }) => {
