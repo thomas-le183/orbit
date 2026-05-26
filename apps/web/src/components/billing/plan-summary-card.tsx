@@ -16,7 +16,7 @@ import {
 } from "@orbit/ui/components/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Zap } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
