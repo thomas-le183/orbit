@@ -24,7 +24,7 @@ import {
 import { AlertTriangle, CreditCard } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { SubscriptionSection } from "@/components/billing/subscription-section";
+import { PlanSummaryCard } from "@/components/billing/plan-summary-card";
 import { loadOrgRole } from "@/hooks/use-auth";
 import {
 	useCancelSubscription,
@@ -114,7 +114,7 @@ function BillingPage() {
 		: null;
 
 	return (
-		<div className="mx-auto w-2xl max-w-5xl space-y-10 px-4 py-6">
+		<div className="mx-auto w-full max-w-2xl space-y-10 px-4 py-6">
 			<div>
 				<h1 className="text-xl font-semibold">Billing</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
@@ -139,7 +139,7 @@ function BillingPage() {
 				</Alert>
 			)}
 
-			<SubscriptionSection isPastDue={isPastDue} />
+			<PlanSummaryCard isPastDue={isPastDue} />
 
 			<FieldSet>
 				<FieldLegend>Manage billing information</FieldLegend>
@@ -150,7 +150,7 @@ function BillingPage() {
 					variant="outline"
 					size="sm"
 					onClick={handlePortal}
-					disabled={portal.isPending || isPastDue}
+					disabled={portal.isPending}
 					className={"max-w-min"}
 				>
 					<CreditCard />
