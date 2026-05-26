@@ -222,7 +222,7 @@ export function PlanSummaryCard({ isPastDue = false }: { isPastDue?: boolean }) 
   function handleSubscribeNow() {
     if (currentPlan !== "basic" && currentPlan !== "business") return;
     changePlan.mutate(
-      { plan: currentPlan, interval: "monthly", subscriptionId: sub?.stripeSubscriptionId },
+      { plan: currentPlan, interval: billingInterval ?? "monthly", subscriptionId: sub?.stripeSubscriptionId },
       {
         onSuccess: (data) => {
           if (data?.url) return;
