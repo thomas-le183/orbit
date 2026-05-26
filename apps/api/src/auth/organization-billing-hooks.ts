@@ -2,11 +2,13 @@ import { Logger } from "@nestjs/common";
 import type { SubscriptionPlan } from "@orbit/shared";
 import type { Queue } from "bullmq";
 import { count, eq } from "drizzle-orm";
+import type Stripe from "stripe";
 import {
 	getPlanLookupKey,
 	getStripePriceByLookupKey,
 	inferBillingIntervalFromStripeSubscription,
 	normalizeBillingInterval,
+	PLAN_LOOKUP_KEYS,
 	resolveSubscriptionItemByLookupKey,
 	resolveSubscriptionItemByPrice,
 	type StripeClientForSeatBilling,
@@ -94,6 +96,83 @@ export async function syncStripeSeatQuantity({
 	}
 }
 
+export async function autoStartTrial(
+	orgId: string,
+	db: Db,
+	stripeClient: Stripe,
+): Promise<void> {
+	try {
+		// Idempotency: skip if trial already exists
+		const existing = await db.query.subscription.findFirst({
+			where: eq(schema.subscription.referenceId, orgId),
+		});
+		if (existing) return;
+
+		const org = await db.query.organization.findFirst({
+			where: eq(schema.organization.id, orgId),
+		});
+		if (!org) return;
+
+		// Create or reuse Stripe customer
+		let customerId = org.stripeCustomerId ?? null;
+		if (!customerId) {
+			const customer = await stripeClient.customers.create({
+				name: org.name,
+				metadata: { referenceId: orgId, referenceType: "organization" },
+			});
+			customerId = customer.id;
+			await db
+				.update(schema.organization)
+				.set({ stripeCustomerId: customerId })
+				.where(eq(schema.organization.id, orgId));
+		}
+
+		// Resolve Business monthly price
+		const price = await getStripePriceByLookupKey(
+			stripeClient as unknown as StripeClientForSeatBilling,
+			PLAN_LOOKUP_KEYS.business!.monthly,
+		);
+		if (!price) {
+			seatBillingLogger.error(
+				`Business monthly price not found; cannot auto-start trial for org ${orgId}`,
+			);
+			return;
+		}
+
+		// Create trialing Stripe subscription
+		const trialEndUnix = Math.floor(Date.now() / 1000) + 14 * 24 * 60 * 60;
+		const stripeSub = await stripeClient.subscriptions.create({
+			customer: customerId,
+			items: [{ price: price.id, quantity: 1 }],
+			trial_end: trialEndUnix,
+			payment_settings: { payment_method_collection: "if_required" },
+			metadata: { referenceId: orgId, referenceType: "organization" },
+		});
+
+		// Insert subscription row
+		const now = new Date();
+		const periodEnd = new Date(trialEndUnix * 1000);
+		await db.insert(schema.subscription).values({
+			plan: "business",
+			referenceId: orgId,
+			stripeCustomerId: customerId,
+			stripeSubscriptionId: stripeSub.id,
+			status: "trialing",
+			periodStart: now,
+			periodEnd,
+			trialStart: now,
+			trialEnd: periodEnd,
+			seats: 1,
+			cancelAtPeriodEnd: false,
+		});
+	} catch (error) {
+		seatBillingLogger.error(
+			`autoStartTrial failed for org ${orgId}`,
+			error instanceof Error ? error.stack : undefined,
+		);
+	}
+}
+
 export function createOrganizationHooks({
 	db,
 	emailQueue,
@@ -105,7 +184,7 @@ export function createOrganizationHooks({
 	emailQueue: Queue;
 	notificationQueue: Queue;
 	appUrl: string;
-	stripeClient: StripeClientForSeatBilling;
+	stripeClient: Stripe;
 }) {
 	return {
 		afterCreateOrganization: async ({ organization: org, user: owner }) => {
@@ -118,6 +197,8 @@ export function createOrganizationHooks({
 					workspaceUrl: `${appUrl}/${org.slug}`,
 				},
 			});
+
+			void autoStartTrial(org.id, db, stripeClient);
 		},
 
 		afterAcceptInvitation: async ({
