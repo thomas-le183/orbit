@@ -93,7 +93,7 @@ if [ "$success" = true ]; then
     echo -e "${GREEN}✓${NC} Environment setup completed successfully!\n"
     echo -e "${BOLD}Next steps:${NC}"
     echo -e "1. Review the .env files in each folder if needed"
-    echo -e "2. Start infrastructure:  ${BOLD}docker compose -f docker-compose-local.yml up -d${NC}"
+    echo -e "2. Start infrastructure:  ${BOLD}pnpm docker:up${NC}"
     echo -e "3. Run DB migrations:     ${BOLD} cd apps/api && pnpm db:migrate ${NC}"
     echo -e "4. Seed dev data:         ${BOLD} cd apps/api && pnpm db:seed:dev ${NC}"
     echo -e "5. Start dev server:      ${BOLD} pnpm dev ${NC}"

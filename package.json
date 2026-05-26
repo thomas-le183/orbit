@@ -8,7 +8,9 @@
     "format": "biome format",
     "lint": "biome lint",
     "check": "biome check",
-    "stripe:listen": "stripe listen --forward-to localhost:8000/api/auth/stripe/webhook"
+    "stripe:listen": "stripe listen --forward-to localhost:8000/api/auth/stripe/webhook",
+    "docker:up": "docker compose -f docker-compose-local.yml up -d",
+    "docker:down": "docker compose -f docker-compose-local.yml down"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.5",
