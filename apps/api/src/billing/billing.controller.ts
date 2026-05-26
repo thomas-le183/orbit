@@ -1,5 +1,4 @@
 import {
-	Body,
 	Controller,
 	ForbiddenException,
 	Get,
@@ -47,28 +46,6 @@ export class BillingController {
 			throw new ForbiddenException("You are not a member of this organization");
 
 		return this.billingService.cancelAtPeriodEnd(org.id);
-	}
-
-	@Post(":orgSlug/activate-trial")
-	async activateTrial(
-		@Param("orgSlug") orgSlug: string,
-		@Body() body: { successUrl: string; cancelUrl: string },
-		@CurrentUser() user: User,
-	): Promise<{ url: string }> {
-		const org = await this.db.query.organization.findFirst({
-			where: eq(schema.organization.slug, orgSlug),
-		});
-		if (!org) throw new NotFoundException("Organization not found");
-
-		const member = await this.billingService.getOrgMember(user.id, org.id);
-		if (!member)
-			throw new ForbiddenException("You are not a member of this organization");
-
-		return this.billingService.activateTrial(
-			org.id,
-			body.successUrl,
-			body.cancelUrl,
-		);
 	}
 
 	@Get(":orgSlug/subscription")

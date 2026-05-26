@@ -138,57 +138,6 @@ export class BillingService {
 		});
 	}
 
-	async activateTrial(
-		organizationId: string,
-		successUrl: string,
-		cancelUrl: string,
-	): Promise<{ url: string }> {
-		const sub = await this.db.query.subscription.findFirst({
-			where: eq(schema.subscription.referenceId, organizationId),
-		});
-
-		if (!sub || sub.status !== "trialing") {
-			throw new BadRequestException("No active trial found for this organization");
-		}
-
-		if (!sub.stripeSubscriptionId) {
-			throw new NotFoundException("Stripe subscription not found");
-		}
-
-		const plan = sub.plan as SubscriptionPlan;
-		const billingInterval = await this.getSubscriptionBillingInterval(sub);
-		const lookupKey = getPlanLookupKey(plan, billingInterval ?? "monthly");
-		if (!lookupKey) {
-			throw new BadRequestException("Cannot determine plan price");
-		}
-
-		const price = await getStripePriceByLookupKey(this.stripe, lookupKey);
-		if (!price) {
-			throw new NotFoundException("Stripe price not found for plan");
-		}
-
-		// Cancel the trial subscription immediately so there's no duplicate
-		await this.stripe.subscriptions.cancel(sub.stripeSubscriptionId);
-
-		const sessionParams: Parameters<typeof this.stripe.checkout.sessions.create>[0] = {
-			mode: "subscription",
-			line_items: [{ price: price.id, quantity: sub.seats ?? 1 }],
-			success_url: successUrl,
-			cancel_url: cancelUrl,
-		};
-
-		if (sub.stripeCustomerId) {
-			sessionParams.customer = sub.stripeCustomerId;
-		}
-
-		const session = await this.stripe.checkout.sessions.create(sessionParams);
-
-		if (!session.url) {
-			throw new BadRequestException("Failed to create checkout session");
-		}
-
-		return { url: session.url };
-	}
 
 	async getPlans(): Promise<PlanResponse[]> {
 		const allLookupKeys = Object.values(PLAN_LOOKUP_KEYS).flatMap((keys) => [
