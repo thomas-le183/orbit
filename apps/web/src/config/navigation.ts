@@ -5,6 +5,7 @@ import {
 	BuildingIcon,
 	ClockIcon,
 	CreditCardIcon,
+	GanttChartIcon,
 	HomeIcon,
 	InboxIcon,
 	LayoutDashboardIcon,
@@ -75,6 +76,11 @@ function getHomeConfig(orgSlug: string): ModuleConfig {
 						icon: ActivityIcon,
 						label: "Activity",
 						to: `/${orgSlug}/activity`,
+					},
+					{
+						icon: GanttChartIcon,
+						label: "Timeline",
+						to: `/${orgSlug}/timeline`,
 					},
 				],
 			},
@@ -175,6 +181,7 @@ export function resolveModule(
 			return getHomeConfig(orgSlug);
 		case "inbox":
 		case "activity":
+		case "timeline":
 		case "starred":
 		case "recent":
 			return getHomeConfig(orgSlug);
