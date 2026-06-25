@@ -7,7 +7,7 @@ import {
 	SUBSCRIPTION_PLANS,
 	type SubscriptionPlan,
 } from "@orbit/shared";
-import { and, count, eq, isNotNull } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import Stripe from "stripe";
 import { DB, type Db } from "../db/db.module";
 import * as schema from "../db/schema";
@@ -43,7 +43,8 @@ export class BillingService {
 		if (
 			!sub ||
 			sub.status === "unpaid" ||
-			sub.status === "incomplete_expired"
+			sub.status === "incomplete_expired" ||
+			sub.status === "past_due"
 		) {
 			return "free";
 		}
@@ -75,16 +76,6 @@ export class BillingService {
 		});
 	}
 
-	async isTrialEligible(organizationId: string): Promise<boolean> {
-		const sub = await this.db.query.subscription.findFirst({
-			where: and(
-				eq(schema.subscription.referenceId, organizationId),
-				isNotNull(schema.subscription.trialStart),
-			),
-		});
-		return sub == null;
-	}
-
 	async getSubscriptionBillingInterval(
 		subscription: typeof schema.subscription.$inferSelect | null | undefined,
 	): Promise<BillingInterval | null> {
@@ -114,6 +105,87 @@ export class BillingService {
 
 		const price = await getStripePriceByLookupKey(this.stripe, lookupKey);
 		return price?.unit_amount != null ? price.unit_amount / 100 : null;
+	}
+
+	async createTrialConversionCheckout(
+		organizationId: string,
+		successUrl: string,
+		cancelUrl: string,
+	): Promise<{ url: string }> {
+		const sub = await this.db.query.subscription.findFirst({
+			where: eq(schema.subscription.referenceId, organizationId),
+		});
+
+		if (!sub || sub.status !== "trialing") {
+			throw new BadRequestException("No active trial found for this organization");
+		}
+		if (!sub.stripeCustomerId) {
+			throw new BadRequestException("No Stripe customer found");
+		}
+
+		const session = await this.stripe.checkout.sessions.create({
+			mode: "setup",
+			customer: sub.stripeCustomerId,
+			metadata: {
+				organization_id: organizationId,
+			},
+			setup_intent_data: {
+				metadata: {
+					subscription_id: sub.stripeSubscriptionId ?? "",
+					organization_id: organizationId,
+				},
+			},
+			success_url: successUrl,
+			cancel_url: cancelUrl,
+		});
+
+		if (!session.url) throw new BadRequestException("Could not create checkout session");
+		return { url: session.url };
+	}
+
+	async activateTrialConversion(
+		organizationId: string,
+		checkoutSessionId: string,
+	): Promise<void> {
+		const sub = await this.db.query.subscription.findFirst({
+			where: eq(schema.subscription.referenceId, organizationId),
+		});
+
+		if (!sub || sub.status !== "trialing") {
+			throw new BadRequestException("No active trial found for this organization");
+		}
+		if (!sub.stripeSubscriptionId) {
+			throw new BadRequestException("No Stripe subscription found");
+		}
+
+		const session = await this.stripe.checkout.sessions.retrieve(
+			checkoutSessionId,
+			{ expand: ["setup_intent"] },
+		);
+
+		if (session.mode !== "setup" || session.status !== "complete") {
+			throw new BadRequestException("Checkout session not completed");
+		}
+		if (session.metadata?.organization_id !== organizationId) {
+			throw new BadRequestException("Checkout session does not belong to this organization");
+		}
+		if (session.customer !== sub.stripeCustomerId) {
+			throw new BadRequestException("Checkout session customer mismatch");
+		}
+
+		const setupIntent = session.setup_intent as { payment_method: string | { id: string } | null } | null;
+		if (!setupIntent?.payment_method) {
+			throw new BadRequestException("No payment method found in session");
+		}
+
+		const paymentMethodId =
+			typeof setupIntent.payment_method === "string"
+				? setupIntent.payment_method
+				: setupIntent.payment_method.id;
+
+		await this.stripe.subscriptions.update(sub.stripeSubscriptionId, {
+			default_payment_method: paymentMethodId,
+		});
 	}
 
 	async cancelAtPeriodEnd(organizationId: string): Promise<void> {

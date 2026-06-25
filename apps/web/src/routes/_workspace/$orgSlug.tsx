@@ -26,11 +26,18 @@ import {
 	useParams,
 	useRouterState,
 } from "@tanstack/react-router";
-import { BellIcon } from "lucide-react";
+import { AlertTriangle, BellIcon, Crown, Info, TriangleAlert } from "lucide-react";
 import { useEffect } from "react";
+import { toast } from "sonner";
 import { AppSidebar } from "@/components/workspace/app-sidebar";
 import { resolveModule } from "@/config/navigation";
-import { useOrganizations, useSetActiveOrganization } from "@/hooks/use-auth";
+import {
+	useOrganizations,
+	useOrgRole,
+	useSetActiveOrganization,
+} from "@/hooks/use-auth";
+
+import { useBillingSummary, useConvertTrial, usePortal } from "@/hooks/use-billing";
 import {
 	useMarkAllNotificationsRead,
 	useMarkNotificationRead,
@@ -70,12 +77,141 @@ function OrgLayout() {
 			<AppSidebar />
 			<SidebarInset className="bg-background-tertiary">
 				<PageHeader />
+				<SubscriptionStatusBanner />
 				<main className="flex-1 overflow-auto p-6 bg-background-primary rounded-xl border border-border-medium">
 					<Outlet />
 				</main>
 			</SidebarInset>
 		</SidebarProvider>
 	);
+}
+
+function SubscriptionStatusBanner() {
+	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
+	const { targetOrg } = Route.useRouteContext();
+	const { data: summary } = useBillingSummary(orgSlug);
+	const role = useOrgRole(targetOrg.id);
+	const portal = usePortal(orgSlug);
+	const convertTrial = useConvertTrial(orgSlug);
+
+	const sub = summary?.subscription;
+	if (!sub) return null;
+
+	const canManage = role === "owner" || role === "admin";
+	const base = `${import.meta.env.VITE_WEB_BASE_URL}/${orgSlug}/settings/billing`;
+
+	const rawPeriodEnd = sub.periodEnd;
+	const periodEnd = rawPeriodEnd
+		? new Date(rawPeriodEnd).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+		: null;
+
+	const daysRemaining = sub.status === "trialing" && rawPeriodEnd
+		? Math.max(0, Math.ceil((new Date(rawPeriodEnd).getTime() - Date.now()) / 86_400_000))
+		: null;
+
+	const isCanceledWithAccess =
+		sub.status === "canceled" &&
+		rawPeriodEnd != null &&
+		new Date(rawPeriodEnd).getTime() > Date.now();
+
+	if (sub.status === "past_due") {
+		return (
+			<div className="flex items-center justify-between gap-4 border-b bg-(--color-red-bg) px-4 py-2.5">
+				<div className="flex items-center gap-2 text-sm text-(--color-red-foreground)">
+					<AlertTriangle className="size-4 shrink-0" />
+					<span>
+						<span className="font-semibold">Payment failed.</span>{" "}
+						{canManage ? "Update your payment method to restore access." : "Contact your workspace admin to resolve this."}
+					</span>
+				</div>
+				{canManage && (
+					<Button size="sm" variant="outline"
+						className="shrink-0 border-(--color-red-border) text-(--color-red-foreground) hover:bg-(--color-red-bg)"
+						onClick={() => portal.mutate(undefined, { onError: () => toast.error("Could not open billing portal.") })}
+						disabled={portal.isPending}
+					>
+						Fix payment
+					</Button>
+				)}
+			</div>
+		);
+	}
+
+	if (sub.status === "trialing") {
+		return (
+			<div className="flex items-center justify-between gap-4 border-b bg-(--color-amber-bg) px-4 py-2.5">
+				<div className="flex items-center gap-2 text-sm text-(--color-amber-foreground)">
+					<Crown className="size-4 shrink-0" />
+					<span>
+						<span className="font-semibold">
+							Business trial{daysRemaining !== null ? ` — ${daysRemaining} day${daysRemaining !== 1 ? "s" : ""} left` : ""}
+						</span>
+						{periodEnd && <span className="ml-1 opacity-75">· Ends {periodEnd}</span>}
+					</span>
+				</div>
+				{canManage && (
+					<Button size="sm" variant="outline"
+						className="shrink-0 border-(--color-amber-border) text-(--color-amber-foreground) hover:bg-(--color-amber-bg)"
+						onClick={() => convertTrial.mutate(
+							{ successUrl: `${base}?checkout=success&setup_session={CHECKOUT_SESSION_ID}`, cancelUrl: `${base}?checkout=canceled` },
+							{ onError: (e) => toast.error(e.message ?? "Could not start checkout.") },
+						)}
+						disabled={convertTrial.isPending}
+					>
+						Subscribe now
+					</Button>
+				)}
+			</div>
+		);
+	}
+
+	if (sub.cancelAtPeriodEnd && sub.status !== "canceled") {
+		return (
+			<div className="flex items-center justify-between gap-4 border-b bg-(--color-amber-bg) px-4 py-2.5">
+				<div className="flex items-center gap-2 text-sm text-(--color-amber-foreground)">
+					<TriangleAlert className="size-4 shrink-0" />
+					<span>
+						<span className="font-semibold">Subscription canceling.</span>
+						{periodEnd && <span className="ml-1">Access until {periodEnd}.</span>}
+					</span>
+				</div>
+				{canManage && (
+					<Button size="sm" variant="outline"
+						className="shrink-0 border-(--color-amber-border) text-(--color-amber-foreground) hover:bg-(--color-amber-bg)"
+						onClick={() => portal.mutate(undefined, { onError: () => toast.error("Could not open billing portal.") })}
+						disabled={portal.isPending}
+					>
+						Manage billing
+					</Button>
+				)}
+			</div>
+		);
+	}
+
+	if (isCanceledWithAccess) {
+		return (
+			<div className="flex items-center justify-between gap-4 border-b bg-(--color-gray-bg) px-4 py-2.5">
+				<div className="flex items-center gap-2 text-sm text-(--color-gray-foreground)">
+					<Info className="size-4 shrink-0" />
+					<span>
+						<span className="font-semibold">Subscription canceled.</span>
+						{periodEnd && <span className="ml-1">Access until {periodEnd}.</span>}
+					</span>
+				</div>
+				{canManage && (
+					<Button size="sm" variant="outline"
+						className="shrink-0"
+						onClick={() => portal.mutate(undefined, { onError: () => toast.error("Could not open billing portal.") })}
+						disabled={portal.isPending}
+					>
+						Resubscribe
+					</Button>
+				)}
+			</div>
+		);
+	}
+
+	return null;
 }
 
 function PageHeader() {

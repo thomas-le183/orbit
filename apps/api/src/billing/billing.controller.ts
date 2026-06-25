@@ -1,4 +1,6 @@
 import {
+	BadRequestException,
+	Body,
 	Controller,
 	ForbiddenException,
 	Get,
@@ -29,6 +31,54 @@ export class BillingController {
 	@Get("plans")
 	async getPlans(): Promise<PlanResponse[]> {
 		return this.billingService.getPlans();
+	}
+
+	@Post(":orgSlug/convert-trial")
+	async convertTrial(
+		@Param("orgSlug") orgSlug: string,
+		@CurrentUser() user: User,
+		@Body() body: { successUrl: string; cancelUrl: string },
+	): Promise<{ url: string }> {
+		if (!body.successUrl || !body.cancelUrl) {
+			throw new BadRequestException("successUrl and cancelUrl are required");
+		}
+		const org = await this.db.query.organization.findFirst({
+			where: eq(schema.organization.slug, orgSlug),
+		});
+		if (!org) throw new NotFoundException("Organization not found");
+
+		const member = await this.billingService.getOrgMember(user.id, org.id);
+		if (!member)
+			throw new ForbiddenException("You are not a member of this organization");
+		if (member.role !== "owner" && member.role !== "admin")
+			throw new ForbiddenException("Only admins can manage billing");
+
+		return this.billingService.createTrialConversionCheckout(
+			org.id,
+			body.successUrl,
+			body.cancelUrl,
+		);
+	}
+
+	@Post(":orgSlug/activate-trial")
+	async activateTrial(
+		@Param("orgSlug") orgSlug: string,
+		@CurrentUser() user: User,
+		@Body() body: { sessionId: string },
+	): Promise<void> {
+		if (!body.sessionId) throw new BadRequestException("sessionId is required");
+		const org = await this.db.query.organization.findFirst({
+			where: eq(schema.organization.slug, orgSlug),
+		});
+		if (!org) throw new NotFoundException("Organization not found");
+
+		const member = await this.billingService.getOrgMember(user.id, org.id);
+		if (!member)
+			throw new ForbiddenException("You are not a member of this organization");
+		if (member.role !== "owner" && member.role !== "admin")
+			throw new ForbiddenException("Only admins can manage billing");
+
+		return this.billingService.activateTrialConversion(org.id, body.sessionId);
 	}
 
 	@Post(":orgSlug/cancel")
@@ -66,7 +116,6 @@ export class BillingController {
 		const subscription = await this.billingService.getSubscription(org.id);
 		const memberCount = await this.billingService.getMemberCount(org.id);
 		const metadata = PLAN_METADATA[plan];
-		const trialEligible = await this.billingService.isTrialEligible(org.id);
 		const hasSeatBilling = plan === "basic" || plan === "business";
 		const billingInterval = hasSeatBilling
 			? await this.billingService.getSubscriptionBillingInterval(subscription)
@@ -78,7 +127,6 @@ export class BillingController {
 		return {
 			plan,
 			planLabel: metadata.label,
-			trialEligible,
 			pricePerSeat,
 			billingInterval,
 			usage: {
@@ -90,11 +138,13 @@ export class BillingController {
 			subscription: subscription
 				? {
 						status: subscription.status,
-						currentPeriodStart: subscription.periodStart ?? new Date(),
-						currentPeriodEnd: subscription.periodEnd ?? new Date(),
+						periodStart: subscription.periodStart ?? new Date(),
+						periodEnd: subscription.periodEnd ?? new Date(),
 						cancelAtPeriodEnd: subscription.cancelAtPeriodEnd ?? false,
 						plan: subscription.plan as import("@orbit/shared").SubscriptionPlan,
 						wasTrial: subscription.trialStart != null,
+						stripeSubscriptionId: subscription.stripeSubscriptionId ?? null,
+						seats: subscription.seats ?? null,
 					}
 				: null,
 		};

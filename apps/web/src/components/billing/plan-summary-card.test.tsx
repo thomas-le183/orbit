@@ -59,15 +59,50 @@ describe("deriveShowActions", () => {
     expect(r.showSwitchYearly).toBe(true);
   });
 
+  it("does NOT show switch-to-yearly when past_due (payment failed)", () => {
+    const r = deriveShowActions({ ...base, subStatus: "past_due", currentPlan: "basic", billingInterval: "monthly" });
+    expect(r.showSwitchYearly).toBe(false);
+  });
+
   it("shows convertTrial when trial ended and plan reverted to free", () => {
     const r = deriveShowActions({ subStatus: null, currentPlan: "free", billingInterval: null, rawSub: { plan: "business", wasTrial: true } });
     expect(r.showConvertTrial).toBe(true);
     expect(r.showUpgrade).toBe(false);
+    expect(r.showResubscribe).toBe(false);
+    expect(r.showConvertCanceled).toBe(false);
   });
 
   it("shows resubscribe when paid sub ended and plan reverted to free", () => {
     const r = deriveShowActions({ subStatus: null, currentPlan: "free", billingInterval: null, rawSub: { plan: "business", wasTrial: false } });
     expect(r.showResubscribe).toBe(true);
     expect(r.showUpgrade).toBe(false);
+    expect(r.showConvertTrial).toBe(false);
+  });
+
+  it("shows convertCanceled when trial was canceled mid-period (still has access)", () => {
+    const r = deriveShowActions({ subStatus: "canceled", currentPlan: "business", billingInterval: null, rawSub: { plan: "business", wasTrial: true } });
+    expect(r.showConvertCanceled).toBe(true);
+    expect(r.showConvertTrial).toBe(false);
+    expect(r.showResubscribe).toBe(false);
+    expect(r.showUpgrade).toBe(false);
+  });
+
+  it("does not show upgrade when trialing", () => {
+    const r = deriveShowActions({ ...base, subStatus: "trialing", currentPlan: "business", billingInterval: "monthly" });
+    expect(r.showUpgrade).toBe(false);
+  });
+
+  it("does not show upgrade when on business (highest paid tier)", () => {
+    const r = deriveShowActions({ ...base, subStatus: "active", currentPlan: "business", billingInterval: "monthly" });
+    expect(r.showUpgrade).toBe(false);
+  });
+
+  it("does not show any action for active business yearly (already optimal)", () => {
+    const r = deriveShowActions({ ...base, subStatus: "active", currentPlan: "business", billingInterval: "yearly" });
+    expect(r.showUpgrade).toBe(false);
+    expect(r.showSwitchYearly).toBe(false);
+    expect(r.showConvertTrial).toBe(false);
+    expect(r.showResubscribe).toBe(false);
+    expect(r.showConvertCanceled).toBe(false);
   });
 });

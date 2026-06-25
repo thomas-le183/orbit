@@ -21,8 +21,7 @@ describe("BillingController", () => {
 			getOrgSubscriptionPlan: jest.fn().mockResolvedValue(plan),
 			getSubscription: jest.fn().mockResolvedValue(subscription),
 			getMemberCount: jest.fn().mockResolvedValue(3),
-			isTrialEligible: jest.fn().mockResolvedValue(false),
-			getSubscriptionBillingInterval: jest
+getSubscriptionBillingInterval: jest
 				.fn()
 				.mockResolvedValue(billingInterval),
 			getPricePerSeat: jest.fn().mockResolvedValue(pricePerSeat),

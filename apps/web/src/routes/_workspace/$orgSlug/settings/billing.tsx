@@ -26,9 +26,14 @@ import { AlertTriangle, CreditCard } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PlanSummaryCard } from "@/components/billing/plan-summary-card";
+import { PricingTable } from "@/components/billing/pricing-table";
 import { loadOrgRole } from "@/hooks/use-auth";
 import {
+	useActivateTrial,
+	useBillingSummary,
 	useCancelSubscription,
+	useChangePlan,
+	useCheckout,
 	useOrgSubscription,
 	usePortal,
 } from "@/hooks/use-billing";
@@ -47,22 +52,29 @@ export const Route = createFileRoute("/_workspace/$orgSlug/settings/billing")({
 	},
 	validateSearch: (search: Record<string, unknown>) => ({
 		checkout: search.checkout as "success" | "canceled" | undefined,
+		setup_session: search.setup_session as string | undefined,
 	}),
 	component: BillingPage,
 });
 
 function BillingPage() {
 	const { orgSlug } = useParams({ from: "/_workspace/$orgSlug" });
-	const { checkout: checkoutResult } = useSearch({
+	const { checkout: checkoutResult, setup_session: setupSession } = useSearch({
 		from: "/_workspace/$orgSlug/settings/billing",
 	});
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 	const { data, isLoading } = useOrgSubscription(orgSlug);
+	const { data: summary } = useBillingSummary(orgSlug);
 	const portal = usePortal(orgSlug);
+	const activateTrial = useActivateTrial(orgSlug);
+	const checkout = useCheckout(orgSlug);
+	const changePlan = useChangePlan(orgSlug);
 	const cancelSubscription = useCancelSubscription(orgSlug);
 	const [cancelModalOpen, setCancelModalOpen] = useState(false);
 	const sub = data?.subscription;
+	const currentPlan = (sub?.plan ?? summary?.plan ?? "free") as import("@orbit/shared").SubscriptionPlan;
+	const hasActiveSubscription = sub != null && ["active", "trialing", "past_due"].includes(sub.status);
 	const isPastDue = sub?.status === "past_due";
 	const isTrialing = sub?.status === "trialing";
 	const canCancel =
@@ -71,7 +83,22 @@ function BillingPage() {
 		!sub.cancelAtPeriodEnd;
 
 	useEffect(() => {
-		if (!checkoutResult) return;
+		if (!setupSession) return;
+		activateTrial.mutate(
+			{ sessionId: setupSession },
+			{
+				onSuccess: () => {
+					toast.success("Payment method saved. You'll be charged when your trial ends.");
+					void queryClient.invalidateQueries({ queryKey: ["billing", orgSlug, "subscription"] });
+					navigate({ to: ".", search: (prev) => ({ ...prev, checkout: undefined, setup_session: undefined }) });
+				},
+				onError: () => toast.error("Could not save payment method. Please try again."),
+			},
+		);
+	}, [setupSession, activateTrial.mutate, navigate, queryClient, orgSlug]);
+
+	useEffect(() => {
+		if (!checkoutResult || setupSession) return;
 		if (checkoutResult === "success") {
 			toast.success("Subscription activated! Welcome to your new plan.");
 			void queryClient.invalidateQueries({
@@ -81,12 +108,29 @@ function BillingPage() {
 			toast.info("Checkout canceled. No changes were made.");
 		}
 		navigate({ to: ".", search: (prev) => ({ ...prev, checkout: undefined }) });
-	}, [checkoutResult, navigate, queryClient, orgSlug]);
+	}, [checkoutResult, setupSession, navigate, queryClient, orgSlug]);
 
 	function handlePortal() {
 		portal.mutate(undefined, {
 			onError: () => toast.error("Could not open billing portal."),
 		});
+	}
+
+	function handleSelectPlan(plan: import("@orbit/shared").SubscriptionPlan, interval: "monthly" | "yearly") {
+		if (hasActiveSubscription && sub?.stripeSubscriptionId) {
+			changePlan.mutate(
+				{ plan, interval, subscriptionId: sub.stripeSubscriptionId ?? undefined },
+				{
+					onSuccess: () => toast.success("Plan updated successfully."),
+					onError: (e) => toast.error(e.message ?? "Could not switch plan. Please try again."),
+				},
+			);
+		} else {
+			checkout.mutate(
+				{ plan, interval },
+				{ onError: (e) => toast.error(e.message ?? "Could not start checkout. Please try again.") },
+			);
+		}
 	}
 
 	function handleCancel() {
@@ -118,7 +162,7 @@ function BillingPage() {
 		: null;
 
 	return (
-		<div className="mx-auto w-full max-w-2xl space-y-10 px-4 py-6">
+		<div className="mx-auto w-full max-w-4xl space-y-10 px-4 py-6">
 			<div>
 				<h1 className="text-xl font-semibold">Billing</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
@@ -144,6 +188,21 @@ function BillingPage() {
 			)}
 
 			<PlanSummaryCard isPastDue={isPastDue} />
+
+			<FieldSet>
+				<FieldLegend>Plans</FieldLegend>
+				<FieldDescription>
+					{hasActiveSubscription
+						? "Upgrade or downgrade your plan at any time."
+						: "Choose a plan to get started."}
+				</FieldDescription>
+				<PricingTable
+					currentPlan={currentPlan}
+					hasActiveSubscription={hasActiveSubscription}
+					isPending={checkout.isPending || changePlan.isPending}
+					onSelectPlan={handleSelectPlan}
+				/>
+			</FieldSet>
 
 			{isLoading ? (
 				<div className="space-y-3">
@@ -205,22 +264,12 @@ function BillingPage() {
 				>
 					<DialogContent className="max-w-md">
 						<DialogHeader>
-							<DialogTitle>
-								{isTrialing ? "End your trial?" : "Cancel subscription?"}
-							</DialogTitle>
+							<DialogTitle>{isTrialing ? "End trial?" : "Cancel subscription?"}</DialogTitle>
 							<DialogDescription>
 								{isTrialing ? (
-									<>
-										Your trial will be marked for cancellation. You'll keep
-										Business access until <strong>{periodEnd}</strong>, then
-										your workspace will revert to the free plan.
-									</>
+									<>Your trial will remain active until <strong>{periodEnd}</strong>. After that you'll revert to the free plan.</>
 								) : (
-									<>
-										Your subscription will remain active until{" "}
-										<strong>{periodEnd}</strong>, then revert to the free plan.
-										You can resubscribe at any time.
-									</>
+									<>Your subscription will remain active until <strong>{periodEnd}</strong>, then revert to the free plan. You can resubscribe at any time.</>
 								)}
 							</DialogDescription>
 						</DialogHeader>

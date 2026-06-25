@@ -33,7 +33,6 @@ export type PlanFlags = PlanMetadata["flags"];
 export interface SubscriptionResponse {
 	plan: SubscriptionPlan;
 	planLabel: string;
-	trialEligible: boolean;
 	pricePerSeat: number | null;
 	billingInterval: BillingInterval | null;
 	usage: {
@@ -44,11 +43,13 @@ export interface SubscriptionResponse {
 	};
 	subscription: {
 		status: string;
-		currentPeriodStart: Date;
-		currentPeriodEnd: Date;
+		periodStart: Date;
+		periodEnd: Date;
 		cancelAtPeriodEnd: boolean;
 		plan: SubscriptionPlan;
 		wasTrial: boolean;
+		stripeSubscriptionId: string | null;
+		seats: number | null;
 	} | null;
 }
 
