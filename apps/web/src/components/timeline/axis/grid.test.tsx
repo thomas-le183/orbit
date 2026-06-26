@@ -35,7 +35,7 @@ describe("TimelineGrid", () => {
 		expect(highlighted.length).toBe(1);
 	});
 
-	it("renders months zoom with right borders on month boundaries", () => {
+	it("renders months zoom with borders on month boundaries", () => {
 		const { container } = render(
 			<TimelineProvider initialZoom="months">
 				<SizeViewport width={640} />
@@ -48,7 +48,7 @@ describe("TimelineGrid", () => {
 		expect(cells.length).toBeGreaterThan(0);
 
 		const borderCells = Array.from(cells).filter((cell) =>
-			cell.className.includes("border-r"),
+			cell.className.includes("border-l"),
 		);
 		// Borders should be applied (at least one cell has a month boundary)
 		expect(borderCells.length).toBeGreaterThan(0);
