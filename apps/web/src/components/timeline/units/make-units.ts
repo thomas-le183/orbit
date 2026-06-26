@@ -1,4 +1,9 @@
-import type { RelativeTimeRangeOffset, Unit, UnitType, ZoomLevel } from "./types";
+import type {
+	RelativeTimeRangeOffset,
+	Unit,
+	UnitType,
+	ZoomLevel,
+} from "./types";
 
 export const ONE_DAY = 86_400_000;
 export const ONE_WEEK = ONE_DAY * 7;
@@ -37,16 +42,43 @@ const makeUnits = (
 	return units;
 };
 
-const toMonday = (date: Date): Date =>
-	new Date(date.getTime() - ((date.getUTCDay() + 6) % 7) * ONE_DAY);
+/**
+ * Snap a date back to the most recent week-start day.
+ * @param weekStart day the week begins on, 0 = Sunday … 6 = Saturday.
+ */
+const toWeekStart = (date: Date, weekStart: number): Date =>
+	new Date(date.getTime() - ((date.getUTCDay() - weekStart + 7) % 7) * ONE_DAY);
 
-export const getDayUnits = (range: RelativeTimeRangeOffset, today: number): Unit[] =>
-	makeUnits(range, "week", today, toMonday, (date) => new Date(date.getTime() + ONE_DAY));
+export const getDayUnits = (
+	range: RelativeTimeRangeOffset,
+	today: number,
+	weekStart = 1,
+): Unit[] =>
+	makeUnits(
+		range,
+		"week",
+		today,
+		(date) => toWeekStart(date, weekStart),
+		(date) => new Date(date.getTime() + ONE_DAY),
+	);
 
-export const getWeekUnits = (range: RelativeTimeRangeOffset, today: number): Unit[] =>
-	makeUnits(range, "week", today, toMonday, (date) => new Date(date.getTime() + ONE_WEEK));
+export const getWeekUnits = (
+	range: RelativeTimeRangeOffset,
+	today: number,
+	weekStart = 1,
+): Unit[] =>
+	makeUnits(
+		range,
+		"week",
+		today,
+		(date) => toWeekStart(date, weekStart),
+		(date) => new Date(date.getTime() + ONE_WEEK),
+	);
 
-export const getMonthUnits = (range: RelativeTimeRangeOffset, today: number): Unit[] =>
+export const getMonthUnits = (
+	range: RelativeTimeRangeOffset,
+	today: number,
+): Unit[] =>
 	makeUnits(
 		range,
 		"month",
@@ -114,10 +146,11 @@ export const getUnits = (
 	zoomLevel: ZoomLevel,
 	today: number,
 	fiscalMonth = 1,
+	weekStart = 1,
 ): Unit[] => {
 	switch (zoomLevel) {
 		case "weeks":
-			return getWeekUnits(range, today);
+			return getWeekUnits(range, today, weekStart);
 		case "months":
 			return getMonthUnits(range, today);
 		case "quarters":
@@ -128,5 +161,6 @@ export const getUnits = (
 };
 
 /** Index of the unit straddling today (from <= 0 < to), or -1. */
-export const getTodayColumnIndex = (units: { from: number; to: number }[]): number =>
-	units.findIndex(({ from, to }) => from <= 0 && to > 0);
+export const getTodayColumnIndex = (
+	units: { from: number; to: number }[],
+): number => units.findIndex(({ from, to }) => from <= 0 && to > 0);

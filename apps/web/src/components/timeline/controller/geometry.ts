@@ -22,7 +22,8 @@ export type Geometry = {
 export const pxPerMs = (zoom: ZoomLevel): number => PX_PER_DAY[zoom] / ONE_DAY;
 
 /** How many ms of time the viewport spans at the current zoom + width. */
-export const msPerViewport = (g: Geometry): number => g.viewportWidth / pxPerMs(g.zoom);
+export const msPerViewport = (g: Geometry): number =>
+	g.viewportWidth / pxPerMs(g.zoom);
 
 /** Map a ms-offset-from-today to a percentage across the viewport (0% = left edge). */
 export const msToPercent = (ms: number, g: Geometry): number =>

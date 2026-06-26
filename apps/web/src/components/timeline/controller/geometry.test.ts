@@ -34,7 +34,10 @@ describe("msToPercent / percentToMs", () => {
 	});
 
 	it("round-trips percent → ms → percent", () => {
-		expect(percentToMs(msToPercent(3 * ONE_DAY, g), g)).toBeCloseTo(3 * ONE_DAY, 5);
+		expect(percentToMs(msToPercent(3 * ONE_DAY, g), g)).toBeCloseTo(
+			3 * ONE_DAY,
+			5,
+		);
 	});
 });
 

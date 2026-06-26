@@ -33,7 +33,10 @@ describe("useHorizontalPercentageOffset", () => {
 		);
 		act(() => result.current.ctrl.setViewportWidth(320));
 		const leftEdgeMs = result.current.ctrl.offsetMs;
-		expect(result.current.offset.getPercentageOffset(leftEdgeMs)).toBeCloseTo(0, 6);
+		expect(result.current.offset.getPercentageOffset(leftEdgeMs)).toBeCloseTo(
+			0,
+			6,
+		);
 	});
 });
 

@@ -18,7 +18,9 @@ describe("TimelineGrid", () => {
 				<TimelineGrid />
 			</TimelineProvider>,
 		);
-		const cells = container.querySelectorAll("[data-testid='timeline-grid-unit']");
+		const cells = container.querySelectorAll(
+			"[data-testid='timeline-grid-unit']",
+		);
 		expect(cells.length).toBeGreaterThan(0);
 	});
 
@@ -40,7 +42,9 @@ describe("TimelineGrid", () => {
 				<TimelineGrid />
 			</TimelineProvider>,
 		);
-		const cells = container.querySelectorAll("[data-testid='timeline-grid-unit']");
+		const cells = container.querySelectorAll(
+			"[data-testid='timeline-grid-unit']",
+		);
 		expect(cells.length).toBeGreaterThan(0);
 
 		const borderCells = Array.from(cells).filter((cell) =>

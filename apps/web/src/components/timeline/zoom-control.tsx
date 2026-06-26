@@ -1,4 +1,7 @@
-import { ToggleGroup, ToggleGroupItem } from "@orbit/ui/components/toggle-group";
+import {
+	ToggleGroup,
+	ToggleGroupItem,
+} from "@orbit/ui/components/toggle-group";
 import { useZoomLevel } from "./controller/hooks";
 import type { ZoomLevel } from "./units/types";
 

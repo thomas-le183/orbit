@@ -31,6 +31,11 @@ describe("getDayUnits", () => {
 		// Mon8, Tue9, Wed10, Thu11, Fri12 → 5 days
 		expect(units).toHaveLength(5);
 	});
+
+	it("snaps to Sunday when weekStart = 0 (Sun 7 Jan = -3 days)", () => {
+		const sundayUnits = getDayUnits({ from: 0, to: 3 * ONE_DAY }, TODAY, 0);
+		expect(sundayUnits[0].from).toBe(-3 * ONE_DAY);
+	});
 });
 
 describe("getTodayColumnIndex", () => {

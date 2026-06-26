@@ -17,9 +17,12 @@ export type TimelineControllerValue = {
 	offsetMs: number;
 	zoomLevel: ZoomLevel;
 	viewportWidth: number;
+	/** Day the week begins on, 0 = Sunday … 6 = Saturday (user preference). */
+	weekStart: number;
 	setZoomLevel: (z: ZoomLevel) => void;
 	setOffsetMs: (updater: number | ((prev: number) => number)) => void;
 	setViewportWidth: (w: number) => void;
+	scrollToToday: () => void;
 };
 
 const TimelineContext = createContext<TimelineControllerValue | null>(null);
@@ -34,9 +37,12 @@ const centeredOffset = (zoom: ZoomLevel, viewportWidth: number): number => {
 export function TimelineProvider({
 	children,
 	initialZoom = DEFAULT_ZOOM,
+	weekStart = 1,
 }: {
 	children: ReactNode;
 	initialZoom?: ZoomLevel;
+	/** Day the week begins on, 0 = Sunday … 6 = Saturday. Defaults to Monday. */
+	weekStart?: number;
 }) {
 	const [today] = useState(() => startOfUtcDay(Date.now()));
 	const [zoomLevel, setZoomLevelState] = useState<ZoomLevel>(initialZoom);
@@ -46,18 +52,15 @@ export function TimelineProvider({
 	const zoomLevelRef = useRef(zoomLevel);
 	zoomLevelRef.current = zoomLevel;
 
-	const setViewportWidth = useCallback(
-		(w: number) => {
-			setViewportWidthState((prevW) => {
-				// On first real measurement, center today.
-				if (prevW === 0 && w > 0) {
-					setOffsetMsState(centeredOffset(zoomLevelRef.current, w));
-				}
-				return w;
-			});
-		},
-		[zoomLevelRef],
-	);
+	const setViewportWidth = useCallback((w: number) => {
+		setViewportWidthState((prevW) => {
+			// On first real measurement, center today.
+			if (prevW === 0 && w > 0) {
+				setOffsetMsState(centeredOffset(zoomLevelRef.current, w));
+			}
+			return w;
+		});
+	}, []);
 
 	const setZoomLevel = useCallback(
 		(z: ZoomLevel) => {
@@ -77,26 +80,48 @@ export function TimelineProvider({
 		[],
 	);
 
+	const scrollToToday = useCallback(() => {
+		setOffsetMsState(centeredOffset(zoomLevelRef.current, viewportWidth));
+	}, [viewportWidth]);
+
 	const value = useMemo<TimelineControllerValue>(
 		() => ({
 			today,
 			offsetMs,
 			zoomLevel,
 			viewportWidth,
+			weekStart,
 			setZoomLevel,
 			setOffsetMs,
 			setViewportWidth,
+			scrollToToday,
 		}),
-		[today, offsetMs, zoomLevel, viewportWidth, setZoomLevel, setOffsetMs, setViewportWidth],
+		[
+			today,
+			offsetMs,
+			zoomLevel,
+			viewportWidth,
+			weekStart,
+			setZoomLevel,
+			setOffsetMs,
+			setViewportWidth,
+			scrollToToday,
+		],
 	);
 
-	return <TimelineContext.Provider value={value}>{children}</TimelineContext.Provider>;
+	return (
+		<TimelineContext.Provider value={value}>
+			{children}
+		</TimelineContext.Provider>
+	);
 }
 
 export function useTimelineController(): TimelineControllerValue {
 	const ctx = useContext(TimelineContext);
 	if (!ctx) {
-		throw new Error("useTimelineController must be used within a TimelineProvider");
+		throw new Error(
+			"useTimelineController must be used within a TimelineProvider",
+		);
 	}
 	return ctx;
 }

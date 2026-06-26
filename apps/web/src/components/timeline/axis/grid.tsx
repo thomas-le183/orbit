@@ -2,13 +2,18 @@ import { FISCAL_MONTH } from "../constants";
 import {
 	useHorizontalPercentageOffset,
 	useRenderingWindow,
+	useWeekStart,
 	useZoomLevel,
 } from "../controller/hooks";
 import { getTodayColumnIndex, getUnits } from "../units/make-units";
 import { GridUnit } from "./unit";
 
 /** Should this unit draw a right border for the given zoom level? */
-function hasRightBorder(zoom: string, unitToOffset: number, today: number): boolean {
+function hasRightBorder(
+	zoom: string,
+	unitToOffset: number,
+	today: number,
+): boolean {
 	switch (zoom) {
 		case "weeks": {
 			// border on each day
@@ -28,8 +33,15 @@ export default function TimelineGrid() {
 	const [zoomLevel] = useZoomLevel();
 	const { today, from, to } = useRenderingWindow();
 	const { getPercentageOffset } = useHorizontalPercentageOffset();
+	const weekStart = useWeekStart();
 
-	const units = getUnits({ from, to }, zoomLevel, today, FISCAL_MONTH);
+	const units = getUnits(
+		{ from, to },
+		zoomLevel,
+		today,
+		FISCAL_MONTH,
+		weekStart,
+	);
 	const todayIndex = getTodayColumnIndex(units);
 
 	if (units.length === 0) return null;

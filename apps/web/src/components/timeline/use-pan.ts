@@ -1,4 +1,7 @@
-import type { PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from "react";
+import type {
+	PointerEvent as ReactPointerEvent,
+	WheelEvent as ReactWheelEvent,
+} from "react";
 import { useRef } from "react";
 import { useTimelineController } from "./controller/context";
 import { pxPerMs } from "./controller/geometry";

@@ -4,6 +4,7 @@ import { stickyLeftPx } from "../controller/geometry";
 import {
 	useHorizontalPercentageOffset,
 	useRenderingWindow,
+	useWeekStart,
 	useZoomLevel,
 } from "../controller/hooks";
 import { getDayUnits, getUnits, ONE_DAY } from "../units/make-units";
@@ -40,9 +41,15 @@ export default function TimeUnitsBar() {
 	const { today, from, to } = useRenderingWindow();
 	const { viewportWidth } = useTimelineController();
 	const { getPercentageOffset } = useHorizontalPercentageOffset();
+	const weekStart = useWeekStart();
 
 	// ── Top row (coarse units) with sticky-first-label ──────────────────────
-	const topUnits = getUnits({ from, to }, topZoomFor[zoomLevel], today, FISCAL_MONTH);
+	const topUnits = getUnits(
+		{ from, to },
+		topZoomFor[zoomLevel],
+		today,
+		FISCAL_MONTH,
+	);
 	const topRow = topUnits.map((unit) => {
 		const naturalLeft = getPercentageOffset(unit.from);
 		const unitRight = getPercentageOffset(unit.to);
@@ -50,7 +57,8 @@ export default function TimeUnitsBar() {
 		const naturalLeftPx = (naturalLeft / 100) * viewportWidth;
 		const unitRightPx = (unitRight / 100) * viewportWidth;
 		const leftPx = stickyLeftPx(naturalLeftPx, unitRightPx, TOP_LABEL_WIDTH_PX);
-		const leftPercent = viewportWidth > 0 ? (leftPx / viewportWidth) * 100 : naturalLeft;
+		const leftPercent =
+			viewportWidth > 0 ? (leftPx / viewportWidth) * 100 : naturalLeft;
 		return (
 			<TopLabel key={today + unit.from} leftPercent={leftPercent}>
 				{fmtTopLabel(today + unit.from, zoomLevel)}
@@ -61,9 +69,15 @@ export default function TimeUnitsBar() {
 	// ── Bottom row (fine units) ─────────────────────────────────────────────
 	let bottomUnits: Unit[];
 	if (zoomLevel === "weeks") {
-		bottomUnits = getDayUnits({ from, to }, today);
+		bottomUnits = getDayUnits({ from, to }, today, weekStart);
 	} else if (zoomLevel === "months") {
-		bottomUnits = getUnits({ from, to }, "weeks", today, FISCAL_MONTH);
+		bottomUnits = getUnits(
+			{ from, to },
+			"weeks",
+			today,
+			FISCAL_MONTH,
+			weekStart,
+		);
 	} else {
 		bottomUnits = getUnits({ from, to }, "quarters", today, FISCAL_MONTH);
 	}
@@ -78,7 +92,7 @@ export default function TimeUnitsBar() {
 		let withLeftBorder = false;
 		if (zoomLevel === "weeks") {
 			label = String(d.getUTCDate());
-			withLeftBorder = d.getUTCDay() === 1; // Monday
+			withLeftBorder = d.getUTCDay() === weekStart; // first day of the week
 		} else if (zoomLevel === "months") {
 			label = String(d.getUTCDate());
 		} else if (zoomLevel === "quarters") {
@@ -111,7 +125,10 @@ export default function TimeUnitsBar() {
 			>
 				{topRow}
 			</div>
-			<div data-testid="timeline-header-bottom" className="relative h-6 border-b border-border">
+			<div
+				data-testid="timeline-header-bottom"
+				className="relative h-6 border-b border-border"
+			>
 				{bottomRow}
 			</div>
 		</div>

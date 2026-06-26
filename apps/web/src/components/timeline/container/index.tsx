@@ -1,4 +1,6 @@
-import { useEffect, useRef } from "react";
+import { type RefObject, useEffect, useRef } from "react";
+import { useResizeObserver } from "usehooks-ts";
+import { usePreferences } from "@/hooks/use-preferences";
 import TimelineGrid from "../axis/grid";
 import { TimelineProvider, useTimelineController } from "../controller/context";
 import TimeUnitsBar from "../header/time-units-bar";
@@ -11,17 +13,13 @@ function TimelineCanvas() {
 	const { setViewportWidth, scrollToToday } = useTimelineController();
 	const ref = useRef<HTMLDivElement>(null);
 	const { onPointerDown, onWheel } = usePan();
+	const { width = 0 } = useResizeObserver({
+		ref: ref as RefObject<HTMLDivElement>,
+	});
 
-	// Measure the viewport width and keep it in sync on resize.
 	useEffect(() => {
-		const el = ref.current;
-		if (!el) return;
-		const update = () => setViewportWidth(el.clientWidth);
-		update();
-		const observer = new ResizeObserver(update);
-		observer.observe(el);
-		return () => observer.disconnect();
-	}, [setViewportWidth]);
+		setViewportWidth(width);
+	}, [width, setViewportWidth]);
 
 	return (
 		<div className="flex h-full flex-col">
@@ -58,8 +56,9 @@ function TimelineCanvas() {
 }
 
 export default function TimelineContainer() {
+	const { data: prefs } = usePreferences();
 	return (
-		<TimelineProvider>
+		<TimelineProvider weekStart={prefs?.weekStart ?? 1}>
 			<TimelineCanvas />
 		</TimelineProvider>
 	);
