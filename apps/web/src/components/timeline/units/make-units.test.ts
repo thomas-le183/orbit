@@ -7,6 +7,7 @@ import {
 	getUnits,
 	ONE_DAY,
 	startOfUtcDay,
+	toUtcDateString,
 } from "./make-units";
 
 // Wed 10 Jan 2024, 13:45 UTC → start-of-day is Wed 10 Jan 2024 00:00 UTC
@@ -74,5 +75,20 @@ describe("getUnits dispatch", () => {
 	it("routes years to year-sized units", () => {
 		const units = getUnits({ from: 0, to: 400 * ONE_DAY }, "years", TODAY, 1);
 		expect(units[0].type).toBe("year");
+	});
+});
+
+describe("toUtcDateString", () => {
+	it("formats the UTC day as YYYY-MM-DD", () => {
+		expect(toUtcDateString(Date.parse("2026-06-27T13:45:00Z"))).toBe(
+			"2026-06-27",
+		);
+	});
+
+	it("is stable across the day (uses start of UTC day)", () => {
+		const a = toUtcDateString(Date.parse("2026-01-01T00:00:00Z"));
+		const b = toUtcDateString(Date.parse("2026-01-01T23:59:59Z"));
+		expect(a).toBe("2026-01-01");
+		expect(b).toBe("2026-01-01");
 	});
 });

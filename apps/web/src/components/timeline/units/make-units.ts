@@ -15,6 +15,10 @@ export const startOfUtcDay = (ts: number): number => {
 	return d.getTime();
 };
 
+/** UTC YYYY-MM-DD for the day containing `ts`. */
+export const toUtcDateString = (ts: number): string =>
+	new Date(startOfUtcDay(ts)).toISOString().slice(0, 10);
+
 /**
  * Walk a UTC date cursor from `today + from` to `today + to`, emitting one unit per step.
  * `initialize` snaps the cursor to the unit boundary; `next` advances one unit.
