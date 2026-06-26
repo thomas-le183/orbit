@@ -135,7 +135,7 @@ Boundary rules (`initialize` / `next`), identical to source:
 
 | Zoom     | Header top | Header bottom         | Grid border    |
 | -------- | ---------- | --------------------- | -------------- |
-| weeks    | month      | days                  | every day      |
+| weeks    | month      | days                  | every week (Mon) |
 | months   | month      | weeks                 | end of month   |
 | quarters | year       | quarters (Q1 Jan–Mar) | each quarter   |
 | years    | year       | quarters (Q1)         | each year      |
