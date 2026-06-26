@@ -8,15 +8,15 @@ import { getTodayColumnIndex, getUnits } from "../units/make-units";
 import { GridUnit } from "./unit";
 
 /** Should this unit draw a right border for the given zoom level? */
-function hasRightBorder(zoom: string, unitToMs: number, today: number): boolean {
+function hasRightBorder(zoom: string, unitToOffset: number, today: number): boolean {
 	switch (zoom) {
 		case "weeks": {
 			// border on each day
 			return true;
 		}
 		case "months": {
-			// border on the last day of the month (next day is the 1st)
-			return new Date(today + unitToMs).getUTCDate() === 1;
+			// border on the last day of a month: the unit's end boundary lands on the 1st of the next month
+			return new Date(today + unitToOffset).getUTCDate() === 1;
 		}
 		default:
 			// quarters + years: border on each unit
