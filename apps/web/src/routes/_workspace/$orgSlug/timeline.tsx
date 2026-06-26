@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import TimelineContainer from "@/components/timeline/container";
 
 export const Route = createFileRoute("/_workspace/$orgSlug/timeline")({
 	component: TimelinePage,
@@ -6,9 +7,8 @@ export const Route = createFileRoute("/_workspace/$orgSlug/timeline")({
 
 function TimelinePage() {
 	return (
-		<div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-			<h1 className="text-lg font-semibold">Timeline</h1>
-			<p className="text-sm text-muted-foreground">Coming soon.</p>
+		<div className="h-full">
+			<TimelineContainer />
 		</div>
 	);
 }

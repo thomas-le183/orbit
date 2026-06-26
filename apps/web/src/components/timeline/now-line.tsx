@@ -1,8 +1,6 @@
-import { useTimelineController } from "./controller/context";
 import { useHorizontalPercentageOffset } from "./controller/hooks";
 
 export default function NowLine() {
-	const { today } = useTimelineController();
 	const { getPercentageOffset } = useHorizontalPercentageOffset();
 
 	// today is the origin, so the offset of "today" in ms-relative-to-today is 0.
