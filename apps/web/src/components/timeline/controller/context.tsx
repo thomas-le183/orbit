@@ -10,7 +10,7 @@ import {
 import { DEFAULT_ZOOM } from "../constants";
 import { startOfUtcDay } from "../units/make-units";
 import type { ZoomLevel } from "../units/types";
-import { type Geometry, msPerViewport } from "./geometry";
+import { type Geometry, offsetToCenter } from "./geometry";
 
 export type TimelineControllerValue = {
 	today: number;
@@ -23,6 +23,8 @@ export type TimelineControllerValue = {
 	setOffsetMs: (updater: number | ((prev: number) => number)) => void;
 	setViewportWidth: (w: number) => void;
 	scrollToToday: () => void;
+	/** Pan so the given ms-offset-from-today sits at the viewport center. */
+	scrollToMs: (ms: number) => void;
 };
 
 const TimelineContext = createContext<TimelineControllerValue | null>(null);
@@ -31,7 +33,18 @@ const TimelineContext = createContext<TimelineControllerValue | null>(null);
 const centeredOffset = (zoom: ZoomLevel, viewportWidth: number): number => {
 	if (viewportWidth <= 0) return 0;
 	const geom: Geometry = { offsetMs: 0, zoom, viewportWidth };
-	return -msPerViewport(geom) / 2;
+	return offsetToCenter(0, geom);
+};
+
+/** offsetMs that centers an arbitrary ms-offset-from-today in the viewport. */
+const offsetForMs = (
+	ms: number,
+	zoom: ZoomLevel,
+	viewportWidth: number,
+): number => {
+	if (viewportWidth <= 0) return 0;
+	const geom: Geometry = { offsetMs: 0, zoom, viewportWidth };
+	return offsetToCenter(ms, geom);
 };
 
 export function TimelineProvider({
@@ -84,6 +97,13 @@ export function TimelineProvider({
 		setOffsetMsState(centeredOffset(zoomLevelRef.current, viewportWidth));
 	}, [viewportWidth]);
 
+	const scrollToMs = useCallback(
+		(ms: number) => {
+			setOffsetMsState(offsetForMs(ms, zoomLevelRef.current, viewportWidth));
+		},
+		[viewportWidth],
+	);
+
 	const value = useMemo<TimelineControllerValue>(
 		() => ({
 			today,
@@ -95,6 +115,7 @@ export function TimelineProvider({
 			setOffsetMs,
 			setViewportWidth,
 			scrollToToday,
+			scrollToMs,
 		}),
 		[
 			today,
@@ -106,6 +127,7 @@ export function TimelineProvider({
 			setOffsetMs,
 			setViewportWidth,
 			scrollToToday,
+			scrollToMs,
 		],
 	);
 

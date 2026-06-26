@@ -6,6 +6,7 @@ import { TimelineProvider, useTimelineController } from "../controller/context";
 import TimeUnitsBar from "../header/time-units-bar";
 import NowLine from "../now-line";
 import TimelineScrollbar from "../scrollbar";
+import TaskBars from "../task-bars";
 import { usePan } from "../use-pan";
 import ZoomControl from "../zoom-control";
 
@@ -46,6 +47,7 @@ function TimelineCanvas() {
 				{/* grid + now-line fill below the header */}
 				<div className="absolute inset-x-0 bottom-0 top-12">
 					<TimelineGrid />
+					<TaskBars />
 					<NowLine />
 				</div>
 			</div>
