@@ -4,6 +4,7 @@ import {
 	useCallback,
 	useContext,
 	useMemo,
+	useRef,
 	useState,
 } from "react";
 import { DEFAULT_ZOOM } from "../constants";
@@ -42,17 +43,20 @@ export function TimelineProvider({
 	const [viewportWidth, setViewportWidthState] = useState(0);
 	const [offsetMs, setOffsetMsState] = useState(0);
 
+	const zoomLevelRef = useRef(zoomLevel);
+	zoomLevelRef.current = zoomLevel;
+
 	const setViewportWidth = useCallback(
 		(w: number) => {
 			setViewportWidthState((prevW) => {
 				// On first real measurement, center today.
 				if (prevW === 0 && w > 0) {
-					setOffsetMsState(centeredOffset(zoomLevel, w));
+					setOffsetMsState(centeredOffset(zoomLevelRef.current, w));
 				}
 				return w;
 			});
 		},
-		[zoomLevel],
+		[zoomLevelRef],
 	);
 
 	const setZoomLevel = useCallback(

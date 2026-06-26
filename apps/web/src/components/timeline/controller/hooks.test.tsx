@@ -2,6 +2,7 @@ import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
 import { TimelineProvider, useTimelineController } from "./context";
+import { msPerViewport } from "./geometry";
 import {
 	useHorizontalPercentageOffset,
 	useRenderingWindow,
@@ -44,8 +45,9 @@ describe("useRenderingWindow", () => {
 		);
 		act(() => result.current.ctrl.setViewportWidth(320));
 		const { from, to } = result.current.win;
-		// window must be wider than the viewport span and contain offsetMs
-		expect(from).toBeLessThan(result.current.ctrl.offsetMs);
-		expect(to).toBeGreaterThan(result.current.ctrl.offsetMs);
+		const { offsetMs, zoomLevel, viewportWidth } = result.current.ctrl;
+		const span = msPerViewport({ offsetMs, zoom: zoomLevel, viewportWidth });
+		expect(from).toBeCloseTo(offsetMs - span, 3);
+		expect(to).toBeCloseTo(offsetMs + 2 * span, 3);
 	});
 });
