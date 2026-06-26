@@ -96,6 +96,9 @@ export function useBarInteraction(opts: {
 
 	const beginGesture = useCallback(
 		(e: ReactPointerEvent, target: GestureTarget) => {
+			// Ignore a second pointerdown while a gesture is already active so we
+			// never orphan the first gesture's window listeners.
+			if (activeListenersRef.current) return;
 			e.stopPropagation();
 			e.preventDefault();
 			const startX = e.clientX;
