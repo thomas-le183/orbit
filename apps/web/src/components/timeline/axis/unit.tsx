@@ -17,7 +17,7 @@ export function GridUnit({
 			data-today={isToday ? "true" : undefined}
 			className={cn(
 				"absolute top-0 h-full box-border",
-				withRightBorder && "border-r border-border",
+				withRightBorder && "border-l border-border",
 				isToday && "bg-muted/40",
 			)}
 			style={{ left: `${leftPercent}%`, width: `${widthPercent}%` }}
