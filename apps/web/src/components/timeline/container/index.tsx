@@ -4,16 +4,16 @@ import { usePreferences } from "@/hooks/use-preferences";
 import TimelineGrid from "../axis/grid";
 import { TimelineProvider, useTimelineController } from "../controller/context";
 import TimeUnitsBar from "../header/time-units-bar";
+import ItemsLayer from "../items-layer";
 import NowLine from "../now-line";
 import TimelineScrollbar from "../scrollbar";
-import TaskBars from "../task-bars";
 import { usePan } from "../use-pan";
 import ZoomControl from "../zoom-control";
 
 function TimelineCanvas() {
 	const { setViewportWidth, scrollToToday } = useTimelineController();
 	const ref = useRef<HTMLDivElement>(null);
-	const { onPointerDown, onWheel } = usePan();
+	const { onWheel } = usePan();
 	const { width = 0 } = useResizeObserver({
 		ref: ref as RefObject<HTMLDivElement>,
 	});
@@ -36,8 +36,7 @@ function TimelineCanvas() {
 			</div>
 			<div
 				ref={ref}
-				className="relative flex-1 cursor-grab touch-none select-none overflow-hidden active:cursor-grabbing"
-				onPointerDown={onPointerDown}
+				className="relative flex-1 touch-none select-none overflow-hidden"
 				onWheel={onWheel}
 			>
 				{/* header band */}
@@ -47,7 +46,7 @@ function TimelineCanvas() {
 				{/* grid + now-line fill below the header */}
 				<div className="absolute inset-x-0 bottom-0 top-12">
 					<TimelineGrid />
-					<TaskBars />
+					<ItemsLayer />
 					<NowLine />
 				</div>
 			</div>

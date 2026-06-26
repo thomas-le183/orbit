@@ -1,0 +1,226 @@
+// apps/web/src/components/timeline/items-layer.tsx
+import { cn } from "@orbit/shared";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo } from "react";
+import { useTimelineController } from "./controller/context";
+import { type Geometry, rangeVisibility } from "./controller/geometry";
+import { useHorizontalPercentageOffset } from "./controller/hooks";
+import {
+	type ContainerRect,
+	layoutItems,
+	type RenderRow,
+} from "./controller/layout";
+import type { RelativeTimeRangeOffset } from "./units/types";
+import {
+	type GestureTarget,
+	rangeToDates,
+	useBarInteraction,
+} from "./use-bar-interaction";
+import { useTimelineItems } from "./use-timeline-items";
+
+const ROW_HEIGHT = 40;
+const ROW_PADDING = 7;
+
+export default function ItemsLayer() {
+	const { today, offsetMs, zoomLevel, viewportWidth, scrollToMs } =
+		useTimelineController();
+	const { getPercentageOffset } = useHorizontalPercentageOffset();
+	const { items, updateItem, moveDays } = useTimelineItems();
+
+	const { rows, containers } = useMemo(
+		() => layoutItems(items, today),
+		[items, today],
+	);
+
+	const { draft, beginGesture } = useBarInteraction({
+		onCommitMove: (id, days) => moveDays(id, days),
+		onCommitResize: (id, range) =>
+			updateItem(id, rangeToDatesPatch(range, today)),
+	});
+
+	if (viewportWidth <= 0) return null;
+	const geom: Geometry = { offsetMs, zoom: zoomLevel, viewportWidth };
+
+	// effective range = draft override (live drag) else laid-out range
+	const rangeOf = (row: RenderRow): RelativeTimeRangeOffset =>
+		draft[row.item.id] ?? row.range;
+
+	const descendantsOf = (parentId: string): string[] =>
+		rows
+			.filter((r) => r.item.parentId === parentId && !r.isParent)
+			.map((r) => r.item.id);
+
+	return (
+		<div className="pointer-events-none absolute inset-0">
+			{/* parent container rects (behind bars) */}
+			{containers.map((c: ContainerRect) => {
+				const left = getPercentageOffset(c.range.from);
+				const right = getPercentageOffset(c.range.to);
+				if (!Number.isFinite(left) || !Number.isFinite(right)) return null;
+				return (
+					<div
+						key={`container-${c.parentId}`}
+						data-testid="timeline-container-rect"
+						className="absolute rounded-lg border border-border/60 bg-muted/20"
+						style={{
+							left: `${left}%`,
+							width: `${Math.max(right - left, 0)}%`,
+							top: c.rowStart * ROW_HEIGHT + 2,
+							height: (c.rowEnd - c.rowStart + 1) * ROW_HEIGHT - 4,
+						}}
+					/>
+				);
+			})}
+
+			{/* rows */}
+			{rows.map((row) => {
+				const range = rangeOf(row);
+				const top = row.rowIndex * ROW_HEIGHT + ROW_PADDING;
+				const barHeight = ROW_HEIGHT - ROW_PADDING * 2;
+				const centerMs = (range.from + range.to) / 2;
+				const visibility = rangeVisibility(range.from, range.to, geom);
+				const { item } = row;
+
+				if (visibility !== "visible") {
+					const side = visibility;
+					return (
+						<button
+							key={item.id}
+							type="button"
+							data-testid={`timeline-item-flyout-${side}`}
+							onClick={() => scrollToMs(centerMs)}
+							title={`Jump to "${item.name}"`}
+							style={{ top, height: barHeight }}
+							className={cn(
+								"pointer-events-auto absolute z-20 flex items-center gap-1 rounded-md border border-border bg-popover px-1.5 text-xs font-medium text-foreground shadow-md hover:bg-accent",
+								side === "left" ? "left-1" : "right-1",
+							)}
+						>
+							{side === "left" && <ChevronLeft className="size-3.5 shrink-0" />}
+							<span
+								className="size-2 shrink-0 rounded-full"
+								style={{ backgroundColor: item.color }}
+							/>
+							<span className="max-w-28 truncate">{item.name}</span>
+							{side === "right" && (
+								<ChevronRight className="size-3.5 shrink-0" />
+							)}
+						</button>
+					);
+				}
+
+				const left = getPercentageOffset(range.from);
+
+				// Milestone: a diamond point marker at range.from.
+				if (item.kind === "milestone") {
+					if (!Number.isFinite(left)) return null;
+					const moveTarget: GestureTarget = {
+						role: "move",
+						id: item.id,
+						range,
+						descendantIds: [],
+					};
+					return (
+						<div
+							key={item.id}
+							data-testid="timeline-milestone"
+							title={item.name}
+							onPointerDown={(e) => beginGesture(e, moveTarget)}
+							style={{ left: `${left}%`, top: top + barHeight / 2 }}
+							className="pointer-events-auto absolute z-10 -translate-x-1/2 -translate-y-1/2 size-3 rotate-45 cursor-grab rounded-[2px] active:cursor-grabbing"
+						>
+							<span
+								className="block size-full rotate-45"
+								style={{ backgroundColor: item.color }}
+							/>
+						</div>
+					);
+				}
+
+				const right = getPercentageOffset(range.to);
+				if (!Number.isFinite(left) || !Number.isFinite(right)) return null;
+
+				const moveTarget: GestureTarget = {
+					role: "move",
+					id: item.id,
+					range,
+					descendantIds: row.isParent ? descendantsOf(item.id) : [],
+				};
+
+				return (
+					<div
+						key={item.id}
+						data-testid="timeline-task-bar"
+						title={item.name}
+						onPointerDown={(e) => beginGesture(e, moveTarget)}
+						style={{
+							left: `${left}%`,
+							width: `${Math.max(right - left, 0)}%`,
+							top,
+							height: barHeight,
+							backgroundColor: row.isParent ? "transparent" : item.color,
+							borderColor: item.color,
+						}}
+						className={cn(
+							"pointer-events-auto absolute flex items-center overflow-hidden rounded-md px-2 text-xs font-medium shadow-sm",
+							row.isParent
+								? "cursor-grab border-2 active:cursor-grabbing"
+								: "cursor-grab text-white active:cursor-grabbing",
+						)}
+					>
+						{!row.isParent && item.progress !== undefined && (
+							<span
+								className="absolute inset-y-0 left-0 bg-black/20"
+								style={{ width: `${item.progress}%` }}
+							/>
+						)}
+						<span
+							className={cn(
+								"relative truncate",
+								row.isParent && "text-foreground",
+							)}
+						>
+							{item.name}
+						</span>
+
+						{/* resize handles (leaf tasks only) */}
+						{!row.isParent && (
+							<>
+								<span
+									data-testid="timeline-resize-start"
+									onPointerDown={(e) =>
+										beginGesture(e, {
+											role: "resize-start",
+											id: item.id,
+											range,
+											descendantIds: [],
+										})
+									}
+									className="absolute inset-y-0 left-0 w-1.5 cursor-ew-resize"
+								/>
+								<span
+									data-testid="timeline-resize-end"
+									onPointerDown={(e) =>
+										beginGesture(e, {
+											role: "resize-end",
+											id: item.id,
+											range,
+											descendantIds: [],
+										})
+									}
+									className="absolute inset-y-0 right-0 w-1.5 cursor-ew-resize"
+								/>
+							</>
+						)}
+					</div>
+				);
+			})}
+		</div>
+	);
+}
+
+/** Adapt rangeToDates into an updateItem patch. */
+function rangeToDatesPatch(range: RelativeTimeRangeOffset, today: number) {
+	const { startDate, endDate } = rangeToDates(range, today);
+	return { startDate, endDate };
+}

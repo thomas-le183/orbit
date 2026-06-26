@@ -1,3 +1,6 @@
+import type { PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useTimelineController } from "./controller/context";
 import { PX_PER_DAY } from "./controller/geometry";
 import { ONE_DAY, toUtcDateString } from "./units/make-units";
 import type { RelativeTimeRangeOffset, ZoomLevel } from "./units/types";
@@ -41,3 +44,81 @@ export const rangeToDates = (
 	startDate: toUtcDateString(today + range.from),
 	endDate: toUtcDateString(today + range.to - ONE_DAY),
 });
+
+export type GestureRole = "move" | "resize-start" | "resize-end";
+
+export type GestureTarget = {
+	role: GestureRole;
+	id: string;
+	range: RelativeTimeRangeOffset;
+	/** leaf/milestone ids shifted alongside a parent move; empty otherwise. */
+	descendantIds: string[];
+};
+
+/**
+ * Pointer-driven move/resize. Produces a live `draft` (id → range) during the
+ * gesture and commits a day-snapped edit on release.
+ */
+export function useBarInteraction(opts: {
+	onCommitMove: (id: string, days: number) => void;
+	onCommitResize: (id: string, range: RelativeTimeRangeOffset) => void;
+}): {
+	draft: Record<string, RelativeTimeRangeOffset>;
+	beginGesture: (e: ReactPointerEvent, target: GestureTarget) => void;
+} {
+	const { zoomLevel } = useTimelineController();
+	const zoomRef = useRef(zoomLevel);
+	zoomRef.current = zoomLevel;
+	const [draft, setDraft] = useState<Record<string, RelativeTimeRangeOffset>>(
+		{},
+	);
+
+	const beginGesture = useCallback(
+		(e: ReactPointerEvent, target: GestureTarget) => {
+			e.stopPropagation();
+			e.preventDefault();
+			const startX = e.clientX;
+			const target0 = e.currentTarget;
+			try {
+				target0.setPointerCapture(e.pointerId);
+			} catch {}
+
+			const compute = (dx: number): Record<string, RelativeTimeRangeOffset> => {
+				const days = pxToDays(dx, zoomRef.current);
+				if (target.role === "move") {
+					return { [target.id]: applyMove(target.range, days) };
+				}
+				const edge = target.role === "resize-start" ? "start" : "end";
+				return { [target.id]: applyResize(target.range, edge, days) };
+			};
+
+			const onMove = (ev: PointerEvent) => {
+				setDraft(compute(ev.clientX - startX));
+			};
+			const onUp = (ev: PointerEvent) => {
+				const days = pxToDays(ev.clientX - startX, zoomRef.current);
+				if (target.role === "move") opts.onCommitMove(target.id, days);
+				else
+					opts.onCommitResize(
+						target.id,
+						applyResize(
+							target.range,
+							target.role === "resize-start" ? "start" : "end",
+							days,
+						),
+					);
+				setDraft({});
+				try {
+					target0.releasePointerCapture(ev.pointerId);
+				} catch {}
+				window.removeEventListener("pointermove", onMove);
+				window.removeEventListener("pointerup", onUp);
+			};
+			window.addEventListener("pointermove", onMove);
+			window.addEventListener("pointerup", onUp);
+		},
+		[opts],
+	);
+
+	return { draft, beginGesture };
+}
