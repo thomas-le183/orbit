@@ -1,6 +1,11 @@
 import { PLAN_METADATA, type SubscriptionPlan } from "@orbit/shared";
 import { Button } from "@orbit/ui/components/button";
 import {
+	Carousel,
+	CarouselContent,
+	CarouselItem,
+} from "@orbit/ui/components/carousel";
+import {
 	Collapsible,
 	CollapsibleContent,
 	CollapsibleTrigger,
@@ -52,6 +57,9 @@ import {
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
+import girlsDanceGif from "@/assets/girls-dance.gif";
+import minecraftParkourGif from "@/assets/minecraft-parkour.gif";
+import subwaySurfersGif from "@/assets/subway-surfers.gif";
 import { CommandMenu } from "@/components/workspace/command-menu";
 import {
 	resolveModule,
@@ -127,6 +135,15 @@ export function AppSidebar() {
 			</SidebarContent>
 
 			<SidebarFooter>
+				<Carousel className="group-data-[collapsible=icon]:hidden">
+					<CarouselContent>
+						{[subwaySurfersGif, minecraftParkourGif, girlsDanceGif].map((gif, i) => (
+							<CarouselItem key={i}>
+								<img src={gif} alt="" className="w-full object-cover" />
+							</CarouselItem>
+						))}
+					</CarouselContent>
+				</Carousel>
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<UserMenu />
@@ -184,7 +201,12 @@ function WorkspaceSwitcher({ orgSlug }: { orgSlug: string }) {
 									{subscription && (
 										<span className="flex items-center gap-1 truncate text-xs text-muted-foreground capitalize">
 											<CrownIcon className="size-3 shrink-0" />
-											{PLAN_METADATA[(subscription?.subscription?.plan ?? "free") as SubscriptionPlan].label}
+											{
+												PLAN_METADATA[
+													(subscription?.subscription?.plan ??
+														"free") as SubscriptionPlan
+												].label
+											}
 										</span>
 									)}
 								</div>

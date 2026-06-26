@@ -102,6 +102,7 @@
 
 	html {
 		font-size: 14px;
+		overscroll-behavior: none;
 	}
 
 	body {
