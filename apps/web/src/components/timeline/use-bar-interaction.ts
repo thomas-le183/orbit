@@ -1,5 +1,5 @@
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTimelineController } from "./controller/context";
 import { PX_PER_DAY } from "./controller/geometry";
 import { ONE_DAY, toUtcDateString } from "./units/make-units";
@@ -66,12 +66,33 @@ export function useBarInteraction(opts: {
 	draft: Record<string, RelativeTimeRangeOffset>;
 	beginGesture: (e: ReactPointerEvent, target: GestureTarget) => void;
 } {
+	const optsRef = useRef(opts);
+	optsRef.current = opts;
+
+	const activeListenersRef = useRef<{
+		move: (e: PointerEvent) => void;
+		up: (e: PointerEvent) => void;
+	} | null>(null);
+
 	const { zoomLevel } = useTimelineController();
 	const zoomRef = useRef(zoomLevel);
 	zoomRef.current = zoomLevel;
 	const [draft, setDraft] = useState<Record<string, RelativeTimeRangeOffset>>(
 		{},
 	);
+
+	useEffect(() => {
+		return () => {
+			if (activeListenersRef.current) {
+				window.removeEventListener(
+					"pointermove",
+					activeListenersRef.current.move,
+				);
+				window.removeEventListener("pointerup", activeListenersRef.current.up);
+				activeListenersRef.current = null;
+			}
+		};
+	}, []);
 
 	const beginGesture = useCallback(
 		(e: ReactPointerEvent, target: GestureTarget) => {
@@ -97,9 +118,10 @@ export function useBarInteraction(opts: {
 			};
 			const onUp = (ev: PointerEvent) => {
 				const days = pxToDays(ev.clientX - startX, zoomRef.current);
-				if (target.role === "move") opts.onCommitMove(target.id, days);
+				if (target.role === "move")
+					optsRef.current.onCommitMove(target.id, days);
 				else
-					opts.onCommitResize(
+					optsRef.current.onCommitResize(
 						target.id,
 						applyResize(
 							target.range,
@@ -113,11 +135,13 @@ export function useBarInteraction(opts: {
 				} catch {}
 				window.removeEventListener("pointermove", onMove);
 				window.removeEventListener("pointerup", onUp);
+				activeListenersRef.current = null;
 			};
 			window.addEventListener("pointermove", onMove);
 			window.addEventListener("pointerup", onUp);
+			activeListenersRef.current = { move: onMove, up: onUp };
 		},
-		[opts],
+		[],
 	);
 
 	return { draft, beginGesture };
