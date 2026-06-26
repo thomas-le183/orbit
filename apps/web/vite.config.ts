@@ -16,6 +16,7 @@ const config = defineConfig({
 	test: {
 		environment: "happy-dom",
 		globals: true,
+		setupFiles: ["./src/test-setup.ts"],
 	},
 	server: {
 		allowedHosts: true,

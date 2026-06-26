@@ -21,6 +21,7 @@ import { Route as PublicLoginRouteImport } from './routes/_public/login'
 import { Route as PublicForgotPasswordRouteImport } from './routes/_public/forgot-password'
 import { Route as WorkspaceOrgSlugIndexRouteImport } from './routes/_workspace/$orgSlug/index'
 import { Route as WorkspaceOrgSlugWikiRouteImport } from './routes/_workspace/$orgSlug/wiki'
+import { Route as WorkspaceOrgSlugTimelineRouteImport } from './routes/_workspace/$orgSlug/timeline'
 import { Route as WorkspaceOrgSlugTimeRouteImport } from './routes/_workspace/$orgSlug/time'
 import { Route as WorkspaceOrgSlugTasksRouteImport } from './routes/_workspace/$orgSlug/tasks'
 import { Route as WorkspaceOrgSlugStarredRouteImport } from './routes/_workspace/$orgSlug/starred'
@@ -102,6 +103,12 @@ const WorkspaceOrgSlugWikiRoute = WorkspaceOrgSlugWikiRouteImport.update({
   path: '/wiki',
   getParentRoute: () => WorkspaceOrgSlugRoute,
 } as any)
+const WorkspaceOrgSlugTimelineRoute =
+  WorkspaceOrgSlugTimelineRouteImport.update({
+    id: '/timeline',
+    path: '/timeline',
+    getParentRoute: () => WorkspaceOrgSlugRoute,
+  } as any)
 const WorkspaceOrgSlugTimeRoute = WorkspaceOrgSlugTimeRouteImport.update({
   id: '/time',
   path: '/time',
@@ -246,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/$orgSlug/starred': typeof WorkspaceOrgSlugStarredRoute
   '/$orgSlug/tasks': typeof WorkspaceOrgSlugTasksRouteWithChildren
   '/$orgSlug/time': typeof WorkspaceOrgSlugTimeRouteWithChildren
+  '/$orgSlug/timeline': typeof WorkspaceOrgSlugTimelineRoute
   '/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
   '/$orgSlug/': typeof WorkspaceOrgSlugIndexRoute
   '/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
@@ -277,6 +285,7 @@ export interface FileRoutesByTo {
   '/$orgSlug/recent': typeof WorkspaceOrgSlugRecentRoute
   '/$orgSlug/settings': typeof WorkspaceOrgSlugSettingsRouteWithChildren
   '/$orgSlug/starred': typeof WorkspaceOrgSlugStarredRoute
+  '/$orgSlug/timeline': typeof WorkspaceOrgSlugTimelineRoute
   '/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
   '/$orgSlug': typeof WorkspaceOrgSlugIndexRoute
   '/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
@@ -314,6 +323,7 @@ export interface FileRoutesById {
   '/_workspace/$orgSlug/starred': typeof WorkspaceOrgSlugStarredRoute
   '/_workspace/$orgSlug/tasks': typeof WorkspaceOrgSlugTasksRouteWithChildren
   '/_workspace/$orgSlug/time': typeof WorkspaceOrgSlugTimeRouteWithChildren
+  '/_workspace/$orgSlug/timeline': typeof WorkspaceOrgSlugTimelineRoute
   '/_workspace/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
   '/_workspace/$orgSlug/': typeof WorkspaceOrgSlugIndexRoute
   '/_workspace/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
@@ -350,6 +360,7 @@ export interface FileRouteTypes {
     | '/$orgSlug/starred'
     | '/$orgSlug/tasks'
     | '/$orgSlug/time'
+    | '/$orgSlug/timeline'
     | '/$orgSlug/wiki'
     | '/$orgSlug/'
     | '/$orgSlug/settings/billing'
@@ -381,6 +392,7 @@ export interface FileRouteTypes {
     | '/$orgSlug/recent'
     | '/$orgSlug/settings'
     | '/$orgSlug/starred'
+    | '/$orgSlug/timeline'
     | '/$orgSlug/wiki'
     | '/$orgSlug'
     | '/$orgSlug/settings/billing'
@@ -417,6 +429,7 @@ export interface FileRouteTypes {
     | '/_workspace/$orgSlug/starred'
     | '/_workspace/$orgSlug/tasks'
     | '/_workspace/$orgSlug/time'
+    | '/_workspace/$orgSlug/timeline'
     | '/_workspace/$orgSlug/wiki'
     | '/_workspace/$orgSlug/'
     | '/_workspace/$orgSlug/settings/billing'
@@ -527,6 +540,13 @@ declare module '@tanstack/react-router' {
       path: '/wiki'
       fullPath: '/$orgSlug/wiki'
       preLoaderRoute: typeof WorkspaceOrgSlugWikiRouteImport
+      parentRoute: typeof WorkspaceOrgSlugRoute
+    }
+    '/_workspace/$orgSlug/timeline': {
+      id: '/_workspace/$orgSlug/timeline'
+      path: '/timeline'
+      fullPath: '/$orgSlug/timeline'
+      preLoaderRoute: typeof WorkspaceOrgSlugTimelineRouteImport
       parentRoute: typeof WorkspaceOrgSlugRoute
     }
     '/_workspace/$orgSlug/time': {
@@ -772,6 +792,7 @@ interface WorkspaceOrgSlugRouteChildren {
   WorkspaceOrgSlugStarredRoute: typeof WorkspaceOrgSlugStarredRoute
   WorkspaceOrgSlugTasksRoute: typeof WorkspaceOrgSlugTasksRouteWithChildren
   WorkspaceOrgSlugTimeRoute: typeof WorkspaceOrgSlugTimeRouteWithChildren
+  WorkspaceOrgSlugTimelineRoute: typeof WorkspaceOrgSlugTimelineRoute
   WorkspaceOrgSlugWikiRoute: typeof WorkspaceOrgSlugWikiRoute
   WorkspaceOrgSlugIndexRoute: typeof WorkspaceOrgSlugIndexRoute
 }
@@ -786,6 +807,7 @@ const WorkspaceOrgSlugRouteChildren: WorkspaceOrgSlugRouteChildren = {
   WorkspaceOrgSlugStarredRoute: WorkspaceOrgSlugStarredRoute,
   WorkspaceOrgSlugTasksRoute: WorkspaceOrgSlugTasksRouteWithChildren,
   WorkspaceOrgSlugTimeRoute: WorkspaceOrgSlugTimeRouteWithChildren,
+  WorkspaceOrgSlugTimelineRoute: WorkspaceOrgSlugTimelineRoute,
   WorkspaceOrgSlugWikiRoute: WorkspaceOrgSlugWikiRoute,
   WorkspaceOrgSlugIndexRoute: WorkspaceOrgSlugIndexRoute,
 }
