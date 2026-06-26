@@ -3,11 +3,12 @@ import TimelineGrid from "../axis/grid";
 import { TimelineProvider, useTimelineController } from "../controller/context";
 import TimeUnitsBar from "../header/time-units-bar";
 import NowLine from "../now-line";
+import TimelineScrollbar from "../scrollbar";
 import { usePan } from "../use-pan";
 import ZoomControl from "../zoom-control";
 
 function TimelineCanvas() {
-	const { setViewportWidth } = useTimelineController();
+	const { setViewportWidth, scrollToToday } = useTimelineController();
 	const ref = useRef<HTMLDivElement>(null);
 	const { onPointerDown, onWheel } = usePan();
 
@@ -24,7 +25,14 @@ function TimelineCanvas() {
 
 	return (
 		<div className="flex h-full flex-col">
-			<div className="flex items-center justify-end border-b border-border p-2">
+			<div className="flex items-center justify-between border-b border-border p-2">
+				<button
+					type="button"
+					onClick={scrollToToday}
+					className="rounded-md border border-border px-2.5 py-1 text-xs font-medium hover:bg-accent"
+				>
+					Today
+				</button>
 				<ZoomControl />
 			</div>
 			<div
@@ -43,6 +51,8 @@ function TimelineCanvas() {
 					<NowLine />
 				</div>
 			</div>
+			{/* synthetic horizontal scrollbar (drag thumb / click track to pan) */}
+			<TimelineScrollbar />
 		</div>
 	);
 }
