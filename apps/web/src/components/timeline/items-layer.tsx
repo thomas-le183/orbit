@@ -1,7 +1,8 @@
 // apps/web/src/components/timeline/items-layer.tsx
 import { cn } from "@orbit/shared";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
+import { labelFitsInside, measureTextWidth } from "./bar-label";
 import { useTimelineController } from "./controller/context";
 import { type Geometry, rangeVisibility } from "./controller/geometry";
 import { useHorizontalPercentageOffset } from "./controller/hooks";
@@ -147,72 +148,93 @@ export default function ItemsLayer() {
 					descendantIds: row.isParent ? descendantsOf(item.id) : [],
 				};
 
+				// When the name is wider than the bar, render it beside the bar
+				// instead of clipping it inside.
+				const barWidthPx = ((right - left) / 100) * viewportWidth;
+				const fitsInside = labelFitsInside(
+					barWidthPx,
+					measureTextWidth(item.name),
+				);
+
 				return (
-					<div
-						key={item.id}
-						data-testid="timeline-task-bar"
-						title={item.name}
-						onPointerDown={(e) => beginGesture(e, moveTarget)}
-						style={{
-							left: `${left}%`,
-							width: `${Math.max(right - left, 0)}%`,
-							top,
-							height: barHeight,
-							backgroundColor: row.isParent ? "transparent" : item.color,
-							borderColor: item.color,
-						}}
-						className={cn(
-							"pointer-events-auto absolute flex items-center overflow-hidden rounded-md px-2 text-xs font-medium shadow-sm",
-							row.isParent
-								? "cursor-grab border-2 active:cursor-grabbing"
-								: "cursor-grab text-white active:cursor-grabbing",
-						)}
-					>
-						{!row.isParent && item.progress !== undefined && (
-							<span
-								className="absolute inset-y-0 left-0 bg-black/20"
-								style={{ width: `${item.progress}%` }}
-							/>
-						)}
-						<span
+					<Fragment key={item.id}>
+						<div
+							data-testid="timeline-task-bar"
+							title={item.name}
+							onPointerDown={(e) => beginGesture(e, moveTarget)}
+							style={{
+								left: `${left}%`,
+								width: `${Math.max(right - left, 0)}%`,
+								top,
+								height: barHeight,
+								backgroundColor: row.isParent ? "transparent" : item.color,
+								borderColor: item.color,
+							}}
 							className={cn(
-								"relative truncate",
-								row.isParent && "text-foreground",
+								"pointer-events-auto absolute flex items-center overflow-hidden rounded-md px-2 text-xs font-medium shadow-sm",
+								row.isParent
+									? "cursor-grab border-2 active:cursor-grabbing"
+									: "cursor-grab text-white active:cursor-grabbing",
 							)}
 						>
-							{item.name}
-						</span>
+							{!row.isParent && item.progress !== undefined && (
+								<span
+									className="absolute inset-y-0 left-0 bg-black/20"
+									style={{ width: `${item.progress}%` }}
+								/>
+							)}
+							{fitsInside && (
+								<span
+									className={cn(
+										"relative truncate",
+										row.isParent && "text-foreground",
+									)}
+								>
+									{item.name}
+								</span>
+							)}
 
-						{/* resize handles (leaf tasks only) */}
-						{!row.isParent && (
-							<>
-								<span
-									data-testid="timeline-resize-start"
-									onPointerDown={(e) =>
-										beginGesture(e, {
-											role: "resize-start",
-											id: item.id,
-											range,
-											descendantIds: [],
-										})
-									}
-									className="absolute inset-y-0 left-0 w-1.5 cursor-ew-resize"
-								/>
-								<span
-									data-testid="timeline-resize-end"
-									onPointerDown={(e) =>
-										beginGesture(e, {
-											role: "resize-end",
-											id: item.id,
-											range,
-											descendantIds: [],
-										})
-									}
-									className="absolute inset-y-0 right-0 w-1.5 cursor-ew-resize"
-								/>
-							</>
+							{/* resize handles (leaf tasks only) */}
+							{!row.isParent && (
+								<>
+									<span
+										data-testid="timeline-resize-start"
+										onPointerDown={(e) =>
+											beginGesture(e, {
+												role: "resize-start",
+												id: item.id,
+												range,
+												descendantIds: [],
+											})
+										}
+										className="absolute inset-y-0 left-0 w-1.5 cursor-ew-resize"
+									/>
+									<span
+										data-testid="timeline-resize-end"
+										onPointerDown={(e) =>
+											beginGesture(e, {
+												role: "resize-end",
+												id: item.id,
+												range,
+												descendantIds: [],
+											})
+										}
+										className="absolute inset-y-0 right-0 w-1.5 cursor-ew-resize"
+									/>
+								</>
+							)}
+						</div>
+
+						{!fitsInside && (
+							<span
+								data-testid="timeline-task-label-outside"
+								className="pointer-events-none absolute z-10 flex items-center whitespace-nowrap pl-1.5 text-xs font-medium text-foreground"
+								style={{ left: `${right}%`, top, height: barHeight }}
+							>
+								{item.name}
+							</span>
 						)}
-					</div>
+					</Fragment>
 				);
 			})}
 		</div>

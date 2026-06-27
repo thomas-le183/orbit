@@ -11,10 +11,10 @@ function SizeViewport({ width }: { width: number }) {
 	return null;
 }
 
-function renderLayer(width = 100000) {
+function renderLayer(width = 100000, zoom: "weeks" | "months" = "weeks") {
 	// huge width so the whole seed span is on-screen (no fly-outs)
 	return render(
-		<TimelineProvider initialZoom="weeks">
+		<TimelineProvider initialZoom={zoom}>
 			<SizeViewport width={width} />
 			<ItemsLayer />
 		</TimelineProvider>,
@@ -59,6 +59,25 @@ describe("ItemsLayer", () => {
 			) as HTMLElement
 		).style.left;
 		expect(after).not.toBe(before);
+	});
+
+	it("renders an outside label when a bar is too narrow for its name", () => {
+		// months zoom (8px/day) in a 640px viewport makes the seed bars narrow
+		// relative to their long names, so the label spills outside.
+		const { container } = renderLayer(640, "months");
+		const outside = container.querySelectorAll(
+			"[data-testid='timeline-task-label-outside']",
+		);
+		expect(outside.length).toBeGreaterThan(0);
+	});
+
+	it("keeps the label inside when the bar is wide enough", () => {
+		// huge viewport → bars far wider than their names → no outside labels.
+		const { container } = renderLayer();
+		expect(
+			container.querySelectorAll("[data-testid='timeline-task-label-outside']")
+				.length,
+		).toBe(0);
 	});
 
 	it("resizes the end edge via its handle", () => {
