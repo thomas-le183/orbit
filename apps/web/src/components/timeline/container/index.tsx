@@ -43,10 +43,13 @@ function TimelineCanvas() {
 				<div className="absolute inset-x-0 top-0 h-12">
 					<TimeUnitsBar />
 				</div>
-				{/* grid + now-line fill below the header */}
+				{/* grid + now-line fill below the header (pinned — vertical lines are
+				    identical at any scroll position); only the bars scroll vertically */}
 				<div className="absolute inset-x-0 bottom-0 top-12">
 					<TimelineGrid />
-					<ItemsLayer />
+					<div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
+						<ItemsLayer />
+					</div>
 					<NowLine />
 				</div>
 			</div>

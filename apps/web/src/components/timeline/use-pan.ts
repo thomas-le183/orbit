@@ -41,8 +41,10 @@ export function usePan() {
 	};
 
 	const onWheel = (e: ReactWheelEvent) => {
-		const dx = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-		setOffsetMs((prev) => prev + dx * msPerPx());
+		// Horizontal-intent wheel pans time; vertical wheel falls through to the
+		// native vertical scroll of the rows container.
+		if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+		setOffsetMs((prev) => prev + e.deltaX * msPerPx());
 	};
 
 	return { onPointerDown, onWheel };

@@ -61,6 +61,20 @@ describe("ItemsLayer", () => {
 		expect(after).not.toBe(before);
 	});
 
+	it("sizes the content to the stacked rows so it can scroll vertically", () => {
+		const { container } = renderLayer();
+		const content = container.querySelector(
+			"[data-testid='timeline-items-content']",
+		) as HTMLElement;
+		const rowCount = container.querySelectorAll(
+			"[data-testid='timeline-task-bar'], [data-testid='timeline-milestone']",
+		).length;
+		const height = Number.parseInt(content.style.height, 10);
+		// height grows with rows (40px each) → tall enough to overflow a viewport
+		expect(height).toBeGreaterThan(rowCount * 39);
+		expect(height).toBeGreaterThan(600);
+	});
+
 	it("renders a label beside each visible milestone", () => {
 		const { container } = renderLayer();
 		const milestones = container.querySelectorAll(

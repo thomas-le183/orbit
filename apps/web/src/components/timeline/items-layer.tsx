@@ -71,8 +71,15 @@ export default function ItemsLayer() {
 		}
 	}
 
+	// Total stacked height of all rows; drives the vertical scroll area.
+	const contentHeight = rows.length * ROW_HEIGHT + ROW_PADDING;
+
 	return (
-		<div className="pointer-events-none absolute inset-0">
+		<div
+			data-testid="timeline-items-content"
+			className="pointer-events-none relative w-full"
+			style={{ height: contentHeight }}
+		>
 			{/* parent container rects (behind bars) */}
 			{containers.map((c: ContainerRect) => {
 				const left = getPercentageOffset(c.range.from);
