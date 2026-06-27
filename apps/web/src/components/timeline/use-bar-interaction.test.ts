@@ -3,12 +3,14 @@ import { startOfUtcDay } from "./units/make-units";
 import {
 	applyMove,
 	applyResize,
+	gestureTooltip,
 	pxToDays,
 	rangeToDates,
 } from "./use-bar-interaction";
 
 const ONE_DAY = 86_400_000;
 const range = { from: 0, to: 3 * ONE_DAY }; // 3-day task starting today
+const today = startOfUtcDay(Date.parse("2026-06-01"));
 
 describe("pxToDays", () => {
 	it("converts pixels to whole days at the zoom's px/day, rounding", () => {
@@ -57,10 +59,33 @@ describe("applyResize", () => {
 
 describe("rangeToDates", () => {
 	it("round-trips a range back to inclusive ISO dates", () => {
-		const today = startOfUtcDay(Date.parse("2026-06-01"));
 		expect(rangeToDates({ from: 0, to: 3 * ONE_DAY }, today)).toEqual({
 			startDate: "2026-06-01",
 			endDate: "2026-06-03", // exclusive `to` (+1 day) → inclusive end
 		});
+	});
+});
+
+describe("gestureTooltip", () => {
+	it("labels the inclusive end date when resizing the end edge", () => {
+		const t = gestureTooltip("resize-end", { from: 0, to: 3 * ONE_DAY }, today);
+		expect(t.ms).toBe(3 * ONE_DAY);
+		expect(t.label).toBe("Jun 3");
+	});
+
+	it("labels the start date when resizing the start edge", () => {
+		const t = gestureTooltip(
+			"resize-start",
+			{ from: 0, to: 3 * ONE_DAY },
+			today,
+		);
+		expect(t.ms).toBe(0);
+		expect(t.label).toBe("Jun 1");
+	});
+
+	it("labels the full span when moving", () => {
+		const t = gestureTooltip("move", { from: 0, to: 3 * ONE_DAY }, today);
+		expect(t.ms).toBe(0);
+		expect(t.label).toBe("Jun 1 – Jun 3");
 	});
 });

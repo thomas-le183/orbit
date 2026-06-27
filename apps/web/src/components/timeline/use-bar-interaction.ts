@@ -55,6 +55,36 @@ export type GestureTarget = {
 	descendantIds: string[];
 };
 
+const tooltipDateFormat = new Intl.DateTimeFormat("en-US", {
+	month: "short",
+	day: "numeric",
+	timeZone: "UTC",
+});
+
+const formatTooltipDate = (iso: string): string =>
+	tooltipDateFormat.format(Date.parse(iso));
+
+/**
+ * The date label and the ms-offset to anchor a drag/resize tooltip at:
+ * the start edge when moving or resizing the start, the (inclusive) end edge
+ * when resizing the end, and the full span when moving.
+ */
+export const gestureTooltip = (
+	role: GestureRole,
+	range: RelativeTimeRangeOffset,
+	today: number,
+): { ms: number; label: string } => {
+	const { startDate, endDate } = rangeToDates(range, today);
+	if (role === "resize-start")
+		return { ms: range.from, label: formatTooltipDate(startDate) };
+	if (role === "resize-end")
+		return { ms: range.to, label: formatTooltipDate(endDate) };
+	return {
+		ms: range.from,
+		label: `${formatTooltipDate(startDate)} – ${formatTooltipDate(endDate)}`,
+	};
+};
+
 /**
  * Pointer-driven move/resize. Produces a live `draft` (id → range) during the
  * gesture and commits a day-snapped edit on release.
@@ -64,6 +94,8 @@ export function useBarInteraction(opts: {
 	onCommitResize: (id: string, range: RelativeTimeRangeOffset) => void;
 }): {
 	draft: Record<string, RelativeTimeRangeOffset>;
+	/** The in-progress gesture (id + role), or null when idle. */
+	active: { id: string; role: GestureRole } | null;
 	beginGesture: (e: ReactPointerEvent, target: GestureTarget) => void;
 } {
 	const optsRef = useRef(opts);
@@ -80,6 +112,10 @@ export function useBarInteraction(opts: {
 	const [draft, setDraft] = useState<Record<string, RelativeTimeRangeOffset>>(
 		{},
 	);
+	const [active, setActive] = useState<{
+		id: string;
+		role: GestureRole;
+	} | null>(null);
 
 	useEffect(() => {
 		return () => {
@@ -107,6 +143,10 @@ export function useBarInteraction(opts: {
 				target0.setPointerCapture(e.pointerId);
 			} catch {}
 
+			// Show the tooltip / draft from the first frame of the gesture.
+			setActive({ id: target.id, role: target.role });
+			setDraft({ [target.id]: target.range });
+
 			const compute = (dx: number): Record<string, RelativeTimeRangeOffset> => {
 				const days = pxToDays(dx, zoomRef.current);
 				if (target.role === "move") {
@@ -133,6 +173,7 @@ export function useBarInteraction(opts: {
 						),
 					);
 				setDraft({});
+				setActive(null);
 				try {
 					target0.releasePointerCapture(ev.pointerId);
 				} catch {}
@@ -147,5 +188,5 @@ export function useBarInteraction(opts: {
 		[],
 	);
 
-	return { draft, beginGesture };
+	return { draft, active, beginGesture };
 }

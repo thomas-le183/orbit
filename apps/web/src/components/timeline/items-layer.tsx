@@ -1,7 +1,7 @@
 // apps/web/src/components/timeline/items-layer.tsx
 import { cn } from "@orbit/shared";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Fragment, useMemo } from "react";
+import { Fragment, type ReactNode, useMemo } from "react";
 import { labelFitsInside, measureTextWidth } from "./bar-label";
 import { useTimelineController } from "./controller/context";
 import { type Geometry, rangeVisibility } from "./controller/geometry";
@@ -14,6 +14,7 @@ import {
 import type { RelativeTimeRangeOffset } from "./units/types";
 import {
 	type GestureTarget,
+	gestureTooltip,
 	rangeToDates,
 	useBarInteraction,
 } from "./use-bar-interaction";
@@ -33,7 +34,7 @@ export default function ItemsLayer() {
 		[items, today],
 	);
 
-	const { draft, beginGesture } = useBarInteraction({
+	const { draft, active, beginGesture } = useBarInteraction({
 		onCommitMove: (id, days) => moveDays(id, days),
 		onCommitResize: (id, range) =>
 			updateItem(id, rangeToDatesPatch(range, today)),
@@ -50,6 +51,28 @@ export default function ItemsLayer() {
 		rows
 			.filter((r) => r.item.parentId === parentId && !r.isParent)
 			.map((r) => r.item.id);
+
+	// Date tooltip anchored to the edge being dragged/resized.
+	let dragTooltip: ReactNode = null;
+	if (active) {
+		const row = rows.find((r) => r.item.id === active.id);
+		if (row) {
+			const range = draft[active.id] ?? row.range;
+			const tip = gestureTooltip(active.role, range, today);
+			const leftPercent = getPercentageOffset(tip.ms);
+			if (Number.isFinite(leftPercent)) {
+				dragTooltip = (
+					<div
+						data-testid="timeline-drag-tooltip"
+						className="pointer-events-none absolute z-30 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md bg-foreground px-1.5 py-0.5 text-xs font-medium text-background shadow-md"
+						style={{ left: `${leftPercent}%`, top: row.rowIndex * ROW_HEIGHT }}
+					>
+						{tip.label}
+					</div>
+				);
+			}
+		}
+	}
 
 	return (
 		<div className="pointer-events-none absolute inset-0">
@@ -245,6 +268,8 @@ export default function ItemsLayer() {
 					</Fragment>
 				);
 			})}
+
+			{dragTooltip}
 		</div>
 	);
 }

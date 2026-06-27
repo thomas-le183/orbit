@@ -92,6 +92,24 @@ describe("ItemsLayer", () => {
 		).toBe(0);
 	});
 
+	it("shows a date tooltip while resizing and hides it on release", () => {
+		const { container } = renderLayer();
+		const handle = container.querySelector(
+			"[data-testid='timeline-resize-end']",
+		) as HTMLElement;
+		fireEvent.pointerDown(handle, { clientX: 0, pointerId: 5 });
+		fireEvent.pointerMove(window, { clientX: 160, pointerId: 5 });
+		const tip = container.querySelector(
+			"[data-testid='timeline-drag-tooltip']",
+		);
+		expect(tip).not.toBeNull();
+		expect((tip as HTMLElement).textContent?.trim().length).toBeGreaterThan(0);
+		fireEvent.pointerUp(window, { clientX: 160, pointerId: 5 });
+		expect(
+			container.querySelector("[data-testid='timeline-drag-tooltip']"),
+		).toBeNull();
+	});
+
 	it("resizes the end edge via its handle", () => {
 		const { container } = renderLayer();
 		const handle = container.querySelector(
