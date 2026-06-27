@@ -12,8 +12,21 @@ import TimelineScrollbar from "../scrollbar";
 import { usePan } from "../use-pan";
 import ZoomControl from "../zoom-control";
 
-/** Fraction of a viewport the arrow buttons pan per click. */
+/** Fraction of a viewport the arrow buttons / keys pan per step. */
 const PAN_STEP = 0.5;
+
+/** True when focus is in a field where arrow keys should keep their normal meaning. */
+function isTypingTarget(target: EventTarget | null): boolean {
+	const el = target as HTMLElement | null;
+	if (!el) return false;
+	const tag = el.tagName;
+	return (
+		tag === "INPUT" ||
+		tag === "TEXTAREA" ||
+		tag === "SELECT" ||
+		el.isContentEditable
+	);
+}
 
 function TimelineCanvas() {
 	const {
@@ -42,6 +55,26 @@ function TimelineCanvas() {
 					msPerViewport({ offsetMs: prev, zoom: zoomLevel, viewportWidth }),
 		);
 	};
+
+	// Keep the keydown handler reading the latest panViewports without resubscribing.
+	const panRef = useRef(panViewports);
+	panRef.current = panViewports;
+
+	// Left/Right arrow keys pan the timeline (unless the user is typing in a field).
+	useEffect(() => {
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (isTypingTarget(e.target)) return;
+			if (e.key === "ArrowLeft") {
+				e.preventDefault();
+				panRef.current(-PAN_STEP);
+			} else if (e.key === "ArrowRight") {
+				e.preventDefault();
+				panRef.current(PAN_STEP);
+			}
+		};
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, []);
 
 	return (
 		<div className="flex h-full flex-col">

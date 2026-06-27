@@ -74,4 +74,40 @@ describe("TimelineContainer", () => {
 		// panning later moves the offset forward, so today (the now-line) shifts left
 		expect(nowLineLeft()).not.toBe(before);
 	});
+
+	it("pans the view with the left/right arrow keys", () => {
+		const { container } = renderWithClient(<TimelineContainer />);
+		const nowLineLeft = () =>
+			(
+				container.querySelector(
+					"[data-testid='timeline-now-line']",
+				) as HTMLElement
+			).style.left;
+
+		const before = nowLineLeft();
+		fireEvent.keyDown(window, { key: "ArrowRight" });
+		const afterRight = nowLineLeft();
+		expect(afterRight).not.toBe(before);
+
+		// ArrowLeft pans back the other way
+		fireEvent.keyDown(window, { key: "ArrowLeft" });
+		expect(nowLineLeft()).not.toBe(afterRight);
+	});
+
+	it("ignores arrow keys while typing in an input", () => {
+		const { container } = renderWithClient(<TimelineContainer />);
+		const nowLineLeft = () =>
+			(
+				container.querySelector(
+					"[data-testid='timeline-now-line']",
+				) as HTMLElement
+			).style.left;
+
+		const input = document.createElement("input");
+		document.body.appendChild(input);
+		const before = nowLineLeft();
+		fireEvent.keyDown(input, { key: "ArrowRight" });
+		expect(nowLineLeft()).toBe(before);
+		input.remove();
+	});
 });
