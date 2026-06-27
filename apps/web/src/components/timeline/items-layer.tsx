@@ -62,7 +62,7 @@ export default function ItemsLayer() {
 					<div
 						key={`container-${c.parentId}`}
 						data-testid="timeline-container-rect"
-						className="absolute rounded-lg border border-border/60 bg-muted/20"
+						className="absolute rounded-lg border border-border/60 bg-muted/40"
 						style={{
 							left: `${left}%`,
 							width: `${Math.max(right - left, 0)}%`,
@@ -122,19 +122,27 @@ export default function ItemsLayer() {
 						descendantIds: [],
 					};
 					return (
-						<div
-							key={item.id}
-							data-testid="timeline-milestone"
-							title={item.name}
-							onPointerDown={(e) => beginGesture(e, moveTarget)}
-							style={{ left: `${left}%`, top: top + barHeight / 2 }}
-							className="pointer-events-auto absolute z-10 -translate-x-1/2 -translate-y-1/2 size-3 rotate-45 cursor-grab rounded-[2px] active:cursor-grabbing"
-						>
+						<Fragment key={item.id}>
+							<div
+								data-testid="timeline-milestone"
+								title={item.name}
+								onPointerDown={(e) => beginGesture(e, moveTarget)}
+								style={{ left: `${left}%`, top: top + barHeight / 2 }}
+								className="pointer-events-auto absolute z-10 -translate-x-1/2 -translate-y-1/2 size-3 rotate-45 cursor-grab rounded-[2px] active:cursor-grabbing"
+							>
+								<span
+									className="block size-full rotate-45"
+									style={{ backgroundColor: item.color }}
+								/>
+							</div>
 							<span
-								className="block size-full rotate-45"
-								style={{ backgroundColor: item.color }}
-							/>
-						</div>
+								data-testid="timeline-milestone-label"
+								className="pointer-events-none absolute z-10 flex items-center whitespace-nowrap pl-2.5 text-xs font-medium text-foreground"
+								style={{ left: `${left}%`, top, height: barHeight }}
+							>
+								{item.name}
+							</span>
+						</Fragment>
 					);
 				}
 

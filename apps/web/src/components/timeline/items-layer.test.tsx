@@ -61,6 +61,18 @@ describe("ItemsLayer", () => {
 		expect(after).not.toBe(before);
 	});
 
+	it("renders a label beside each visible milestone", () => {
+		const { container } = renderLayer();
+		const milestones = container.querySelectorAll(
+			"[data-testid='timeline-milestone']",
+		);
+		const labels = container.querySelectorAll(
+			"[data-testid='timeline-milestone-label']",
+		);
+		expect(milestones.length).toBeGreaterThan(0);
+		expect(labels.length).toBe(milestones.length);
+	});
+
 	it("renders an outside label when a bar is too narrow for its name", () => {
 		// months zoom (8px/day) in a 640px viewport makes the seed bars narrow
 		// relative to their long names, so the label spills outside.
