@@ -1,11 +1,6 @@
 import { PLAN_METADATA, type SubscriptionPlan } from "@orbit/shared";
 import { Button } from "@orbit/ui/components/button";
 import {
-	Carousel,
-	CarouselContent,
-	CarouselItem,
-} from "@orbit/ui/components/carousel";
-import {
 	Collapsible,
 	CollapsibleContent,
 	CollapsibleTrigger,
@@ -57,9 +52,6 @@ import {
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
-import girlsDanceGif from "@/assets/girls-dance.gif";
-import minecraftParkourGif from "@/assets/minecraft-parkour.gif";
-import subwaySurfersGif from "@/assets/subway-surfers.gif";
 import { CommandMenu } from "@/components/workspace/command-menu";
 import {
 	resolveModule,
@@ -135,7 +127,7 @@ export function AppSidebar() {
 			</SidebarContent>
 
 			<SidebarFooter>
-				<Carousel className="group-data-[collapsible=icon]:hidden">
+				{/* <Carousel className="group-data-[collapsible=icon]:hidden">
 					<CarouselContent>
 						{[subwaySurfersGif, minecraftParkourGif, girlsDanceGif].map((gif, i) => (
 							<CarouselItem key={i}>
@@ -143,7 +135,7 @@ export function AppSidebar() {
 							</CarouselItem>
 						))}
 					</CarouselContent>
-				</Carousel>
+				</Carousel> */}
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<UserMenu />
