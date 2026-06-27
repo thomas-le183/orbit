@@ -96,6 +96,8 @@ export function useBarInteraction(opts: {
 	draft: Record<string, RelativeTimeRangeOffset>;
 	/** The in-progress gesture (id + role), or null when idle. */
 	active: { id: string; role: GestureRole } | null;
+	/** Latest pointer position (viewport coords) during a gesture, else null. */
+	pointer: { x: number; y: number } | null;
 	beginGesture: (e: ReactPointerEvent, target: GestureTarget) => void;
 } {
 	const optsRef = useRef(opts);
@@ -116,6 +118,7 @@ export function useBarInteraction(opts: {
 		id: string;
 		role: GestureRole;
 	} | null>(null);
+	const [pointer, setPointer] = useState<{ x: number; y: number } | null>(null);
 
 	useEffect(() => {
 		return () => {
@@ -146,6 +149,7 @@ export function useBarInteraction(opts: {
 			// Show the tooltip / draft from the first frame of the gesture.
 			setActive({ id: target.id, role: target.role });
 			setDraft({ [target.id]: target.range });
+			setPointer({ x: e.clientX, y: e.clientY });
 
 			const compute = (dx: number): Record<string, RelativeTimeRangeOffset> => {
 				const days = pxToDays(dx, zoomRef.current);
@@ -158,6 +162,7 @@ export function useBarInteraction(opts: {
 
 			const onMove = (ev: PointerEvent) => {
 				setDraft(compute(ev.clientX - startX));
+				setPointer({ x: ev.clientX, y: ev.clientY });
 			};
 			const onUp = (ev: PointerEvent) => {
 				const days = pxToDays(ev.clientX - startX, zoomRef.current);
@@ -174,6 +179,7 @@ export function useBarInteraction(opts: {
 					);
 				setDraft({});
 				setActive(null);
+				setPointer(null);
 				try {
 					target0.releasePointerCapture(ev.pointerId);
 				} catch {}
@@ -188,5 +194,5 @@ export function useBarInteraction(opts: {
 		[],
 	);
 
-	return { draft, active, beginGesture };
+	return { draft, active, pointer, beginGesture };
 }

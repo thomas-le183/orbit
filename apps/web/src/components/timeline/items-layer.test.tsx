@@ -92,19 +92,22 @@ describe("ItemsLayer", () => {
 		).toBe(0);
 	});
 
-	it("shows a date tooltip while resizing and hides it on release", () => {
+	it("shows a date tooltip that follows the cursor and hides on release", () => {
 		const { container } = renderLayer();
 		const handle = container.querySelector(
 			"[data-testid='timeline-resize-end']",
 		) as HTMLElement;
-		fireEvent.pointerDown(handle, { clientX: 0, pointerId: 5 });
-		fireEvent.pointerMove(window, { clientX: 160, pointerId: 5 });
+		fireEvent.pointerDown(handle, { clientX: 0, clientY: 200, pointerId: 5 });
+		fireEvent.pointerMove(window, { clientX: 160, clientY: 220, pointerId: 5 });
 		const tip = container.querySelector(
 			"[data-testid='timeline-drag-tooltip']",
-		);
+		) as HTMLElement;
 		expect(tip).not.toBeNull();
-		expect((tip as HTMLElement).textContent?.trim().length).toBeGreaterThan(0);
-		fireEvent.pointerUp(window, { clientX: 160, pointerId: 5 });
+		expect(tip.textContent?.trim().length).toBeGreaterThan(0);
+		// positioned at the cursor (viewport coords)
+		expect(tip.style.left).toBe("160px");
+		expect(tip.style.top).toBe("208px"); // clientY (220) - 12px offset
+		fireEvent.pointerUp(window, { clientX: 160, clientY: 220, pointerId: 5 });
 		expect(
 			container.querySelector("[data-testid='timeline-drag-tooltip']"),
 		).toBeNull();

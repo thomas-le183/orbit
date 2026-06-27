@@ -34,7 +34,7 @@ export default function ItemsLayer() {
 		[items, today],
 	);
 
-	const { draft, active, beginGesture } = useBarInteraction({
+	const { draft, active, pointer, beginGesture } = useBarInteraction({
 		onCommitMove: (id, days) => moveDays(id, days),
 		onCommitResize: (id, range) =>
 			updateItem(id, rangeToDatesPatch(range, today)),
@@ -52,25 +52,22 @@ export default function ItemsLayer() {
 			.filter((r) => r.item.parentId === parentId && !r.isParent)
 			.map((r) => r.item.id);
 
-	// Date tooltip anchored to the edge being dragged/resized.
+	// Date tooltip that follows the cursor during a drag/resize gesture.
 	let dragTooltip: ReactNode = null;
-	if (active) {
+	if (active && pointer) {
 		const row = rows.find((r) => r.item.id === active.id);
 		if (row) {
 			const range = draft[active.id] ?? row.range;
 			const tip = gestureTooltip(active.role, range, today);
-			const leftPercent = getPercentageOffset(tip.ms);
-			if (Number.isFinite(leftPercent)) {
-				dragTooltip = (
-					<div
-						data-testid="timeline-drag-tooltip"
-						className="pointer-events-none absolute z-30 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md bg-foreground px-1.5 py-0.5 text-xs font-medium text-background shadow-md"
-						style={{ left: `${leftPercent}%`, top: row.rowIndex * ROW_HEIGHT }}
-					>
-						{tip.label}
-					</div>
-				);
-			}
+			dragTooltip = (
+				<div
+					data-testid="timeline-drag-tooltip"
+					className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md bg-foreground px-1.5 py-0.5 text-xs font-medium text-background shadow-md"
+					style={{ left: pointer.x, top: pointer.y - 12 }}
+				>
+					{tip.label}
+				</div>
+			);
 		}
 	}
 
