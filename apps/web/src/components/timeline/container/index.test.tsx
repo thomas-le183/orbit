@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render } from "@testing-library/react";
+import { fireEvent, render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import TimelineContainer from "./index";
@@ -54,5 +54,24 @@ describe("TimelineContainer", () => {
 			container.querySelectorAll("button[data-slot='toggle-group-item']")
 				.length,
 		).toBe(4);
+	});
+
+	it("pans the view when the arrow buttons are clicked", () => {
+		const { container } = renderWithClient(<TimelineContainer />);
+		const nowLineLeft = () =>
+			(
+				container.querySelector(
+					"[data-testid='timeline-now-line']",
+				) as HTMLElement
+			).style.left;
+
+		const before = nowLineLeft();
+		fireEvent.click(
+			container.querySelector(
+				"[data-testid='timeline-pan-later']",
+			) as HTMLElement,
+		);
+		// panning later moves the offset forward, so today (the now-line) shifts left
+		expect(nowLineLeft()).not.toBe(before);
 	});
 });
