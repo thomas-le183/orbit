@@ -13,7 +13,7 @@ import { usePan } from "../use-pan";
 import ZoomControl from "../zoom-control";
 
 /** Fraction of a viewport the arrow buttons / keys pan per step. */
-const PAN_STEP = 0.5;
+const PAN_STEP = 0.25;
 
 /** True when focus is in a field where arrow keys should keep their normal meaning. */
 function isTypingTarget(target: EventTarget | null): boolean {
