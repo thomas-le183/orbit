@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	clampTableWidth,
-	MAX_TABLE_WIDTH,
-	MIN_TABLE_WIDTH,
-} from "./divider";
+import { clampTableWidth, MAX_TABLE_WIDTH, MIN_TABLE_WIDTH } from "./divider";
 import { contentHeight, ROW_HEIGHT, ROW_PADDING } from "./row-metrics";
 
 describe("clampTableWidth", () => {

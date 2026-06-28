@@ -23,13 +23,17 @@ export type PaginatedData<T> = {
 	prevCursor: string | null;
 };
 
-export type PaginatedResponse<T> = ApiSuccess<PaginatedData<T>> | ApiResponseError;
+export type PaginatedResponse<T> =
+	| ApiSuccess<PaginatedData<T>>
+	| ApiResponseError;
 
 // Narrowing helpers
 export function isApiSuccess<T>(res: ApiResponse<T>): res is ApiSuccess<T> {
 	return res.success === true;
 }
 
-export function isApiResponseError<T>(res: ApiResponse<T>): res is ApiResponseError {
+export function isApiResponseError<T>(
+	res: ApiResponse<T>,
+): res is ApiResponseError {
 	return res.success === false;
 }

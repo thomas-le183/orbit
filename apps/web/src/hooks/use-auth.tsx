@@ -287,8 +287,9 @@ export function useAcceptInvitation() {
 	const qc = useQueryClient();
 	return useMutation({
 		mutationFn: async (invitationId: string) => {
-			const { data, error } =
-				await authClient.organization.acceptInvitation({ invitationId });
+			const { data, error } = await authClient.organization.acceptInvitation({
+				invitationId,
+			});
 			if (error) throw error;
 			return data;
 		},

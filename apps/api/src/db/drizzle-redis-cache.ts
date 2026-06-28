@@ -19,7 +19,12 @@ export class DrizzleRedisCache extends Cache {
 	}
 
 	// biome-ignore lint/suspicious/noExplicitAny: must match abstract base class signature
-	override async get(key: string, _tables: string[], _isTag: boolean, _isAutoInvalidate?: boolean): Promise<any[] | undefined> {
+	override async get(
+		key: string,
+		_tables: string[],
+		_isTag: boolean,
+		_isAutoInvalidate?: boolean,
+	): Promise<any[] | undefined> {
 		const value = await this.redis.get(key);
 		if (value === null) return undefined;
 		return JSON.parse(value) as unknown[];
@@ -32,17 +37,24 @@ export class DrizzleRedisCache extends Cache {
 		_isTag: boolean,
 		config?: CacheConfig,
 	): Promise<void> {
-		const ttlMs = config?.px ?? (config?.ex ? config.ex * 1000 : this.defaultTtl * 1000);
+		const ttlMs =
+			config?.px ?? (config?.ex ? config.ex * 1000 : this.defaultTtl * 1000);
 
 		await this.redis.set(key, JSON.stringify(response), "PX", ttlMs);
 
 		await Promise.all(
-			tables.map((table) => this.redis.sadd(`${TABLE_KEY_PREFIX}${table}`, key)),
+			tables.map((table) =>
+				this.redis.sadd(`${TABLE_KEY_PREFIX}${table}`, key),
+			),
 		);
 	}
 
 	override async onMutate(params: MutationOption): Promise<void> {
-		const tags = params.tags ? (Array.isArray(params.tags) ? params.tags : [params.tags]) : [];
+		const tags = params.tags
+			? Array.isArray(params.tags)
+				? params.tags
+				: [params.tags]
+			: [];
 		const tables = params.tables
 			? Array.isArray(params.tables)
 				? params.tables
@@ -53,7 +65,9 @@ export class DrizzleRedisCache extends Cache {
 		const tableSetKeys: string[] = [];
 
 		for (const table of tables) {
-			const tableName = is(table, Table) ? getTableName(table) : (table as string);
+			const tableName = is(table, Table)
+				? getTableName(table)
+				: (table as string);
 			const setKey = `${TABLE_KEY_PREFIX}${tableName}`;
 			tableSetKeys.push(setKey);
 			const keys = await this.redis.smembers(setKey);

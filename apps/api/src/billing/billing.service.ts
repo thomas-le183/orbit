@@ -1,4 +1,9 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import {
+	BadRequestException,
+	Inject,
+	Injectable,
+	NotFoundException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
 	type BillingInterval,
@@ -63,7 +68,10 @@ export class BillingService {
 			.select({ value: count() })
 			.from(schema.member)
 			.where(eq(schema.member.organizationId, organizationId))
-			.$withCache({ tag: `member-count:${organizationId}`, config: { ex: 300 } });
+			.$withCache({
+				tag: `member-count:${organizationId}`,
+				config: { ex: 300 },
+			});
 		return result[0]?.value ?? 0;
 	}
 
@@ -117,7 +125,9 @@ export class BillingService {
 		});
 
 		if (!sub || sub.status !== "trialing") {
-			throw new BadRequestException("No active trial found for this organization");
+			throw new BadRequestException(
+				"No active trial found for this organization",
+			);
 		}
 		if (!sub.stripeCustomerId) {
 			throw new BadRequestException("No Stripe customer found");
@@ -139,7 +149,8 @@ export class BillingService {
 			cancel_url: cancelUrl,
 		});
 
-		if (!session.url) throw new BadRequestException("Could not create checkout session");
+		if (!session.url)
+			throw new BadRequestException("Could not create checkout session");
 		return { url: session.url };
 	}
 
@@ -152,7 +163,9 @@ export class BillingService {
 		});
 
 		if (!sub || sub.status !== "trialing") {
-			throw new BadRequestException("No active trial found for this organization");
+			throw new BadRequestException(
+				"No active trial found for this organization",
+			);
 		}
 		if (!sub.stripeSubscriptionId) {
 			throw new BadRequestException("No Stripe subscription found");
@@ -167,13 +180,17 @@ export class BillingService {
 			throw new BadRequestException("Checkout session not completed");
 		}
 		if (session.metadata?.organization_id !== organizationId) {
-			throw new BadRequestException("Checkout session does not belong to this organization");
+			throw new BadRequestException(
+				"Checkout session does not belong to this organization",
+			);
 		}
 		if (session.customer !== sub.stripeCustomerId) {
 			throw new BadRequestException("Checkout session customer mismatch");
 		}
 
-		const setupIntent = session.setup_intent as { payment_method: string | { id: string } | null } | null;
+		const setupIntent = session.setup_intent as {
+			payment_method: string | { id: string } | null;
+		} | null;
 		if (!setupIntent?.payment_method) {
 			throw new BadRequestException("No payment method found in session");
 		}
@@ -209,7 +226,6 @@ export class BillingService {
 			cancel_at_period_end: true,
 		});
 	}
-
 
 	async getPlans(): Promise<PlanResponse[]> {
 		const allLookupKeys = Object.values(PLAN_LOOKUP_KEYS).flatMap((keys) => [

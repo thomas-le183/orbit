@@ -22,7 +22,12 @@ import { createOrganizationHooks } from "./organization-billing-hooks";
 	providers: [
 		{
 			provide: AUTH,
-			useFactory: (db: Db, config: ConfigService, emailQueue: Queue, notificationQueue: Queue) => {
+			useFactory: (
+				db: Db,
+				config: ConfigService,
+				emailQueue: Queue,
+				notificationQueue: Queue,
+			) => {
 				const appUrl = config.get<string>("WEB_BASE_URL")!;
 
 				const stripeKey = config.getOrThrow<string>("STRIPE_SECRET_KEY");
@@ -193,7 +198,12 @@ import { createOrganizationHooks } from "./organization-billing-hooks";
 					],
 				});
 			},
-			inject: [DB, ConfigService, getQueueToken(QUEUES.EMAIL), getQueueToken(QUEUES.NOTIFICATION)],
+			inject: [
+				DB,
+				ConfigService,
+				getQueueToken(QUEUES.EMAIL),
+				getQueueToken(QUEUES.NOTIFICATION),
+			],
 		},
 	],
 	controllers: [AuthController, InviteController],

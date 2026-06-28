@@ -64,16 +64,17 @@ function InvitePage() {
 						<CardDescription>
 							This invitation was sent to a different email address.
 							{session?.user?.email && (
-								<> You&apos;re currently signed in as <strong>{session.user.email}</strong>.</>
+								<>
+									{" "}
+									You&apos;re currently signed in as{" "}
+									<strong>{session.user.email}</strong>.
+								</>
 							)}{" "}
 							Sign out and sign in with the invited email to continue.
 						</CardDescription>
 					</CardHeader>
 					<CardFooter className="justify-center gap-2">
-						<Button
-							variant="outline"
-							onClick={() => navigate({ to: "/" })}
-						>
+						<Button variant="outline" onClick={() => navigate({ to: "/" })}>
 							Go home
 						</Button>
 						<Button

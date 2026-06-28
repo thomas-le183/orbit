@@ -3,7 +3,9 @@ import { useRef, useState } from "react";
 import { clampTableWidth, DEFAULT_TABLE_WIDTH } from "./divider";
 
 /** Drag-to-resize state for the table | timeline divider. */
-export function useResizableDivider(initialWidth: number = DEFAULT_TABLE_WIDTH): {
+export function useResizableDivider(
+	initialWidth: number = DEFAULT_TABLE_WIDTH,
+): {
 	tableWidth: number;
 	onDividerPointerDown: (e: ReactPointerEvent) => void;
 } {

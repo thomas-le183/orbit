@@ -37,8 +37,7 @@ export class EmailService {
 					}
 				: undefined,
 		});
-		this.from =
-			config.get<string>("EMAIL_FROM") ?? "Orbit <orbit@localhost>";
+		this.from = config.get<string>("EMAIL_FROM") ?? "Orbit <orbit@localhost>";
 	}
 
 	async sendVerifyEmail(to: string, name: string, url: string): Promise<void> {
@@ -84,7 +83,11 @@ export class EmailService {
 		await this.send(to, changeEmailTemplate(name, newEmail, url));
 	}
 
-	async sendDeleteAccount(to: string, name: string, url: string): Promise<void> {
+	async sendDeleteAccount(
+		to: string,
+		name: string,
+		url: string,
+	): Promise<void> {
 		await this.send(to, deleteAccountEmail(name, url));
 	}
 

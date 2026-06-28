@@ -51,7 +51,10 @@ export class ChannelsService {
 				),
 			)
 			.orderBy(asc(schema.channel.name))
-			.$withCache({ tag: `private-channels:${userId}:${orgId}`, config: { ex: 300 } });
+			.$withCache({
+				tag: `private-channels:${userId}:${orgId}`,
+				config: { ex: 300 },
+			});
 
 		return [...publicChannels, ...privateRows.map((r) => r.channel)];
 	}
@@ -172,7 +175,9 @@ export class ChannelsService {
 
 		const [actor, org] = await Promise.all([
 			this.db.query.user.findFirst({ where: eq(schema.user.id, userId) }),
-			this.db.query.organization.findFirst({ where: eq(schema.organization.id, ch.organizationId) }),
+			this.db.query.organization.findFirst({
+				where: eq(schema.organization.id, ch.organizationId),
+			}),
 		]);
 		if (actor && org) {
 			void this.notificationQueue.add("channel_added", {

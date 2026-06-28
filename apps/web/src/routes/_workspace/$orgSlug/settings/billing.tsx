@@ -73,8 +73,11 @@ function BillingPage() {
 	const cancelSubscription = useCancelSubscription(orgSlug);
 	const [cancelModalOpen, setCancelModalOpen] = useState(false);
 	const sub = data?.subscription;
-	const currentPlan = (sub?.plan ?? summary?.plan ?? "free") as import("@orbit/shared").SubscriptionPlan;
-	const hasActiveSubscription = sub != null && ["active", "trialing", "past_due"].includes(sub.status);
+	const currentPlan = (sub?.plan ??
+		summary?.plan ??
+		"free") as import("@orbit/shared").SubscriptionPlan;
+	const hasActiveSubscription =
+		sub != null && ["active", "trialing", "past_due"].includes(sub.status);
 	const isPastDue = sub?.status === "past_due";
 	const isTrialing = sub?.status === "trialing";
 	const canCancel =
@@ -88,11 +91,23 @@ function BillingPage() {
 			{ sessionId: setupSession },
 			{
 				onSuccess: () => {
-					toast.success("Payment method saved. You'll be charged when your trial ends.");
-					void queryClient.invalidateQueries({ queryKey: ["billing", orgSlug, "subscription"] });
-					navigate({ to: ".", search: (prev) => ({ ...prev, checkout: undefined, setup_session: undefined }) });
+					toast.success(
+						"Payment method saved. You'll be charged when your trial ends.",
+					);
+					void queryClient.invalidateQueries({
+						queryKey: ["billing", orgSlug, "subscription"],
+					});
+					navigate({
+						to: ".",
+						search: (prev) => ({
+							...prev,
+							checkout: undefined,
+							setup_session: undefined,
+						}),
+					});
 				},
-				onError: () => toast.error("Could not save payment method. Please try again."),
+				onError: () =>
+					toast.error("Could not save payment method. Please try again."),
 			},
 		);
 	}, [setupSession, activateTrial.mutate, navigate, queryClient, orgSlug]);
@@ -116,19 +131,34 @@ function BillingPage() {
 		});
 	}
 
-	function handleSelectPlan(plan: import("@orbit/shared").SubscriptionPlan, interval: "monthly" | "yearly") {
+	function handleSelectPlan(
+		plan: import("@orbit/shared").SubscriptionPlan,
+		interval: "monthly" | "yearly",
+	) {
 		if (hasActiveSubscription && sub?.stripeSubscriptionId) {
 			changePlan.mutate(
-				{ plan, interval, subscriptionId: sub.stripeSubscriptionId ?? undefined },
+				{
+					plan,
+					interval,
+					subscriptionId: sub.stripeSubscriptionId ?? undefined,
+				},
 				{
 					onSuccess: () => toast.success("Plan updated successfully."),
-					onError: (e) => toast.error(e.message ?? "Could not switch plan. Please try again."),
+					onError: (e) =>
+						toast.error(
+							e.message ?? "Could not switch plan. Please try again.",
+						),
 				},
 			);
 		} else {
 			checkout.mutate(
 				{ plan, interval },
-				{ onError: (e) => toast.error(e.message ?? "Could not start checkout. Please try again.") },
+				{
+					onError: (e) =>
+						toast.error(
+							e.message ?? "Could not start checkout. Please try again.",
+						),
+				},
 			);
 		}
 	}
@@ -264,12 +294,22 @@ function BillingPage() {
 				>
 					<DialogContent className="max-w-md">
 						<DialogHeader>
-							<DialogTitle>{isTrialing ? "End trial?" : "Cancel subscription?"}</DialogTitle>
+							<DialogTitle>
+								{isTrialing ? "End trial?" : "Cancel subscription?"}
+							</DialogTitle>
 							<DialogDescription>
 								{isTrialing ? (
-									<>Your trial will remain active until <strong>{periodEnd}</strong>. After that you'll revert to the free plan.</>
+									<>
+										Your trial will remain active until{" "}
+										<strong>{periodEnd}</strong>. After that you'll revert to
+										the free plan.
+									</>
 								) : (
-									<>Your subscription will remain active until <strong>{periodEnd}</strong>, then revert to the free plan. You can resubscribe at any time.</>
+									<>
+										Your subscription will remain active until{" "}
+										<strong>{periodEnd}</strong>, then revert to the free plan.
+										You can resubscribe at any time.
+									</>
 								)}
 							</DialogDescription>
 						</DialogHeader>

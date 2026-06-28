@@ -14,9 +14,12 @@ export const userPreferences = pgTable("user_preferences", {
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
-	user: one(user, {
-		fields: [userPreferences.userId],
-		references: [user.id],
+export const userPreferencesRelations = relations(
+	userPreferences,
+	({ one }) => ({
+		user: one(user, {
+			fields: [userPreferences.userId],
+			references: [user.id],
+		}),
 	}),
-}));
+);

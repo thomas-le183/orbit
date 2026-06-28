@@ -7,7 +7,10 @@ import { NotificationProcessor } from "./notification.processor";
 import { NotificationService } from "./notification.service";
 
 @Module({
-	imports: [AuthModule, BullModule.registerQueue({ name: QUEUES.NOTIFICATION })],
+	imports: [
+		AuthModule,
+		BullModule.registerQueue({ name: QUEUES.NOTIFICATION }),
+	],
 	providers: [NotificationService, NotificationProcessor],
 	controllers: [NotificationController],
 })

@@ -1,4 +1,8 @@
-import { PLAN_METADATA, type PlanFlags, type SubscriptionPlan } from "@orbit/shared";
+import {
+	PLAN_METADATA,
+	type PlanFlags,
+	type SubscriptionPlan,
+} from "@orbit/shared";
 import {
 	Tooltip,
 	TooltipContent,

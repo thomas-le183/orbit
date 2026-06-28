@@ -36,13 +36,20 @@ export class EmailProcessor extends WorkerHost {
 				await this.emailService.sendMemberJoined(data.to, data.data);
 				break;
 			case "send-change-email":
-				await this.emailService.sendChangeEmail(data.to, data.name, data.newEmail, data.url);
+				await this.emailService.sendChangeEmail(
+					data.to,
+					data.name,
+					data.newEmail,
+					data.url,
+				);
 				break;
 			case "send-delete-account":
 				await this.emailService.sendDeleteAccount(data.to, data.name, data.url);
 				break;
 			default:
-				this.logger.warn(`Unknown email job type: ${(data as EmailJobData).type}`);
+				this.logger.warn(
+					`Unknown email job type: ${(data as EmailJobData).type}`,
+				);
 		}
 	}
 }

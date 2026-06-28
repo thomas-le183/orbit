@@ -82,7 +82,8 @@ export function deriveShowActions({
 		nextTier != null &&
 		subStatus !== "trialing" &&
 		(isActive || subStatus == null);
-	const showSwitchYearly = isActive && subStatus !== "past_due" && billingInterval === "monthly";
+	const showSwitchYearly =
+		isActive && subStatus !== "past_due" && billingInterval === "monthly";
 
 	return {
 		showUpgrade,
@@ -118,7 +119,9 @@ export function PlanSummaryCard({
 	const sub = data.subscription ?? null;
 	// Display plan: the plan the user is subscribed to (e.g. "business" even when past_due)
 	// Access plan (summary.plan): "free" for past_due/unpaid — used for feature gating only
-	const currentPlan = (sub?.plan ?? summary?.plan ?? "free") as SubscriptionPlan;
+	const currentPlan = (sub?.plan ??
+		summary?.plan ??
+		"free") as SubscriptionPlan;
 	const meta = PLAN_METADATA[currentPlan];
 	const billingInterval = summary?.billingInterval ?? null;
 	const pricePerSeat = summary?.pricePerSeat ?? null;

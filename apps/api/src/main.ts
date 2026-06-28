@@ -28,15 +28,23 @@ async function bootstrap() {
 	app.use(cookieParser());
 
 	// Better Auth reads the raw body stream on /api/auth/* — skip express.json() there
-	app.use((req: express.Request, _res: express.Response, next: express.NextFunction) => {
-		if (req.path.startsWith(`/${API_PREFIX}/auth/`)) return next();
-		express.json()(req, _res, next);
-	});
+	app.use(
+		(
+			req: express.Request,
+			_res: express.Response,
+			next: express.NextFunction,
+		) => {
+			if (req.path.startsWith(`/${API_PREFIX}/auth/`)) return next();
+			express.json()(req, _res, next);
+		},
+	);
 
 	app.setGlobalPrefix(API_PREFIX);
 
 	app.useGlobalFilters(new HttpExceptionFilter());
-	app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
+	app.useGlobalPipes(
+		new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
+	);
 
 	if (process.env.NODE_ENV === "development") {
 		// Adds artificial delay to every request to simulate real-world network latency in development
@@ -54,7 +62,8 @@ async function bootstrap() {
 		serverAdapter.setBasePath("/admin/queues");
 		createBullBoard({
 			queues: Object.values(QUEUES).map(
-				(name) => new BullMQAdapter(new Queue(name, { connection: redisConnection })),
+				(name) =>
+					new BullMQAdapter(new Queue(name, { connection: redisConnection })),
 			),
 			serverAdapter,
 		});

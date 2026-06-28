@@ -32,7 +32,9 @@ export function useUnreadNotificationCount() {
 	return useQuery({
 		queryKey: notificationKeys.unreadCount,
 		queryFn: async () => {
-			const { data } = await api.get<{ count: number }>("/notifications/unread-count");
+			const { data } = await api.get<{ count: number }>(
+				"/notifications/unread-count",
+			);
 			return data.count;
 		},
 		refetchInterval: 30_000,

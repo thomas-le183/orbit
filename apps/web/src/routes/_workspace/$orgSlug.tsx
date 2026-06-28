@@ -26,7 +26,13 @@ import {
 	useParams,
 	useRouterState,
 } from "@tanstack/react-router";
-import { AlertTriangle, BellIcon, Crown, Info, TriangleAlert } from "lucide-react";
+import {
+	AlertTriangle,
+	BellIcon,
+	Crown,
+	Info,
+	TriangleAlert,
+} from "lucide-react";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { AppSidebar } from "@/components/workspace/app-sidebar";
@@ -37,7 +43,11 @@ import {
 	useSetActiveOrganization,
 } from "@/hooks/use-auth";
 
-import { useBillingSummary, useConvertTrial, usePortal } from "@/hooks/use-billing";
+import {
+	useBillingSummary,
+	useConvertTrial,
+	usePortal,
+} from "@/hooks/use-billing";
 import {
 	useMarkAllNotificationsRead,
 	useMarkNotificationRead,
@@ -78,7 +88,7 @@ function OrgLayout() {
 			<SidebarInset className="bg-background-tertiary">
 				<PageHeader />
 				<SubscriptionStatusBanner />
-				<main className="flex-1 overflow-auto p-6 bg-background-primary rounded-xl border border-border-medium">
+				<main className="flex-1 overflow-hidden p-6 bg-background-primary rounded-xl border border-border-medium">
 					<Outlet />
 				</main>
 			</SidebarInset>
@@ -102,12 +112,22 @@ function SubscriptionStatusBanner() {
 
 	const rawPeriodEnd = sub.periodEnd;
 	const periodEnd = rawPeriodEnd
-		? new Date(rawPeriodEnd).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+		? new Date(rawPeriodEnd).toLocaleDateString(undefined, {
+				month: "short",
+				day: "numeric",
+				year: "numeric",
+			})
 		: null;
 
-	const daysRemaining = sub.status === "trialing" && rawPeriodEnd
-		? Math.max(0, Math.ceil((new Date(rawPeriodEnd).getTime() - Date.now()) / 86_400_000))
-		: null;
+	const daysRemaining =
+		sub.status === "trialing" && rawPeriodEnd
+			? Math.max(
+					0,
+					Math.ceil(
+						(new Date(rawPeriodEnd).getTime() - Date.now()) / 86_400_000,
+					),
+				)
+			: null;
 
 	const isCanceledWithAccess =
 		sub.status === "canceled" &&
@@ -121,13 +141,21 @@ function SubscriptionStatusBanner() {
 					<AlertTriangle className="size-4 shrink-0" />
 					<span>
 						<span className="font-semibold">Payment failed.</span>{" "}
-						{canManage ? "Update your payment method to restore access." : "Contact your workspace admin to resolve this."}
+						{canManage
+							? "Update your payment method to restore access."
+							: "Contact your workspace admin to resolve this."}
 					</span>
 				</div>
 				{canManage && (
-					<Button size="sm" variant="outline"
+					<Button
+						size="sm"
+						variant="outline"
 						className="shrink-0 border-(--color-red-border) text-(--color-red-foreground) hover:bg-(--color-red-bg)"
-						onClick={() => portal.mutate(undefined, { onError: () => toast.error("Could not open billing portal.") })}
+						onClick={() =>
+							portal.mutate(undefined, {
+								onError: () => toast.error("Could not open billing portal."),
+							})
+						}
 						disabled={portal.isPending}
 					>
 						Fix payment
@@ -144,18 +172,33 @@ function SubscriptionStatusBanner() {
 					<Crown className="size-4 shrink-0" />
 					<span>
 						<span className="font-semibold">
-							Business trial{daysRemaining !== null ? ` — ${daysRemaining} day${daysRemaining !== 1 ? "s" : ""} left` : ""}
+							Business trial
+							{daysRemaining !== null
+								? ` — ${daysRemaining} day${daysRemaining !== 1 ? "s" : ""} left`
+								: ""}
 						</span>
-						{periodEnd && <span className="ml-1 opacity-75">· Ends {periodEnd}</span>}
+						{periodEnd && (
+							<span className="ml-1 opacity-75">· Ends {periodEnd}</span>
+						)}
 					</span>
 				</div>
 				{canManage && (
-					<Button size="sm" variant="outline"
+					<Button
+						size="sm"
+						variant="outline"
 						className="shrink-0 border-(--color-amber-border) text-(--color-amber-foreground) hover:bg-(--color-amber-bg)"
-						onClick={() => convertTrial.mutate(
-							{ successUrl: `${base}?checkout=success&setup_session={CHECKOUT_SESSION_ID}`, cancelUrl: `${base}?checkout=canceled` },
-							{ onError: (e) => toast.error(e.message ?? "Could not start checkout.") },
-						)}
+						onClick={() =>
+							convertTrial.mutate(
+								{
+									successUrl: `${base}?checkout=success&setup_session={CHECKOUT_SESSION_ID}`,
+									cancelUrl: `${base}?checkout=canceled`,
+								},
+								{
+									onError: (e) =>
+										toast.error(e.message ?? "Could not start checkout."),
+								},
+							)
+						}
 						disabled={convertTrial.isPending}
 					>
 						Subscribe now
@@ -172,13 +215,21 @@ function SubscriptionStatusBanner() {
 					<TriangleAlert className="size-4 shrink-0" />
 					<span>
 						<span className="font-semibold">Subscription canceling.</span>
-						{periodEnd && <span className="ml-1">Access until {periodEnd}.</span>}
+						{periodEnd && (
+							<span className="ml-1">Access until {periodEnd}.</span>
+						)}
 					</span>
 				</div>
 				{canManage && (
-					<Button size="sm" variant="outline"
+					<Button
+						size="sm"
+						variant="outline"
 						className="shrink-0 border-(--color-amber-border) text-(--color-amber-foreground) hover:bg-(--color-amber-bg)"
-						onClick={() => portal.mutate(undefined, { onError: () => toast.error("Could not open billing portal.") })}
+						onClick={() =>
+							portal.mutate(undefined, {
+								onError: () => toast.error("Could not open billing portal."),
+							})
+						}
 						disabled={portal.isPending}
 					>
 						Manage billing
@@ -195,13 +246,21 @@ function SubscriptionStatusBanner() {
 					<Info className="size-4 shrink-0" />
 					<span>
 						<span className="font-semibold">Subscription canceled.</span>
-						{periodEnd && <span className="ml-1">Access until {periodEnd}.</span>}
+						{periodEnd && (
+							<span className="ml-1">Access until {periodEnd}.</span>
+						)}
 					</span>
 				</div>
 				{canManage && (
-					<Button size="sm" variant="outline"
+					<Button
+						size="sm"
+						variant="outline"
 						className="shrink-0"
-						onClick={() => portal.mutate(undefined, { onError: () => toast.error("Could not open billing portal.") })}
+						onClick={() =>
+							portal.mutate(undefined, {
+								onError: () => toast.error("Could not open billing portal."),
+							})
+						}
 						disabled={portal.isPending}
 					>
 						Resubscribe
@@ -298,7 +357,9 @@ function NotificationBell() {
 											<span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
 										)}
 									</div>
-									<span className="text-xs text-muted-foreground">{n.body}</span>
+									<span className="text-xs text-muted-foreground">
+										{n.body}
+									</span>
 								</li>
 							))}
 						</ul>

@@ -4,8 +4,11 @@ import { LoginForm } from "@/components/auth/login-form";
 import { api } from "@/lib/api";
 
 export const Route = createFileRoute("/_public/login")({
-	validateSearch: (search: Record<string, unknown>): { redirectTo?: string } => ({
-		redirectTo: typeof search.redirectTo === "string" ? search.redirectTo : undefined,
+	validateSearch: (
+		search: Record<string, unknown>,
+	): { redirectTo?: string } => ({
+		redirectTo:
+			typeof search.redirectTo === "string" ? search.redirectTo : undefined,
 	}),
 	component: LoginPage,
 });

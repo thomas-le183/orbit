@@ -1,4 +1,10 @@
-import { Controller, Get, Inject, NotFoundException, Param } from "@nestjs/common";
+import {
+	Controller,
+	Get,
+	Inject,
+	NotFoundException,
+	Param,
+} from "@nestjs/common";
 import { eq } from "drizzle-orm";
 import { DB, type Db } from "../db/db.module";
 import * as schema from "../db/schema";

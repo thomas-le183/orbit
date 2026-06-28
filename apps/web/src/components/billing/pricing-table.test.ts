@@ -4,7 +4,10 @@ import { buildPricingPlans } from "./pricing-table";
 function ctaFor(plan: string, plans: ReturnType<typeof buildPricingPlans>) {
 	return plans.find((p) => p.id === plan)?.cta;
 }
-function disabledFor(plan: string, plans: ReturnType<typeof buildPricingPlans>) {
+function disabledFor(
+	plan: string,
+	plans: ReturnType<typeof buildPricingPlans>,
+) {
 	return plans.find((p) => p.id === plan)?.ctaDisabled;
 }
 function onCtaFor(plan: string, plans: ReturnType<typeof buildPricingPlans>) {
@@ -133,9 +136,15 @@ describe("isPending=true", () => {
 describe("onCta callback", () => {
 	it("fires with correct plan and interval", () => {
 		const calls: [string, string][] = [];
-		const plans = buildPricingPlans("basic", true, false, "business", (plan, interval) => {
-			calls.push([plan, interval]);
-		});
+		const plans = buildPricingPlans(
+			"basic",
+			true,
+			false,
+			"business",
+			(plan, interval) => {
+				calls.push([plan, interval]);
+			},
+		);
 		onCtaFor("business", plans)?.("monthly");
 		expect(calls).toEqual([["business", "monthly"]]);
 	});

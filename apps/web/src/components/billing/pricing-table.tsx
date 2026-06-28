@@ -21,7 +21,10 @@ export function buildPricingPlans(
 	hasActiveSubscription: boolean,
 	isPending: boolean,
 	highlightPlan: SubscriptionPlan = SUBSCRIPTION_PLANS.BUSINESS,
-	onSelectPlan?: (plan: SubscriptionPlan, interval: "monthly" | "yearly") => void,
+	onSelectPlan?: (
+		plan: SubscriptionPlan,
+		interval: "monthly" | "yearly",
+	) => void,
 ) {
 	const currentPlanIndex = PLAN_ORDER.indexOf(currentPlan);
 
@@ -33,7 +36,8 @@ export function buildPricingPlans(
 		const isPaid = meta.monthlyPriceUsd > 0 && !isEnterprise;
 		const isFree = plan === SUBSCRIPTION_PLANS.FREE;
 		const isUpgrade = index > currentPlanIndex;
-		const prevLabel = index > 0 ? PLAN_METADATA[PLAN_ORDER[index - 1]].label : null;
+		const prevLabel =
+			index > 0 ? PLAN_METADATA[PLAN_ORDER[index - 1]].label : null;
 
 		const cta = isCurrent
 			? "Current plan"
@@ -42,7 +46,9 @@ export function buildPricingPlans(
 				: isFree
 					? "Downgrade to free"
 					: hasActiveSubscription
-						? isUpgrade ? "Upgrade" : "Downgrade"
+						? isUpgrade
+							? "Upgrade"
+							: "Downgrade"
 						: "Get started";
 
 		const ctaDisabled = isCurrent || isFree || isPending;
@@ -53,10 +59,14 @@ export function buildPricingPlans(
 			description: meta.description,
 			price: meta.monthlyPriceUsd,
 			period: isEnterprise ? undefined : "per seat/month",
-			yearlyPrice: isPaid ? yearlyMonthlyPrice(meta.monthlyPriceUsd) : undefined,
+			yearlyPrice: isPaid
+				? yearlyMonthlyPrice(meta.monthlyPriceUsd)
+				: undefined,
 			badge: isHighlighted && !isEnterprise ? "Most popular" : undefined,
 			highlighted: isHighlighted && !isEnterprise,
-			featuresPrefix: prevLabel ? `Everything in ${prevLabel}, plus:` : undefined,
+			featuresPrefix: prevLabel
+				? `Everything in ${prevLabel}, plus:`
+				: undefined,
 			features: [...meta.features],
 			isEnterprise,
 			cta,
@@ -79,7 +89,10 @@ export function PricingTable({
 	highlightPlan?: SubscriptionPlan;
 	hasActiveSubscription?: boolean;
 	isPending?: boolean;
-	onSelectPlan?: (plan: SubscriptionPlan, interval: "monthly" | "yearly") => void;
+	onSelectPlan?: (
+		plan: SubscriptionPlan,
+		interval: "monthly" | "yearly",
+	) => void;
 }) {
 	const plans = buildPricingPlans(
 		currentPlan,

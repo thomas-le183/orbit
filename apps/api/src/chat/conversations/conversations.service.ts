@@ -25,7 +25,10 @@ export class ConversationsService {
 			)
 			.where(eq(schema.conversation.organizationId, orgId))
 			.orderBy(schema.conversation.createdAt)
-			.$withCache({ tag: `conversations:${userId}:${orgId}`, config: { ex: 300 } });
+			.$withCache({
+				tag: `conversations:${userId}:${orgId}`,
+				config: { ex: 300 },
+			});
 
 		const conversations = rows.map((r) => r.conversation);
 

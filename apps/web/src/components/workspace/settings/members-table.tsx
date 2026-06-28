@@ -249,7 +249,9 @@ export function MembersTable({
 
 			{invitations.length > 0 && (
 				<section>
-					<h2 className="mb-2 capitalize text-foreground">Pending invitations</h2>
+					<h2 className="mb-2 capitalize text-foreground">
+						Pending invitations
+					</h2>
 					<div className="rounded-lg border bg-card">
 						<Table>
 							<TableHeader>
@@ -263,7 +265,8 @@ export function MembersTable({
 							<TableBody>
 								{invitations.map((inv) => {
 									const daysLeft = Math.ceil(
-										(new Date(inv.expiresAt).getTime() - Date.now()) / 86_400_000,
+										(new Date(inv.expiresAt).getTime() - Date.now()) /
+											86_400_000,
 									);
 									return (
 										<TableRow key={inv.id}>
