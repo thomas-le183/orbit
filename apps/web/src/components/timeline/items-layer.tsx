@@ -139,9 +139,10 @@ export default function ItemsLayer() {
 
 				const left = getPercentageOffset(range.from);
 
-				// Milestone: a diamond point marker at range.from.
+				// Milestone: a diamond marker centered in its day (centerMs = range.from + ½ day).
 				if (item.kind === "milestone") {
-					if (!Number.isFinite(left)) return null;
+					const markerLeft = getPercentageOffset(centerMs);
+					if (!Number.isFinite(markerLeft)) return null;
 					const moveTarget: GestureTarget = {
 						role: "move",
 						id: item.id,
@@ -154,7 +155,7 @@ export default function ItemsLayer() {
 								data-testid="timeline-milestone"
 								title={item.name}
 								onPointerDown={(e) => beginGesture(e, moveTarget)}
-								style={{ left: `${left}%`, top: top + barHeight / 2 }}
+								style={{ left: `${markerLeft}%`, top: top + barHeight / 2 }}
 								className="pointer-events-auto absolute z-10 -translate-x-1/2 -translate-y-1/2 size-3 rotate-45 cursor-grab rounded-[2px] active:cursor-grabbing"
 							>
 								<span
@@ -165,7 +166,7 @@ export default function ItemsLayer() {
 							<span
 								data-testid="timeline-milestone-label"
 								className="pointer-events-none absolute z-10 flex items-center whitespace-nowrap pl-2.5 text-xs font-medium text-foreground"
-								style={{ left: `${left}%`, top, height: barHeight }}
+								style={{ left: `${markerLeft}%`, top, height: barHeight }}
 							>
 								{item.name}
 							</span>

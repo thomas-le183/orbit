@@ -123,63 +123,66 @@ function SplitLayoutInner({
 				</div>
 				<ZoomControl />
 			</div>
-			{/* header band */}
-			<div className="relative z-20 flex h-12 shrink-0 border-b border-border">
-				<div
-					className="relative z-20 shrink-0 border-r border-border bg-muted/40"
-					style={{ width: tableWidth }}
-				>
-					{tableHeader}
+			{/* split region (table | timeline) — divider spans only this, not the toolbar */}
+			<div className="relative flex min-h-0 flex-1 flex-col">
+				{/* header band */}
+				<div className="relative z-20 flex h-12 shrink-0 border-b border-border">
+					<div
+						className="relative z-20 shrink-0 overflow-hidden border-r border-border bg-muted/40"
+						style={{ width: tableWidth }}
+					>
+						{tableHeader}
+					</div>
+					<div className="relative" style={{ width: viewportWidth }}>
+						<TimeUnitsBar />
+					</div>
 				</div>
-				<div className="relative flex-1">
-					<TimeUnitsBar />
-				</div>
-			</div>
 
-			{/* body */}
-			<div className="relative flex-1 overflow-hidden">
-				{/* pinned timeline background over the right region */}
-				<div
-					className="absolute inset-y-0 right-0"
-					style={{ left: tableWidth }}
-				>
-					<TimelineGrid />
-					<NowLine />
-				</div>
-				{/* shared vertical scroll: table column + items layer move together */}
-				<div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
-					<div className="flex">
-						<div
-							data-testid="timeline-table-column"
-							className="relative z-20 shrink-0 border-r border-border bg-background-primary"
-							style={{ width: tableWidth }}
-						>
-							{table}
-						</div>
-						<div
-							ref={rightRef}
-							className="relative flex-1 touch-none select-none"
-							onWheel={onWheel}
-						>
-							<ItemsLayer />
+				{/* body */}
+				<div className="relative flex-1 overflow-hidden">
+					{/* pinned timeline background over the right region */}
+					<div
+						className="absolute inset-y-0"
+						style={{ left: tableWidth, width: viewportWidth }}
+					>
+						<TimelineGrid />
+						<NowLine />
+					</div>
+					{/* shared vertical scroll: table column + items layer move together */}
+					<div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
+						<div className="flex">
+							<div
+								data-testid="timeline-table-column"
+								className="relative z-20 shrink-0 overflow-hidden border-r border-border bg-background-primary"
+								style={{ width: tableWidth }}
+							>
+								{table}
+							</div>
+							<div
+								ref={rightRef}
+								className="relative flex-1 touch-none select-none"
+								onWheel={onWheel}
+							>
+								<ItemsLayer />
+							</div>
 						</div>
 					</div>
 				</div>
-			</div>
 
-			{/* full-height draggable divider */}
-			<div
-				data-testid="timeline-split-divider"
-				onPointerDown={onDividerPointerDown}
-				className="absolute inset-y-0 z-30 w-3 -translate-x-1/2 cursor-col-resize hover:bg-border"
-				style={{ left: tableWidth }}
-			/>
+				{/* full-height draggable divider */}
+				<div
+					data-testid="timeline-split-divider"
+					onPointerDown={onDividerPointerDown}
+					className="absolute inset-y-0 z-30 w-3 -translate-x-1/2 cursor-col-resize hover:bg-border"
+					style={{ left: tableWidth }}
+				/>
 
-			{/* footer: horizontal scrollbar under the timeline region only */}
-			<div className="flex shrink-0">
-				<div className="shrink-0" style={{ width: tableWidth }} />
-				<div className="relative flex-1">
-					<TimelineScrollbar />
+				{/* footer: horizontal scrollbar under the timeline region only */}
+				<div className="flex shrink-0">
+					<div className="shrink-0" style={{ width: tableWidth }} />
+					<div className="relative" style={{ width: viewportWidth }}>
+						<TimelineScrollbar />
+					</div>
 				</div>
 			</div>
 		</div>

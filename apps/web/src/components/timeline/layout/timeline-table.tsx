@@ -47,7 +47,7 @@ export default function TimelineTable() {
 							/>
 							<span
 								className={cn(
-									"truncate",
+									"min-w-0 truncate",
 									row.isParent
 										? "font-semibold text-foreground"
 										: "text-foreground",
