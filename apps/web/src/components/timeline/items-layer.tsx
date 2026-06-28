@@ -17,6 +17,7 @@ import {
 	ROW_PADDING,
 	rowTop,
 } from "./layout/row-metrics";
+import { useRowSelection } from "./selection/context";
 import type { RelativeTimeRangeOffset } from "./units/types";
 import {
 	type GestureTarget,
@@ -36,6 +37,10 @@ export default function ItemsLayer() {
 		() => layoutItems(items, today),
 		[items, today],
 	);
+
+	const { isSelected, hoveredId, selectOne, selectTo, setHovered } =
+		useRowSelection();
+	const orderedIds = rows.map((r) => r.item.id);
 
 	const { draft, active, pointer, beginGesture } = useBarInteraction({
 		onCommitMove: (id, days) => moveDays(id, days),
@@ -80,6 +85,24 @@ export default function ItemsLayer() {
 			className="pointer-events-none relative w-full"
 			style={{ height: contentHeight(rows.length) }}
 		>
+			{/* selection / hover row bands (behind bars) */}
+			{rows.map((row) => {
+				const selected = isSelected(row.item.id);
+				const hovered = hoveredId === row.item.id;
+				if (!selected && !hovered) return null;
+				return (
+					<div
+						key={`band-${row.item.id}`}
+						data-testid="timeline-row-band"
+						className={cn(
+							"pointer-events-none absolute inset-x-0",
+							selected ? "bg-accent" : "bg-muted/50",
+						)}
+						style={{ top: row.rowIndex * ROW_HEIGHT, height: ROW_HEIGHT }}
+					/>
+				);
+			})}
+
 			{/* parent container rects (behind bars) */}
 			{containers.map((c: ContainerRect) => {
 				const left = getPercentageOffset(c.range.from);
@@ -155,6 +178,13 @@ export default function ItemsLayer() {
 								data-testid="timeline-milestone"
 								title={item.name}
 								onPointerDown={(e) => beginGesture(e, moveTarget)}
+								onMouseEnter={() => setHovered(item.id)}
+								onMouseLeave={() => setHovered(null)}
+								onClick={(e) =>
+									e.shiftKey
+										? selectTo(item.id, orderedIds)
+										: selectOne(item.id)
+								}
 								style={{ left: `${markerLeft}%`, top: top + barHeight / 2 }}
 								className="pointer-events-auto absolute z-10 -translate-x-1/2 -translate-y-1/2 size-3 rotate-45 cursor-grab rounded-[2px] active:cursor-grabbing"
 							>
@@ -198,6 +228,11 @@ export default function ItemsLayer() {
 							data-testid="timeline-task-bar"
 							title={item.name}
 							onPointerDown={(e) => beginGesture(e, moveTarget)}
+							onMouseEnter={() => setHovered(item.id)}
+							onMouseLeave={() => setHovered(null)}
+							onClick={(e) =>
+								e.shiftKey ? selectTo(item.id, orderedIds) : selectOne(item.id)
+							}
 							style={{
 								left: `${left}%`,
 								width: `${Math.max(right - left, 0)}%`,

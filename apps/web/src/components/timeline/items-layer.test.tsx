@@ -1,9 +1,12 @@
 // apps/web/src/components/timeline/items-layer.test.tsx
 import { fireEvent, render } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { useEffect } from "react";
 import { describe, expect, it } from "vitest";
 import { TimelineProvider, useTimelineController } from "./controller/context";
 import ItemsLayer from "./items-layer";
+import TimelineTable from "./layout/timeline-table";
+import { RowSelectionProvider } from "./selection/context";
 
 function SizeViewport({ width }: { width: number }) {
 	const { setViewportWidth } = useTimelineController();
@@ -145,5 +148,31 @@ describe("ItemsLayer", () => {
 			) as HTMLElement
 		).style.width;
 		expect(widthAfter).not.toBe(widthBefore);
+	});
+});
+
+describe("ItemsLayer row selection band", () => {
+	it("renders a row band after a table row is selected", async () => {
+		const user = userEvent.setup();
+		const { container } = render(
+			<TimelineProvider initialZoom="weeks">
+				<RowSelectionProvider>
+					<SizeViewport width={800} />
+					<TimelineTable />
+					<ItemsLayer />
+				</RowSelectionProvider>
+			</TimelineProvider>,
+		);
+		expect(
+			container.querySelectorAll("[data-testid='timeline-row-band']").length,
+		).toBe(0);
+		const firstRow = container.querySelector<HTMLElement>(
+			"[data-testid='timeline-table-row']",
+		);
+		if (!firstRow) throw new Error("no table row");
+		await user.click(firstRow);
+		expect(
+			container.querySelectorAll("[data-testid='timeline-row-band']").length,
+		).toBe(1);
 	});
 });

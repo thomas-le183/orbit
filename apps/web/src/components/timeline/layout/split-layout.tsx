@@ -9,6 +9,7 @@ import TimeUnitsBar from "../header/time-units-bar";
 import ItemsLayer from "../items-layer";
 import NowLine from "../now-line";
 import TimelineScrollbar from "../scrollbar";
+import { RowSelectionProvider, useRowSelection } from "../selection/context";
 import { usePan } from "../use-pan";
 import ZoomControl from "../zoom-control";
 import { useResizableDivider } from "./use-resizable-divider";
@@ -50,6 +51,7 @@ function SplitLayoutInner({
 	const { tableWidth, onDividerPointerDown } =
 		useResizableDivider(initialTableWidth);
 	const { onWheel } = usePan();
+	const { clear } = useRowSelection();
 
 	// Measure the timeline (right) region so viewportWidth excludes the table column.
 	const rightRef = useRef<HTMLDivElement>(null);
@@ -89,6 +91,15 @@ function SplitLayoutInner({
 		window.addEventListener("keydown", onKeyDown);
 		return () => window.removeEventListener("keydown", onKeyDown);
 	}, []);
+
+	// Esc clears the row selection (unless focus is in a typing field).
+	useEffect(() => {
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key === "Escape" && !isTypingTarget(e.target)) clear();
+		};
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, [clear]);
 
 	return (
 		<div className="relative flex h-full flex-col">
@@ -193,7 +204,9 @@ export default function SplitLayout(props: SplitLayoutProps) {
 	const { data: prefs } = usePreferences();
 	return (
 		<TimelineProvider weekStart={prefs?.weekStart ?? 1}>
-			<SplitLayoutInner {...props} />
+			<RowSelectionProvider>
+				<SplitLayoutInner {...props} />
+			</RowSelectionProvider>
 		</TimelineProvider>
 	);
 }
