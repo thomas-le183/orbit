@@ -11,6 +11,12 @@ import {
 	layoutItems,
 	type RenderRow,
 } from "./controller/layout";
+import {
+	contentHeight,
+	ROW_HEIGHT,
+	ROW_PADDING,
+	rowTop,
+} from "./layout/row-metrics";
 import type { RelativeTimeRangeOffset } from "./units/types";
 import {
 	type GestureTarget,
@@ -19,7 +25,6 @@ import {
 	useBarInteraction,
 } from "./use-bar-interaction";
 import { useTimelineItems } from "./use-timeline-items";
-import { ROW_HEIGHT, ROW_PADDING } from "./layout/row-metrics";
 
 export default function ItemsLayer() {
 	const { today, offsetMs, zoomLevel, viewportWidth, scrollToMs } =
@@ -69,14 +74,11 @@ export default function ItemsLayer() {
 		}
 	}
 
-	// Total stacked height of all rows; drives the vertical scroll area.
-	const contentHeight = rows.length * ROW_HEIGHT + ROW_PADDING;
-
 	return (
 		<div
 			data-testid="timeline-items-content"
 			className="pointer-events-none relative w-full"
-			style={{ height: contentHeight }}
+			style={{ height: contentHeight(rows.length) }}
 		>
 			{/* parent container rects (behind bars) */}
 			{containers.map((c: ContainerRect) => {
@@ -101,7 +103,7 @@ export default function ItemsLayer() {
 			{/* rows */}
 			{rows.map((row) => {
 				const range = rangeOf(row);
-				const top = row.rowIndex * ROW_HEIGHT + ROW_PADDING;
+				const top = rowTop(row.rowIndex);
 				const barHeight = ROW_HEIGHT - ROW_PADDING * 2;
 				const centerMs = (range.from + range.to) / 2;
 				const visibility = rangeVisibility(range.from, range.to, geom);

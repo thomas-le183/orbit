@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { useTimelineController } from "../controller/context";
 import { layoutItems } from "../controller/layout";
 import { useTimelineItems } from "../use-timeline-items";
-import { contentHeight, ROW_HEIGHT, ROW_PADDING } from "./row-metrics";
+import { contentHeight, ROW_HEIGHT, ROW_PADDING, rowTop } from "./row-metrics";
 
 /** Column titles for the header band, left of the date axis. */
 export function TimelineTableHeader() {
@@ -23,9 +23,12 @@ export default function TimelineTable() {
 	const { rows } = useMemo(() => layoutItems(items, today), [items, today]);
 
 	return (
-		<div className="relative w-full" style={{ height: contentHeight(rows.length) }}>
+		<div
+			className="relative w-full"
+			style={{ height: contentHeight(rows.length) }}
+		>
 			{rows.map((row) => {
-				const top = row.rowIndex * ROW_HEIGHT + ROW_PADDING;
+				const top = rowTop(row.rowIndex);
 				const { item } = row;
 				return (
 					<div
@@ -45,7 +48,9 @@ export default function TimelineTable() {
 							<span
 								className={cn(
 									"truncate",
-									row.isParent ? "font-semibold text-foreground" : "text-foreground",
+									row.isParent
+										? "font-semibold text-foreground"
+										: "text-foreground",
 								)}
 							>
 								{item.name}
