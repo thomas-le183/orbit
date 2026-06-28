@@ -40,7 +40,7 @@ function SplitLayoutInner({
 			{/* header band */}
 			<div className="flex h-12 shrink-0 border-b border-border">
 				<div
-					className="shrink-0 border-r border-border"
+					className="shrink-0 border-r border-border bg-muted/40"
 					style={{ width: tableWidth }}
 				>
 					{tableHeader}
@@ -65,7 +65,7 @@ function SplitLayoutInner({
 					<div className="flex">
 						<div
 							data-testid="timeline-table-column"
-							className="shrink-0 border-r border-border"
+							className="shrink-0 border-r border-border bg-muted/20"
 							style={{ width: tableWidth }}
 						>
 							{table}
