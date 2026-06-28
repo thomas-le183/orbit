@@ -8,7 +8,7 @@ import { contentHeight, ROW_HEIGHT, ROW_PADDING, rowTop } from "./row-metrics";
 /** Column titles for the header band, left of the date axis. */
 export function TimelineTableHeader() {
 	return (
-		<div className="flex h-full items-center gap-2 px-3 text-xs font-semibold text-muted-foreground">
+		<div className="flex h-full items-center gap-2 px-3 text-xs font-semibold text-muted-foreground bg-background-primary">
 			<span className="flex-1">Name</span>
 			<span className="w-24 shrink-0">Assignee</span>
 			<span className="w-28 shrink-0">Dates</span>

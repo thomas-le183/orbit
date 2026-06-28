@@ -11,18 +11,16 @@ function ZoomReadout() {
 }
 
 describe("ZoomControl", () => {
-	it("renders a button per zoom level", () => {
+	it("shows the current zoom level on the trigger button", () => {
 		render(
 			<TimelineProvider initialZoom="weeks">
 				<ZoomControl />
 			</TimelineProvider>,
 		);
-		for (const label of ["Weeks", "Months", "Quarters", "Years"]) {
-			expect(screen.getByRole("button", { name: label })).toBeTruthy();
-		}
+		expect(screen.getByRole("button", { name: /weeks/i })).toBeTruthy();
 	});
 
-	it("changes the controller zoom level when clicked", async () => {
+	it("changes the controller zoom level when an option is selected", async () => {
 		const user = userEvent.setup();
 		render(
 			<TimelineProvider initialZoom="weeks">
@@ -30,7 +28,8 @@ describe("ZoomControl", () => {
 				<ZoomReadout />
 			</TimelineProvider>,
 		);
-		await user.click(screen.getByRole("button", { name: "Quarters" }));
+		await user.click(screen.getByRole("button", { name: /weeks/i }));
+		await user.click(screen.getByRole("menuitemradio", { name: "Quarters" }));
 		expect(screen.getByTestId("zoom-readout").textContent).toBe("quarters");
 	});
 });

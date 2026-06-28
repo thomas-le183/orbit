@@ -49,11 +49,10 @@ describe("TimelineContainer", () => {
 		expect(
 			container.querySelector("[data-testid='timeline-now-line']"),
 		).not.toBeNull();
-		// zoom control buttons (4 zoom level options)
+		// zoom control: a dropdown trigger button showing the current view
 		expect(
-			container.querySelectorAll("button[data-slot='toggle-group-item']")
-				.length,
-		).toBe(4);
+			container.querySelector("[data-slot='dropdown-menu-trigger']"),
+		).not.toBeNull();
 	});
 
 	it("pans the view when the arrow buttons are clicked", () => {

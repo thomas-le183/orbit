@@ -121,13 +121,13 @@ export default function TimeUnitsBar() {
 		<div className="absolute inset-0 h-full w-full">
 			<div
 				data-testid="timeline-header-top"
-				className="relative h-6 border-b border-border"
+				className="relative h-6 border-b border-border overflow-hidden"
 			>
 				{topRow}
 			</div>
 			<div
 				data-testid="timeline-header-bottom"
-				className="relative h-6 border-b border-border"
+				className="relative h-6 border-b border-border overflow-hidden"
 			>
 				{bottomRow}
 			</div>

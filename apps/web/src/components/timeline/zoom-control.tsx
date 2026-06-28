@@ -1,7 +1,12 @@
+import { Button } from "@orbit/ui/components/button";
 import {
-	ToggleGroup,
-	ToggleGroupItem,
-} from "@orbit/ui/components/toggle-group";
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuTrigger,
+} from "@orbit/ui/components/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 import { useZoomLevel } from "./controller/hooks";
 import type { ZoomLevel } from "./units/types";
 
@@ -14,23 +19,29 @@ const ZOOM_OPTIONS: { value: ZoomLevel; label: string }[] = [
 
 export default function ZoomControl() {
 	const [zoomLevel, setZoomLevel] = useZoomLevel();
+	const currentLabel =
+		ZOOM_OPTIONS.find((o) => o.value === zoomLevel)?.label ?? "View";
 
 	return (
-		<ToggleGroup
-			value={[zoomLevel]}
-			onValueChange={(groupValue: string[]) => {
-				const next = groupValue[0] as ZoomLevel | undefined;
-				// single-select: clicking the active item yields [] — ignore so zoom never clears
-				if (next) setZoomLevel(next);
-			}}
-			variant="outline"
-			size="sm"
-		>
-			{ZOOM_OPTIONS.map((option) => (
-				<ToggleGroupItem key={option.value} value={option.value}>
-					{option.label}
-				</ToggleGroupItem>
-			))}
-		</ToggleGroup>
+		<DropdownMenu>
+			<DropdownMenuTrigger
+				render={<Button variant="outline" size="sm" className="gap-1.5" />}
+			>
+				{currentLabel}
+				<ChevronDown className="size-4 opacity-60" />
+			</DropdownMenuTrigger>
+			<DropdownMenuContent align="end" className="min-w-32">
+				<DropdownMenuRadioGroup
+					value={zoomLevel}
+					onValueChange={(value) => setZoomLevel(value as ZoomLevel)}
+				>
+					{ZOOM_OPTIONS.map((option) => (
+						<DropdownMenuRadioItem key={option.value} value={option.value}>
+							{option.label}
+						</DropdownMenuRadioItem>
+					))}
+				</DropdownMenuRadioGroup>
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 }
