@@ -18,79 +18,80 @@ Both share the same need: a **table pane on the left | timeline pane on the righ
 
 **Out of scope (deferred to Gantt/Scheduler specs):** task hierarchy & expand/collapse, real table columns, multi-bar lane packing, drag-to-reschedule/assign, persistence.
 
-## 2. Architecture
+## 2. Architecture (wrap the existing timeline body)
 
-A single **shared vertical scroll** container holds flex rows shaped `[ table cell | timeline track ]`. One container means table and timeline rows can never drift — alignment and scroll-sync are free. A custom draggable **divider** sets the table-pane width.
+The timeline body already exists as a monolithic `ItemsLayer` driven by `layoutItems()` — it renders all rows (bars, parent-container rects, milestones, drag/resize gestures, out-of-view fly-outs) in one absolute layer, stacked at `rowIndex × ROW_HEIGHT`. We **reuse it as-is** rather than re-architect it into per-row tracks.
 
-We deliberately do **not** use `react-resizable-panels` here: two separate scroll panels would require fragile `scrollTop` mirroring. The timeline is already virtual (it pans by recomputing `offsetMs`, not native horizontal scroll), so the only native scroll is vertical — perfect for one shared container.
+`SplitLayout` adds a **left table column** that aligns to those *same* rows (same `layoutItems` row order, same `ROW_HEIGHT`), and places the table column and `ItemsLayer` inside **one shared vertical scroll** so they can never drift. Alignment is guaranteed because both sides read the same rows and the same row-height metric. A custom draggable **divider** sets the table width.
+
+We deliberately do **not** use `react-resizable-panels`: two separate scroll panels would require fragile `scrollTop` mirroring. The timeline pans by recomputing `offsetMs` (not native horizontal scroll), so the only native scroll is vertical — perfect for one shared container.
 
 Layout:
 
 ```
-SplitLayout (h-full, flex col)
-├─ Header band (sticky top, not vertically scrolled; height = AXIS_HEIGHT)
-│   [ table column-headers  | divider | TimeUnitsBar (date axis) ]
-├─ Body (flex-1, overflow-y-auto)  ← THE shared vertical scroll
-│   ├─ timeline background layer (absolute, height = totalHeight, offset under table width)
-│   │     TimelineGrid + NowLine
-│   └─ rows (relative): for each row →
-│         [ table cell (width = tableWidth) | track (flex-1, relative, height = row.height) ]
-└─ Footer (sticky bottom): TimelineScrollbar under the timeline pane only
+SplitLayout (TimelineProvider) → flex col, h-full
+├─ Header band (h-12, pinned, not scrolled)
+│   [ table column-headers (w = tableWidth) │ divider │ TimeUnitsBar (flex-1) ]
+├─ Body (flex-1, relative, overflow hidden)
+│   ├─ pinned background over the right region (absolute, left = tableWidth, right = 0):
+│   │     TimelineGrid + NowLine                       (not vertically scrolled)
+│   └─ shared scroll (absolute inset-0, overflow-y-auto):
+│         flex row, height = contentHeight:
+│           [ table body (w = tableWidth): one cell per row ]
+│           [ right region (flex-1, relative): ItemsLayer ]   ← bars; % within this region
+├─ full-height draggable divider (absolute, at x = tableWidth)
+└─ Footer (h-…, pinned): [ spacer (w = tableWidth) │ TimelineScrollbar (flex-1) ]
 ```
 
-- **Horizontal pan** (`usePan` wheel/drag) is wired on the **timeline pane region only**.
-- **`viewportWidth`** measured by the controller now reflects the **timeline pane** width (= container width − tableWidth − divider), not the whole container, so axis/grid/bars position within the right pane. The header axis, background grid, per-row tracks, and footer scrollbar all share this same width.
+- **Horizontal pan** (`usePan` wheel + arrow keys) stays scoped to the timeline (right) region.
+- **`viewportWidth`** is measured from the **right region element** (= container − tableWidth − divider), so axis/grid/bars/scrollbar all position within the timeline pane. Changing the table width re-measures it and reflows the timeline.
+- The table column and `ItemsLayer` both size their content to `contentHeight = rows.length × ROW_HEIGHT + ROW_PADDING`, so their rows line up and scroll together.
 
-## 3. The row model (contract for both apps)
+## 3. The shell contract
+
+`SplitLayout` is a fixed composition for sub-project 1 (not yet a fully generic primitive). The timeline (right) body is the existing `ItemsLayer`, hardcoded. The table (left) is passed in as node slots so the table component owns its own row rendering:
 
 ```ts
-export type TimelineRow = { id: string; height: number };
-
 export type SplitLayoutProps = {
-  rows: TimelineRow[];
-  /** Left pane: header cells (column titles) and one cell per row. */
-  renderTableHeader: () => React.ReactNode;
-  renderTableCell: (row: TimelineRow) => React.ReactNode;
-  /** Right pane: content positioned within the row's timeline track. */
-  renderTrack: (row: TimelineRow) => React.ReactNode;
-  /** Initial / persisted table width in px (default 320). */
+  /** Titles row shown in the header band, left of the date axis. */
+  tableHeader: React.ReactNode;
+  /** Left column body; sizes itself to contentHeight(rowCount) and renders one cell per row. */
+  table: React.ReactNode;
+  /** Initial table width in px (default DEFAULT_TABLE_WIDTH). */
   initialTableWidth?: number;
 };
 ```
 
-- Per-row `height` is variable — Gantt passes a uniform value; Scheduler computes height from the number of stacked lanes.
-- The shell owns vertical geometry (each row's `top`, the total body height) and the table width; consumers own only what renders inside each cell/track.
+Alignment contract: both the `table` node and `ItemsLayer` lay rows out at `rowIndex × ROW_HEIGHT + ROW_PADDING` and size their content to `contentHeight(rowCount)`, importing those metrics from the shared `row-metrics` module — so rows line up without the shell threading per-row data. `RenderRow` (from `controller/layout.ts`: `{ item, depth, range, rowIndex, isParent }`) carries `depth` for table indentation. Variable per-row height (Scheduler) is a follow-on once `layoutItems` returns per-row heights.
+
+Note: the table renders item data for display; live two-way sync with bar drag/resize (shared mutable item state) is a Gantt-spec concern, not part of the shell.
 
 ## 4. Components (new `apps/web/src/components/timeline/layout/`)
 
-- `layout/types.ts` — `TimelineRow`, `SplitLayoutProps`.
-- `layout/row-geometry.ts` — pure helpers:
-  - `rowTops(rows: TimelineRow[]): number[]` — cumulative top offset per row (prefix sum of heights).
-  - `totalHeight(rows: TimelineRow[]): number` — sum of heights.
-  - `clampTableWidth(px: number, min: number, max: number): number`.
+- `layout/row-metrics.ts` — extract the existing `ROW_HEIGHT = 40` and `ROW_PADDING = 7` from `items-layer.tsx` into a shared module; `items-layer.tsx` imports them so the table and the bars use the **same** metric. Also `contentHeight(rowCount)`.
+- `layout/divider.ts` (pure) — `clampTableWidth(px, min, max)`.
 - `layout/use-resizable-divider.ts` — pointer-drag hook returning `{ tableWidth, onDividerPointerDown }`, clamping via `clampTableWidth`.
-- `layout/split-layout.tsx` — the shell described in §2.
-- **Reused as-is:** `TimeUnitsBar`, `TimelineGrid`, `NowLine`, `TimelineScrollbar`, `usePan`, the controller + hooks.
-- **Change:** the width-measuring `ResizeObserver`/`useResizeObserver` is attached to the **timeline pane element** so `viewportWidth` = right-pane width. (Today it measures the whole canvas in `container/index.tsx`.)
+- `layout/split-layout.tsx` — the shell in §2: header band, pinned background, shared-scroll body (table column + `ItemsLayer`), divider, footer scrollbar; wraps everything in `TimelineProvider` and measures the right region for `viewportWidth`.
+- `layout/timeline-table.tsx` — the demo table (see §5).
+- **Reused as-is:** `TimeUnitsBar`, `TimelineGrid`, `NowLine`, `TimelineScrollbar`, `ItemsLayer`, `usePan`, controller + hooks, `useTimelineItems`, `layoutItems`.
 
-Constants: `AXIS_HEIGHT = 48` (matches the current `h-12` header band), `DEFAULT_TABLE_WIDTH = 320`, `MIN_TABLE_WIDTH = 160`, `MAX_TABLE_WIDTH = 640`.
+Constants: `DEFAULT_TABLE_WIDTH = 320`, `MIN_TABLE_WIDTH = 160`, `MAX_TABLE_WIDTH = 640`.
 
-## 5. Demo binding (runnable + testable, not the Gantt app)
+## 5. Demo table (runnable + testable, not the Gantt app)
 
-A thin consumer (`layout/demo/` or reuse in the route) maps `timeline-items` to uniform-height rows:
-- `renderTableHeader` → a single "Name" column header.
-- `renderTableCell(row)` → the item's name (+ color dot).
-- `renderTrack(row)` → one bar positioned via `getPercentageOffset(from)`/`(to)` for that item's date range (same math as the existing `TaskBars`).
+`timeline-table.tsx` reads `useTimelineItems()` + `layoutItems(items, today).rows` and renders, per row at `top = rowIndex × ROW_HEIGHT + ROW_PADDING`:
+- name, indented by depth (walk `parentId`), with a color dot;
+- assignee name, start–end dates (from the item) — enough columns to prove alignment.
 
-Mounted in `routes/_workspace/$orgSlug/timeline.tsx` in place of the current full-width `TimelineContainer`. This proves the shell; it intentionally omits hierarchy, extra columns, and interaction (those are the Gantt spec).
+`renderTableHeader` is a simple titles row. Mounted via `SplitLayout` in `routes/_workspace/$orgSlug/timeline.tsx` in place of the current full-width `TimelineContainer` (which is retained for reference). This proves the shell; full hierarchy expand/collapse, rich columns, and inline editing are the **Gantt spec**.
 
 ## 6. Testing (Vitest + Testing Library)
 
-- `row-geometry.test.ts` — `rowTops` prefix sums (incl. variable heights), `totalHeight`, `clampTableWidth` bounds.
+- `divider.test.ts` — `clampTableWidth` clamps at min/max and passes through in-range values; `row-metrics` `contentHeight(n)` = `n × ROW_HEIGHT + ROW_PADDING`.
 - `use-resizable-divider.test.ts` (or via the render test) — dragging changes width and clamps at min/max.
-- `split-layout.test.tsx` — given N rows: renders N table cells + N tracks; the header band shows the table header + the date axis; the divider is present; dragging the divider changes the table width; total body height equals `totalHeight(rows)`.
-- Scroll-sync is structural (single container) → no dedicated test.
-- Reuse the established happy-dom `ResizeObserver` mock so the timeline pane reports a nonzero width.
+- `split-layout.test.tsx` — renders the header band (table header titles + the date axis), one table cell per `layoutItems` row, the `ItemsLayer` region, and the divider; dragging the divider changes the table width; the table column and `ItemsLayer` both report `contentHeight` so rows align.
+- Scroll-sync is structural (single shared container) → no dedicated test.
+- Reuse the established happy-dom `ResizeObserver` mock so the right region reports a nonzero width.
 
 ## 7. Integration & follow-ons
 
