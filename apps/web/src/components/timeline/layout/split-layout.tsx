@@ -21,7 +21,7 @@ function SplitLayoutInner({
 	table,
 	initialTableWidth,
 }: SplitLayoutProps) {
-	const { setViewportWidth, viewportWidth } = useTimelineController();
+	const { setViewportWidth } = useTimelineController();
 	const { tableWidth, onDividerPointerDown } =
 		useResizableDivider(initialTableWidth);
 	const { onWheel } = usePan();
@@ -54,17 +54,14 @@ function SplitLayoutInner({
 			<div className="relative flex-1 overflow-hidden">
 				{/* pinned timeline background over the right region */}
 				<div
-					className="absolute top-0 bottom-0"
-					style={{ left: tableWidth, width: viewportWidth }}
+					className="absolute inset-y-0 right-0"
+					style={{ left: tableWidth }}
 				>
 					<TimelineGrid />
 					<NowLine />
 				</div>
 				{/* shared vertical scroll: table column + items layer move together */}
-				<div
-					className="absolute inset-0 overflow-y-auto overflow-x-hidden"
-					style={{ scrollbarGutter: "stable" }}
-				>
+				<div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
 					<div className="flex">
 						<div
 							data-testid="timeline-table-column"
