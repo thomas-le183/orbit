@@ -19,9 +19,7 @@ import {
 	useBarInteraction,
 } from "./use-bar-interaction";
 import { useTimelineItems } from "./use-timeline-items";
-
-const ROW_HEIGHT = 40;
-const ROW_PADDING = 7;
+import { ROW_HEIGHT, ROW_PADDING } from "./layout/row-metrics";
 
 export default function ItemsLayer() {
 	const { today, offsetMs, zoomLevel, viewportWidth, scrollToMs } =
