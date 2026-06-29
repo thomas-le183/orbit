@@ -46,7 +46,7 @@ export function useCreateProject(orgSlug: string) {
 			toast.success("Project created");
 		},
 		onError: (err) => {
-			toast.error(getErrorMessage(err));
+			toast.error(getErrorMessage(err, "Couldn't create project"));
 		},
 	});
 }
