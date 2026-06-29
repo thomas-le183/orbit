@@ -53,6 +53,7 @@ import { useTheme } from "next-themes";
 import { useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { CommandMenu } from "@/components/workspace/command-menu";
+import { ProjectsNavSection } from "@/components/workspace/projects-nav-section";
 import {
 	resolveModule,
 	type SidebarItem,
@@ -124,6 +125,7 @@ export function AppSidebar() {
 						orgSlug={orgSlug}
 					/>
 				))}
+				{!isSettings && <ProjectsNavSection orgSlug={orgSlug} />}
 			</SidebarContent>
 
 			<SidebarFooter>
