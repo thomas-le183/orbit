@@ -32,6 +32,7 @@ describe("org-defaults helpers", () => {
 			"monitoring",
 			"completed",
 		]);
+		expect(statuses[1].name).toBe("Planning");
 	});
 
 	it("picks the preferred-type status with the lowest position", () => {

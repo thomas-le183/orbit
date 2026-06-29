@@ -5,7 +5,7 @@ import {
 	TASK_STATUS_TYPES,
 	type TaskStatusType,
 } from "@orbit/shared";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { Db } from "../db/db.module";
 import * as schema from "../db/schema";
 
@@ -50,34 +50,40 @@ export function pickDefaultStatusId(
 }
 
 // Idempotent: seeds default statuses only if the org has none yet.
+// A transaction-scoped advisory lock serializes concurrent first-time seeds
+// for the same org so the check-then-insert can't double-seed.
 export async function ensureOrgDefaults(db: Db, orgId: string): Promise<void> {
-	const existingTask = await db.query.taskStatus.findFirst({
-		where: eq(schema.taskStatus.organizationId, orgId),
-	});
-	if (!existingTask) {
-		await db.insert(schema.taskStatus).values(
-			buildDefaultTaskStatuses().map((s, index) => ({
-				id: randomUUID(),
-				organizationId: orgId,
-				type: s.type,
-				name: s.name,
-				position: index,
-			})),
-		);
-	}
+	await db.transaction(async (tx) => {
+		await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${orgId}))`);
 
-	const existingProject = await db.query.projectStatus.findFirst({
-		where: eq(schema.projectStatus.organizationId, orgId),
+		const existingTask = await tx.query.taskStatus.findFirst({
+			where: eq(schema.taskStatus.organizationId, orgId),
+		});
+		if (!existingTask) {
+			await tx.insert(schema.taskStatus).values(
+				buildDefaultTaskStatuses().map((s, index) => ({
+					id: randomUUID(),
+					organizationId: orgId,
+					type: s.type,
+					name: s.name,
+					position: index,
+				})),
+			);
+		}
+
+		const existingProject = await tx.query.projectStatus.findFirst({
+			where: eq(schema.projectStatus.organizationId, orgId),
+		});
+		if (!existingProject) {
+			await tx.insert(schema.projectStatus).values(
+				buildDefaultProjectStatuses().map((s, index) => ({
+					id: randomUUID(),
+					organizationId: orgId,
+					type: s.type,
+					name: s.name,
+					position: index,
+				})),
+			);
+		}
 	});
-	if (!existingProject) {
-		await db.insert(schema.projectStatus).values(
-			buildDefaultProjectStatuses().map((s, index) => ({
-				id: randomUUID(),
-				organizationId: orgId,
-				type: s.type,
-				name: s.name,
-				position: index,
-			})),
-		);
-	}
 }
