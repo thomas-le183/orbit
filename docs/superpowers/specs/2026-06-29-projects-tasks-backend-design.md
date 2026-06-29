@@ -1,7 +1,7 @@
 # Projects & Tasks — Backend Design
 
 **Date:** 2026-06-29
-**Scope:** Database schema + migration, shared Zod schemas/constants, and a NestJS module with CRUD endpoints (projects, tasks, customizable statuses, customizable labels). No frontend wiring in this pass.
+**Scope:** Database schema + migration, shared Zod schemas/constants, and a NestJS module with CRUD endpoints (projects, tasks, milestones, customizable statuses, customizable labels). No frontend wiring in this pass.
 
 ## Goal
 
@@ -10,6 +10,7 @@ Introduce server-side persistence for **projects** and **tasks**, with customiza
 ## Decisions
 
 - **Hierarchy:** Org → Project → Task. A task belongs to exactly one project and may self-reference a `parentId` for subtask/grouping nesting.
+- **Milestones are a separate entity**, not a task kind. A milestone belongs to exactly one project and is a single dated marker (no duration, no progress, no subtasks). The timeline view will merge tasks and milestones for rendering in a later (frontend) pass.
 - **Project ↔ Team:** many-to-many via a `project_team` join table. One project links to many teams; teams remain reusable org-level entities (no unique constraint on `teamId`).
 - **Assignment:** single nullable `assigneeId` per task.
 - **Statuses (Linear-style):** status **types** are fixed, **site-wide code constants** (identical for every org); the named **states** inside each type are **org-wide** rows that users create, rename, recolor, reorder, and delete.
@@ -32,8 +33,11 @@ New files, re-exported from `packages/shared/src/schemas/index.ts` and the packa
 - `schemas/tasks.ts`:
   - `TASK_STATUS_TYPES = ["backlog","planned","in_progress","done","canceled"]` + `TaskStatusType` type
   - `TASK_PRIORITIES = ["none","low","medium","high","urgent"]` + `TaskPriority` type
-  - `createTaskSchema` (`name`, `kind?`, `parentId?`, `description?`, `statusId?`, `priority?`, `progress?`, `startDate?`, `endDate?`, `color?`, `assigneeId?`, `position?`, `labelIds?`)
+  - `createTaskSchema` (`name`, `parentId?`, `description?`, `statusId?`, `priority?`, `progress?`, `startDate?`, `endDate?`, `color?`, `assigneeId?`, `position?`, `labelIds?`)
   - `updateTaskSchema` (partial), `moveTaskSchema` (`{ parentId?: string | null, position: number }`)
+- `schemas/milestones.ts`:
+  - `createMilestoneSchema` (`name`, `date`, `description?`, `color?`, `position?`)
+  - `updateMilestoneSchema` (partial; adds `completedAt?: string | null` to mark reached/unreached)
 - `schemas/taxonomy.ts` (statuses + labels):
   - `createTaskStatusSchema` (`type` ∈ task status types, `name`, `color?`, `position?`), `updateTaskStatusSchema` (partial; `type` updatable)
   - `createProjectStatusSchema` (`type` ∈ project status types, `name`, `color?`, `position?`), `updateProjectStatusSchema`
@@ -102,13 +106,12 @@ New file `apps/api/src/db/schema/projects.ts`, re-exported from `apps/api/src/db
 | `id` | text PK | |
 | `projectId` | text NOT NULL | → `project.id` cascade |
 | `parentId` | text | nullable, self-ref → `task.id` cascade |
-| `kind` | text NOT NULL default `"task"` | `task` \| `milestone` |
 | `name` | text NOT NULL | |
 | `description` | text | nullable |
 | `statusId` | text NOT NULL | → `task_status.id` `onDelete: restrict` |
 | `priority` | text NOT NULL default `"none"` | fixed enum |
 | `progress` | integer NOT NULL default `0` | 0–100 |
-| `startDate` | date | nullable (milestone: equals `endDate`) |
+| `startDate` | date | nullable |
 | `endDate` | date | nullable |
 | `color` | text | nullable |
 | `assigneeId` | uuid | nullable → `user.id` `onDelete: set null` |
@@ -116,10 +119,28 @@ New file `apps/api/src/db/schema/projects.ts`, re-exported from `apps/api/src/db
 | `createdBy` | uuid NOT NULL | → `user.id` |
 | `createdAt` / `updatedAt` | timestamp NOT NULL | `defaultNow()` |
 
+### `milestone`
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | text PK | |
+| `projectId` | text NOT NULL | → `project.id` cascade |
+| `name` | text NOT NULL | |
+| `description` | text | nullable |
+| `date` | date NOT NULL | the single milestone date |
+| `color` | text | nullable |
+| `position` | integer NOT NULL default `0` | order among the project's milestones |
+| `completedAt` | timestamp | nullable (null = not reached) |
+| `createdBy` | uuid NOT NULL | → `user.id` |
+| `createdAt` / `updatedAt` | timestamp NOT NULL | `defaultNow()` |
+
+No `parentId`, `status`, `priority`, `progress`, or labels — milestones are flat, project-scoped markers.
+
 ### Relations
 
-- `project` → one `organization`, one `projectStatus`, many `task`, many `projectTeam`, many `projectLabelLink`.
+- `project` → one `organization`, one `projectStatus`, many `task`, many `milestone`, many `projectTeam`, many `projectLabelLink`.
 - `task` → one `project`, one `taskStatus`, self `parent`/`children`, one `assignee`, many `taskLabelLink`.
+- `milestone` → one `project`.
 - `taskStatus`/`projectStatus` → one `organization`, many tasks/projects.
 - `taskLabel`/`projectLabel` → one `organization`, many link rows.
 - `projectTeam` → one `project`, one `team`.
@@ -151,6 +172,7 @@ apps/api/src/projects/
   org-defaults.ts                          // ensureOrgDefaults() helper (shared by hook + services)
   projects/projects.controller.ts + projects.service.ts
   tasks/tasks.controller.ts + tasks.service.ts
+  milestones/milestones.controller.ts + milestones.service.ts
   statuses/statuses.controller.ts + statuses.service.ts   // task + project statuses
   labels/labels.controller.ts + labels.service.ts         // task + project labels
 ```
@@ -177,6 +199,15 @@ apps/api/src/projects/
 | PATCH | `/tasks/:id` | update any field incl. `statusId`, `priority`, `labelIds` (replace-all) |
 | DELETE | `/tasks/:id` | delete (cascades subtasks, label links) |
 | PATCH | `/tasks/:id/move` | reorder/reparent (`parentId` + `position`) |
+
+**Milestones**
+
+| method | path | purpose |
+| --- | --- | --- |
+| GET | `/projects/:projectId/milestones` | list milestones (ordered by `date`, then `position`) |
+| POST | `/projects/:projectId/milestones` | create milestone |
+| PATCH | `/milestones/:id` | update (name, date, color, position, `completedAt`) |
+| DELETE | `/milestones/:id` | delete |
 
 **Statuses** (task & project)
 
@@ -206,14 +237,16 @@ apps/api/src/projects/
 
 - `ProjectsService`: `listProjects`, `getProject` (+status/teams/labels), `createProject`, `updateProject`, `deleteProject`, `setTeams` (replace-all, txn), `setLabels` (replace-all, txn).
 - `TasksService`: `listTasks`, `createTask`, `updateTask`, `deleteTask`, `moveTask`, `setLabels`; private `assertProjectInOrg`.
+- `MilestonesService`: `listMilestones`, `createMilestone`, `updateMilestone`, `deleteMilestone`; reuses the same `assertProjectInOrg` guard.
 - `StatusesService`: task & project status CRUD; `deleteStatus(id, orgId, reassignTo?)` enforces the migration rule in a transaction.
 - `LabelsService`: task & project label CRUD.
 
 ## Testing
 
 - `apps/api` Jest unit tests:
-  - org scoping (cross-org access → not-found) across projects, tasks, statuses, labels
-  - project/task create/update/delete happy paths; team & label replace-all
+  - org scoping (cross-org access → not-found) across projects, tasks, milestones, statuses, labels
+  - project/task/milestone create/update/delete happy paths; team & label replace-all
+  - milestone scoping to project-in-org; `completedAt` toggle
   - task reorder/reparent; cascade deletes
   - status delete: 409 when in use without `reassignTo`; successful migrate-then-delete with `reassignTo`
   - `ensureOrgDefaults` idempotency (no duplicate seeds on repeat calls)
