@@ -7,6 +7,7 @@ import { DbModule } from "./db/db.module";
 import { EmailModule } from "./email/email.module";
 import { NotificationModule } from "./notifications/notification.module";
 import { PreferencesModule } from "./preferences/preferences.module";
+import { ProjectsModule } from "./projects/projects.module";
 import { QueueModule } from "./queue/queue.module";
 import { StorageModule } from "./storage/storage.module";
 import { UploadsModule } from "./uploads/uploads.module";
@@ -27,6 +28,7 @@ import { UploadsModule } from "./uploads/uploads.module";
 		ChatModule,
 		NotificationModule,
 		PreferencesModule,
+		ProjectsModule,
 		UploadsModule,
 	],
 })

@@ -43,3 +43,8 @@ export {
 } from "./types/error-codes.js";
 
 export { cn, getInitials } from "./utils/index.js";
+
+export * from "./schemas/projects.js";
+export * from "./schemas/tasks.js";
+export * from "./schemas/milestones.js";
+export * from "./schemas/taxonomy.js";

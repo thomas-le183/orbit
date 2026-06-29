@@ -7,13 +7,14 @@ expand(config({ path: "../../.env" }));
 import { drizzle } from "drizzle-orm/node-postgres";
 import type { Db } from "./db.module";
 import * as schema from "./schema";
+import { seedOrgStatusDefaults } from "./seeds/init/org-status-defaults";
 
 // ------------------------------------------------------------------
 // Init seeds — run in every environment (staging, production, local)
 // These are required baseline data: roles, system config, etc.
 // ------------------------------------------------------------------
 const initSeeds: { name: string; fn: (db: Db) => Promise<void> }[] = [
-	// e.g. { name: "roles", fn: seedRoles },
+	{ name: "org-status-defaults", fn: seedOrgStatusDefaults },
 ];
 
 // ------------------------------------------------------------------

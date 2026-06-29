@@ -16,6 +16,7 @@ import {
 } from "../billing/stripe-seat-billing";
 import type { Db } from "../db/db.module";
 import * as schema from "../db/schema";
+import { ensureOrgDefaults } from "../projects/org-defaults";
 
 const seatBillingLogger = new Logger("PerSeatBilling");
 
@@ -188,6 +189,8 @@ export function createOrganizationHooks({
 }) {
 	return {
 		afterCreateOrganization: async ({ organization: org, user: owner }) => {
+			await ensureOrgDefaults(db, org.id);
+
 			void emailQueue.add("send-workspace-created", {
 				type: "send-workspace-created",
 				to: owner.email,
