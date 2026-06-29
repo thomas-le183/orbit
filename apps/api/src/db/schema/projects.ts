@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+	type AnyPgColumn,
 	date,
 	integer,
 	pgTable,
@@ -117,7 +118,9 @@ export const task = pgTable("task", {
 	projectId: text("project_id")
 		.notNull()
 		.references(() => project.id, { onDelete: "cascade" }),
-	parentId: text("parent_id"),
+	parentId: text("parent_id").references((): AnyPgColumn => task.id, {
+		onDelete: "cascade",
+	}),
 	name: text("name").notNull(),
 	description: text("description"),
 	statusId: text("status_id")
