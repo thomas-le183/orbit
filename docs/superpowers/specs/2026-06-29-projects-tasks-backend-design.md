@@ -10,7 +10,7 @@ Introduce server-side persistence for **projects** and **tasks**, with customiza
 ## Decisions
 
 - **Hierarchy:** Org → Project → Task. A task belongs to exactly one project and may self-reference a `parentId` for subtask/grouping nesting.
-- **Milestones are a separate entity**, not a task kind. A milestone belongs to exactly one project and is a single dated marker (no duration, no progress, no subtasks). The timeline view will merge tasks and milestones for rendering in a later (frontend) pass.
+- **Milestones are a separate entity**, not a task kind. A milestone belongs to exactly one project and is a single dated marker (no duration, no progress, no subtasks). Milestones render distinctly (their own markers/view) rather than as rows interleaved into the task tree, so no merged-ordering concern — they're fetched and positioned independently.
 - **Project ↔ Team:** many-to-many via a `project_team` join table. One project links to many teams; teams remain reusable org-level entities (no unique constraint on `teamId`).
 - **Assignment:** single nullable `assigneeId` per task.
 - **Statuses (Linear-style):** status **types** are fixed, **site-wide code constants** (identical for every org); the named **states** inside each type are **org-wide** rows that users create, rename, recolor, reorder, and delete.
