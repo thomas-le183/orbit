@@ -12,9 +12,9 @@ Introduce server-side persistence for **projects** and **tasks**, with customiza
 - **Hierarchy:** Org → Project → Task. A task belongs to exactly one project and may self-reference a `parentId` for subtask/grouping nesting.
 - **Project ↔ Team:** many-to-many via a `project_team` join table. One project links to many teams; teams remain reusable org-level entities (no unique constraint on `teamId`).
 - **Assignment:** single nullable `assigneeId` per task.
-- **Statuses (Linear-style):** status **categories** are fixed, **site-wide code constants** (identical for every org); the named **states** inside each category are **org-wide** rows that users create, rename, recolor, reorder, and delete.
-  - Task categories: `backlog`, `planned`, `in_progress`, `done`, `canceled`.
-  - Project categories: `draft`, `planning`, `execution`, `monitoring`, `completed`.
+- **Statuses (Linear-style):** status **types** are fixed, **site-wide code constants** (identical for every org); the named **states** inside each type are **org-wide** rows that users create, rename, recolor, reorder, and delete.
+  - Task status types: `backlog`, `planned`, `in_progress`, `done`, `canceled`.
+  - Project status types: `draft`, `planning`, `execution`, `monitoring`, `completed`.
 - **Priority:** fixed enum on `task`: `none` | `low` | `medium` | `high` | `urgent` (text column, default `none`).
 - **Labels:** org-wide, user-managed (add/rename/delete). **Separate sets** for projects vs tasks. Many-to-many via join tables. Attach via **replace-all** `labelIds` on the task/project create/update payloads.
 - **Status deletion requires migration:** deleting a status that is still referenced returns 409 unless the request supplies `reassignTo` (another status id in the same org), in which case all referencing rows are moved to that status first, then the status is deleted.
@@ -26,17 +26,17 @@ Introduce server-side persistence for **projects** and **tasks**, with customiza
 New files, re-exported from `packages/shared/src/schemas/index.ts` and the package barrel:
 
 - `schemas/projects.ts` — project constants + schemas:
-  - `PROJECT_STATUS_CATEGORIES = ["draft","planning","execution","monitoring","completed"]` + `ProjectStatusCategory` type
+  - `PROJECT_STATUS_TYPES = ["draft","planning","execution","monitoring","completed"]` + `ProjectStatusType` type
   - `createProjectSchema` (`name`, `description?`, `statusId?`, `color?`, `startDate?`, `endDate?`, `teamIds?`, `labelIds?`)
   - `updateProjectSchema` (partial), `setProjectTeamsSchema` (`{ teamIds: string[] }`)
 - `schemas/tasks.ts`:
-  - `TASK_STATUS_CATEGORIES = ["backlog","planned","in_progress","done","canceled"]` + `TaskStatusCategory` type
+  - `TASK_STATUS_TYPES = ["backlog","planned","in_progress","done","canceled"]` + `TaskStatusType` type
   - `TASK_PRIORITIES = ["none","low","medium","high","urgent"]` + `TaskPriority` type
   - `createTaskSchema` (`name`, `kind?`, `parentId?`, `description?`, `statusId?`, `priority?`, `progress?`, `startDate?`, `endDate?`, `color?`, `assigneeId?`, `position?`, `labelIds?`)
   - `updateTaskSchema` (partial), `moveTaskSchema` (`{ parentId?: string | null, position: number }`)
 - `schemas/taxonomy.ts` (statuses + labels):
-  - `createTaskStatusSchema` (`category` ∈ task categories, `name`, `color?`, `position?`), `updateTaskStatusSchema` (partial; `category` updatable)
-  - `createProjectStatusSchema` (`category` ∈ project categories, `name`, `color?`, `position?`), `updateProjectStatusSchema`
+  - `createTaskStatusSchema` (`type` ∈ task status types, `name`, `color?`, `position?`), `updateTaskStatusSchema` (partial; `type` updatable)
+  - `createProjectStatusSchema` (`type` ∈ project status types, `name`, `color?`, `position?`), `updateProjectStatusSchema`
   - `createLabelSchema` (`name`, `color?`), `updateLabelSchema` (partial) — reused for task & project labels
   - `deleteStatusSchema` (`{ reassignTo?: string }`)
 
@@ -44,7 +44,7 @@ Enum membership, `0 <= progress <= 100`, and required fields are enforced here.
 
 ## Database schema
 
-New file `apps/api/src/db/schema/projects.ts`, re-exported from `apps/api/src/db/schema/index.ts`. Conventions follow `chat.ts`: `text` primary keys via `randomUUID()`, `uuid` FKs to `organization`/`user`/`team` with cascade, inline Drizzle relations. `category`/`priority` stored as plain `text` (enforced in Zod, not `pgEnum`).
+New file `apps/api/src/db/schema/projects.ts`, re-exported from `apps/api/src/db/schema/index.ts`. Conventions follow `chat.ts`: `text` primary keys via `randomUUID()`, `uuid` FKs to `organization`/`user`/`team` with cascade, inline Drizzle relations. `type`/`priority` stored as plain `text` (enforced in Zod, not `pgEnum`).
 
 ### Taxonomy tables (org-wide)
 
@@ -54,13 +54,13 @@ New file `apps/api/src/db/schema/projects.ts`, re-exported from `apps/api/src/db
 | --- | --- | --- |
 | `id` | text PK | |
 | `organizationId` | uuid NOT NULL | → `organization.id` cascade |
-| `category` | text NOT NULL | one of the task categories (constant) |
+| `type` | text NOT NULL | one of the task status types (constant) |
 | `name` | text NOT NULL | |
 | `color` | text | nullable |
-| `position` | integer NOT NULL default `0` | order within category |
+| `position` | integer NOT NULL default `0` | order within type |
 | `createdAt` | timestamp NOT NULL | `defaultNow()` |
 
-**`project_status`** — same shape, `category` ∈ project categories.
+**`project_status`** — same shape, `type` ∈ project status types.
 
 **`task_label`** / **`project_label`**
 
@@ -130,7 +130,7 @@ Generate with `pnpm db:generate` (from `apps/api`), then `pnpm db:migrate`.
 
 ## Default seeding
 
-`ensureOrgDefaults(orgId)` — idempotent helper that, if the org has no task/project statuses, inserts the default named states (one per category, name = humanized category):
+`ensureOrgDefaults(orgId)` — idempotent helper that, if the org has no task/project statuses, inserts the default named states (one per type, name = humanized type):
 
 - task: Backlog, Planned, In Progress, Done, Canceled
 - project: Draft, Planning, Execution, Monitoring, Completed
@@ -139,7 +139,7 @@ Labels seed empty.
 
 - **New orgs:** called from `afterCreateOrganization` (`apps/api/src/auth/organization-billing-hooks.ts`).
 - **Existing dev orgs:** backfilled via `pnpm db:seed:dev`.
-- **Safety net:** task/project create resolves a default `statusId` when omitted (first status by `position`; for tasks, in the `backlog` category), calling `ensureOrgDefaults` first if none exist.
+- **Safety net:** task/project create resolves a default `statusId` when omitted (first status by `position`; for tasks, in the `backlog` type), calling `ensureOrgDefaults` first if none exist.
 
 ## NestJS module
 
@@ -182,9 +182,9 @@ apps/api/src/projects/
 
 | method | path | purpose |
 | --- | --- | --- |
-| GET | `/task-statuses` · `/project-statuses` | list org statuses (grouped by category) |
-| POST | `/task-statuses` · `/project-statuses` | create a named state in a category |
-| PATCH | `/task-statuses/:id` · `/project-statuses/:id` | rename/recolor/reorder/recategorize |
+| GET | `/task-statuses` · `/project-statuses` | list org statuses (grouped by type) |
+| POST | `/task-statuses` · `/project-statuses` | create a named state in a type |
+| PATCH | `/task-statuses/:id` · `/project-statuses/:id` | rename/recolor/reorder/change type |
 | DELETE | `/task-statuses/:id` · `/project-statuses/:id` | delete; body `{ reassignTo? }` — 409 if in use without `reassignTo`, else migrate then delete |
 
 **Labels** (task & project)
@@ -217,7 +217,7 @@ apps/api/src/projects/
   - task reorder/reparent; cascade deletes
   - status delete: 409 when in use without `reassignTo`; successful migrate-then-delete with `reassignTo`
   - `ensureOrgDefaults` idempotency (no duplicate seeds on repeat calls)
-- `@orbit/shared` Zod tests: progress range, status/project category membership, priority enum, required fields.
+- `@orbit/shared` Zod tests: progress range, task/project status type membership, priority enum, required fields.
 
 ## Out of scope
 
