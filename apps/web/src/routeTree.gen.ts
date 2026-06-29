@@ -44,6 +44,7 @@ import { Route as WorkspaceOrgSlugSettingsPreferencesRouteImport } from './route
 import { Route as WorkspaceOrgSlugSettingsNotificationsRouteImport } from './routes/_workspace/$orgSlug/settings/notifications'
 import { Route as WorkspaceOrgSlugSettingsMembersRouteImport } from './routes/_workspace/$orgSlug/settings/members'
 import { Route as WorkspaceOrgSlugSettingsBillingRouteImport } from './routes/_workspace/$orgSlug/settings/billing'
+import { Route as WorkspaceOrgSlugProjectsProjectIdRouteImport } from './routes/_workspace/$orgSlug/projects/$projectId'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -234,6 +235,12 @@ const WorkspaceOrgSlugSettingsBillingRoute =
     path: '/billing',
     getParentRoute: () => WorkspaceOrgSlugSettingsRoute,
   } as any)
+const WorkspaceOrgSlugProjectsProjectIdRoute =
+  WorkspaceOrgSlugProjectsProjectIdRouteImport.update({
+    id: '/projects/$projectId',
+    path: '/projects/$projectId',
+    getParentRoute: () => WorkspaceOrgSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -256,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/$orgSlug/timeline': typeof WorkspaceOrgSlugTimelineRoute
   '/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
   '/$orgSlug/': typeof WorkspaceOrgSlugIndexRoute
+  '/$orgSlug/projects/$projectId': typeof WorkspaceOrgSlugProjectsProjectIdRoute
   '/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
   '/$orgSlug/settings/members': typeof WorkspaceOrgSlugSettingsMembersRoute
   '/$orgSlug/settings/notifications': typeof WorkspaceOrgSlugSettingsNotificationsRoute
@@ -288,6 +296,7 @@ export interface FileRoutesByTo {
   '/$orgSlug/timeline': typeof WorkspaceOrgSlugTimelineRoute
   '/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
   '/$orgSlug': typeof WorkspaceOrgSlugIndexRoute
+  '/$orgSlug/projects/$projectId': typeof WorkspaceOrgSlugProjectsProjectIdRoute
   '/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
   '/$orgSlug/settings/members': typeof WorkspaceOrgSlugSettingsMembersRoute
   '/$orgSlug/settings/notifications': typeof WorkspaceOrgSlugSettingsNotificationsRoute
@@ -326,6 +335,7 @@ export interface FileRoutesById {
   '/_workspace/$orgSlug/timeline': typeof WorkspaceOrgSlugTimelineRoute
   '/_workspace/$orgSlug/wiki': typeof WorkspaceOrgSlugWikiRoute
   '/_workspace/$orgSlug/': typeof WorkspaceOrgSlugIndexRoute
+  '/_workspace/$orgSlug/projects/$projectId': typeof WorkspaceOrgSlugProjectsProjectIdRoute
   '/_workspace/$orgSlug/settings/billing': typeof WorkspaceOrgSlugSettingsBillingRoute
   '/_workspace/$orgSlug/settings/members': typeof WorkspaceOrgSlugSettingsMembersRoute
   '/_workspace/$orgSlug/settings/notifications': typeof WorkspaceOrgSlugSettingsNotificationsRoute
@@ -363,6 +373,7 @@ export interface FileRouteTypes {
     | '/$orgSlug/timeline'
     | '/$orgSlug/wiki'
     | '/$orgSlug/'
+    | '/$orgSlug/projects/$projectId'
     | '/$orgSlug/settings/billing'
     | '/$orgSlug/settings/members'
     | '/$orgSlug/settings/notifications'
@@ -395,6 +406,7 @@ export interface FileRouteTypes {
     | '/$orgSlug/timeline'
     | '/$orgSlug/wiki'
     | '/$orgSlug'
+    | '/$orgSlug/projects/$projectId'
     | '/$orgSlug/settings/billing'
     | '/$orgSlug/settings/members'
     | '/$orgSlug/settings/notifications'
@@ -432,6 +444,7 @@ export interface FileRouteTypes {
     | '/_workspace/$orgSlug/timeline'
     | '/_workspace/$orgSlug/wiki'
     | '/_workspace/$orgSlug/'
+    | '/_workspace/$orgSlug/projects/$projectId'
     | '/_workspace/$orgSlug/settings/billing'
     | '/_workspace/$orgSlug/settings/members'
     | '/_workspace/$orgSlug/settings/notifications'
@@ -703,6 +716,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceOrgSlugSettingsBillingRouteImport
       parentRoute: typeof WorkspaceOrgSlugSettingsRoute
     }
+    '/_workspace/$orgSlug/projects/$projectId': {
+      id: '/_workspace/$orgSlug/projects/$projectId'
+      path: '/projects/$projectId'
+      fullPath: '/$orgSlug/projects/$projectId'
+      preLoaderRoute: typeof WorkspaceOrgSlugProjectsProjectIdRouteImport
+      parentRoute: typeof WorkspaceOrgSlugRoute
+    }
   }
 }
 
@@ -795,6 +815,7 @@ interface WorkspaceOrgSlugRouteChildren {
   WorkspaceOrgSlugTimelineRoute: typeof WorkspaceOrgSlugTimelineRoute
   WorkspaceOrgSlugWikiRoute: typeof WorkspaceOrgSlugWikiRoute
   WorkspaceOrgSlugIndexRoute: typeof WorkspaceOrgSlugIndexRoute
+  WorkspaceOrgSlugProjectsProjectIdRoute: typeof WorkspaceOrgSlugProjectsProjectIdRoute
 }
 
 const WorkspaceOrgSlugRouteChildren: WorkspaceOrgSlugRouteChildren = {
@@ -810,6 +831,8 @@ const WorkspaceOrgSlugRouteChildren: WorkspaceOrgSlugRouteChildren = {
   WorkspaceOrgSlugTimelineRoute: WorkspaceOrgSlugTimelineRoute,
   WorkspaceOrgSlugWikiRoute: WorkspaceOrgSlugWikiRoute,
   WorkspaceOrgSlugIndexRoute: WorkspaceOrgSlugIndexRoute,
+  WorkspaceOrgSlugProjectsProjectIdRoute:
+    WorkspaceOrgSlugProjectsProjectIdRoute,
 }
 
 const WorkspaceOrgSlugRouteWithChildren =
