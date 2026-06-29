@@ -1,7 +1,12 @@
 import { randomUUID } from "node:crypto";
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import {
+	ForbiddenException,
+	Inject,
+	Injectable,
+	NotFoundException,
+} from "@nestjs/common";
 import type { CreateProjectInput, UpdateProjectInput } from "@orbit/shared";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { DB, type Db } from "../../db/db.module";
 import * as schema from "../../db/schema";
 import { ensureOrgDefaults, pickDefaultStatusId } from "../org-defaults";
@@ -53,6 +58,11 @@ export class ProjectsService {
 		await ensureOrgDefaults(this.db, orgId);
 		const statusId =
 			input.statusId ?? (await this.defaultProjectStatusId(orgId));
+		await this.assertRefsInOrg(orgId, {
+			statusId: input.statusId,
+			teamIds: input.teamIds,
+			labelIds: input.labelIds,
+		});
 		const id = randomUUID();
 		await this.db.transaction(async (tx) => {
 			await tx.insert(schema.project).values({
@@ -85,6 +95,11 @@ export class ProjectsService {
 
 	async updateProject(id: string, orgId: string, input: UpdateProjectInput) {
 		await this.assertProjectInOrg(id, orgId);
+		await this.assertRefsInOrg(orgId, {
+			statusId: input.statusId,
+			teamIds: input.teamIds,
+			labelIds: input.labelIds,
+		});
 		await this.db.transaction(async (tx) => {
 			const { teamIds, labelIds, ...fields } = input;
 			if (Object.keys(fields).length > 0) {
@@ -122,7 +137,14 @@ export class ProjectsService {
 
 	async deleteProject(id: string, orgId: string) {
 		await this.assertProjectInOrg(id, orgId);
-		await this.db.delete(schema.project).where(eq(schema.project.id, id));
+		await this.db
+			.delete(schema.project)
+			.where(
+				and(
+					eq(schema.project.id, id),
+					eq(schema.project.organizationId, orgId),
+				),
+			);
 		return { deleted: true };
 	}
 
@@ -131,5 +153,53 @@ export class ProjectsService {
 			where: eq(schema.projectStatus.organizationId, orgId),
 		});
 		return pickDefaultStatusId(statuses, "draft");
+	}
+
+	// Reject references (statusId/teamIds/labelIds) that don't belong to the org
+	// — prevents cross-org IDOR via caller-supplied foreign keys.
+	private async assertRefsInOrg(
+		orgId: string,
+		refs: { statusId?: string; teamIds?: string[]; labelIds?: string[] },
+	): Promise<void> {
+		if (refs.statusId) {
+			const found = await this.db.query.projectStatus.findFirst({
+				columns: { id: true },
+				where: and(
+					eq(schema.projectStatus.id, refs.statusId),
+					eq(schema.projectStatus.organizationId, orgId),
+				),
+			});
+			if (!found) {
+				throw new ForbiddenException("statusId is not in this organization");
+			}
+		}
+		if (refs.teamIds?.length) {
+			const rows = await this.db.query.team.findMany({
+				columns: { id: true },
+				where: and(
+					inArray(schema.team.id, refs.teamIds),
+					eq(schema.team.organizationId, orgId),
+				),
+			});
+			if (rows.length !== new Set(refs.teamIds).size) {
+				throw new ForbiddenException(
+					"One or more teamIds are not in this organization",
+				);
+			}
+		}
+		if (refs.labelIds?.length) {
+			const rows = await this.db.query.projectLabel.findMany({
+				columns: { id: true },
+				where: and(
+					inArray(schema.projectLabel.id, refs.labelIds),
+					eq(schema.projectLabel.organizationId, orgId),
+				),
+			});
+			if (rows.length !== new Set(refs.labelIds).size) {
+				throw new ForbiddenException(
+					"One or more labelIds are not in this organization",
+				);
+			}
+		}
 	}
 }
