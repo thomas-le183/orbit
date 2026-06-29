@@ -1,20 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import SplitLayout from "@/components/timeline/layout/split-layout";
-import TimelineTable, {
-	TimelineTableHeader,
-} from "@/components/timeline/layout/timeline-table";
+import TimelineView from "@/components/timeline/timeline-view";
 
 export const Route = createFileRoute("/_workspace/$orgSlug/timeline")({
-	component: TimelinePage,
+	component: TimelineView,
 });
-
-function TimelinePage() {
-	return (
-		<div className="h-full">
-			<SplitLayout
-				tableHeader={<TimelineTableHeader />}
-				table={<TimelineTable />}
-			/>
-		</div>
-	);
-}
