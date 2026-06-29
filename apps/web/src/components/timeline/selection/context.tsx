@@ -92,7 +92,16 @@ export function RowSelectionProvider({ children }: { children: ReactNode }) {
 			clear,
 			setHovered,
 		}),
-		[selectedIds, hoveredId, selectOne, selectTo, toggle, selectAll, clear, setHovered],
+		[
+			selectedIds,
+			hoveredId,
+			selectOne,
+			selectTo,
+			toggle,
+			selectAll,
+			clear,
+			setHovered,
+		],
 	);
 
 	return (

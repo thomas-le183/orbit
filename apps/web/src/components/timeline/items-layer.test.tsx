@@ -151,8 +151,13 @@ describe("ItemsLayer", () => {
 	});
 });
 
-describe("ItemsLayer row selection band", () => {
-	it("renders a row band after a table row is selected", async () => {
+describe("ItemsLayer row lanes", () => {
+	const selectedLaneCount = (container: HTMLElement) =>
+		[...container.querySelectorAll("[data-testid='timeline-row-lane']")].filter(
+			(l) => l.getAttribute("data-selected") === "true",
+		).length;
+
+	it("highlights exactly one lane after a table row is selected", async () => {
 		const user = userEvent.setup();
 		const { container } = render(
 			<TimelineProvider initialZoom="weeks">
@@ -163,16 +168,32 @@ describe("ItemsLayer row selection band", () => {
 				</RowSelectionProvider>
 			</TimelineProvider>,
 		);
-		expect(
-			container.querySelectorAll("[data-testid='timeline-row-band']").length,
-		).toBe(0);
-		const firstRow = container.querySelector<HTMLElement>(
-			"[data-testid='timeline-table-row']",
+		expect(selectedLaneCount(container)).toBe(0);
+		const firstCheckbox = container.querySelector<HTMLElement>(
+			"[data-testid='timeline-table-row'] [data-slot='checkbox']",
 		);
-		if (!firstRow) throw new Error("no table row");
-		await user.click(firstRow);
-		expect(
-			container.querySelectorAll("[data-testid='timeline-row-band']").length,
-		).toBe(1);
+		if (!firstCheckbox) throw new Error("no row checkbox");
+		await user.click(firstCheckbox);
+		expect(selectedLaneCount(container)).toBe(1);
+	});
+
+	it("applies a hover background when a timeline lane is hovered", async () => {
+		const user = userEvent.setup();
+		const { container } = render(
+			<TimelineProvider initialZoom="weeks">
+				<RowSelectionProvider>
+					<SizeViewport width={800} />
+					<ItemsLayer />
+				</RowSelectionProvider>
+			</TimelineProvider>,
+		);
+		const lane = container.querySelector<HTMLElement>(
+			"[data-testid='timeline-row-lane']",
+		);
+		if (!lane) throw new Error("no lane");
+		await user.hover(lane);
+		expect(lane.className).toContain("bg-muted/50");
+		await user.unhover(lane);
+		expect(lane.className).not.toContain("bg-muted/50");
 	});
 });

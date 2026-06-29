@@ -24,49 +24,70 @@ describe("TimelineTable", () => {
 		).toBeGreaterThan(0);
 	});
 
-	it("positions each row by its rowIndex (first row at the top padding)", () => {
+	it("positions each row in its full-height lane (first row at the top)", () => {
 		const { container } = renderTable();
 		const first = container.querySelector<HTMLElement>(
 			"[data-testid='timeline-table-row']",
 		);
-		expect(first?.style.top).toBe("7px");
+		expect(first?.style.top).toBe("0px");
+		expect(first?.style.height).toBe("40px");
 	});
 
-	it("selects a single row on click", async () => {
+	const rowCheckbox = (row: HTMLElement) =>
+		row.querySelector<HTMLElement>("[data-slot='checkbox']") as HTMLElement;
+
+	it("selects a row only via its checkbox", async () => {
 		const user = userEvent.setup();
 		const { container } = renderTable();
 		const rows = container.querySelectorAll<HTMLElement>(
 			"[data-testid='timeline-table-row']",
 		);
-		await user.click(rows[0]);
+		await user.click(rowCheckbox(rows[0]));
 		expect(rows[0].getAttribute("data-selected")).toBe("true");
 		expect(rows[1].getAttribute("data-selected")).toBe("false");
 	});
 
-	it("shift-click selects a contiguous range", async () => {
+	it("does not change the selection when the row body is clicked", async () => {
 		const user = userEvent.setup();
 		const { container } = renderTable();
 		const rows = container.querySelectorAll<HTMLElement>(
 			"[data-testid='timeline-table-row']",
 		);
-		await user.click(rows[0]);
+		await user.click(rowCheckbox(rows[0]));
+		await user.click(rows[1]); // clicking another row's body must NOT move selection
+		expect(rows[0].getAttribute("data-selected")).toBe("true");
+		expect(rows[1].getAttribute("data-selected")).toBe("false");
+	});
+
+	it("shift-click on a checkbox selects a contiguous range", async () => {
+		const user = userEvent.setup();
+		const { container } = renderTable();
+		const rows = container.querySelectorAll<HTMLElement>(
+			"[data-testid='timeline-table-row']",
+		);
+		await user.click(rowCheckbox(rows[0]));
 		await user.keyboard("{Shift>}");
-		await user.click(rows[2]);
+		await user.click(rowCheckbox(rows[2]));
 		await user.keyboard("{/Shift}");
 		expect(rows[0].getAttribute("data-selected")).toBe("true");
 		expect(rows[1].getAttribute("data-selected")).toBe("true");
 		expect(rows[2].getAttribute("data-selected")).toBe("true");
 	});
 
-	it("header checkbox selects all rows", async () => {
+	it("header checkbox selects all rows, then clears all", async () => {
 		const user = userEvent.setup();
 		const { container } = renderTable();
-		await user.click(screen.getByTestId("timeline-select-all"));
+		const header = screen.getByTestId("timeline-select-all");
 		const rows = container.querySelectorAll<HTMLElement>(
 			"[data-testid='timeline-table-row']",
 		);
+		await user.click(header);
 		expect(
 			[...rows].every((r) => r.getAttribute("data-selected") === "true"),
+		).toBe(true);
+		await user.click(header); // any selection → clear all immediately
+		expect(
+			[...rows].every((r) => r.getAttribute("data-selected") === "false"),
 		).toBe(true);
 	});
 

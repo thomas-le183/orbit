@@ -1,11 +1,11 @@
-import { Checkbox } from "@orbit/ui/components/checkbox";
 import { cn } from "@orbit/shared";
+import { Checkbox } from "@orbit/ui/components/checkbox";
 import { useMemo } from "react";
 import { useTimelineController } from "../controller/context";
 import { layoutItems } from "../controller/layout";
 import { useRowSelection } from "../selection/context";
 import { useTimelineItems } from "../use-timeline-items";
-import { contentHeight, ROW_HEIGHT, ROW_PADDING, rowTop } from "./row-metrics";
+import { contentHeight, ROW_HEIGHT } from "./row-metrics";
 
 /** Ordered visible row ids — the shared order both panes select against. */
 function useOrderedIds(): string[] {
@@ -18,17 +18,20 @@ function useOrderedIds(): string[] {
 /** Column titles + select-all checkbox for the header band. */
 export function TimelineTableHeader() {
 	const orderedIds = useOrderedIds();
-	const { selectedIds, selectAll } = useRowSelection();
+	const { selectedIds, selectAll, clear } = useRowSelection();
 	const allSelected =
 		orderedIds.length > 0 && orderedIds.every((id) => selectedIds.has(id));
+	const someSelected = selectedIds.size > 0;
 
 	return (
 		<div className="flex h-full items-center gap-2 bg-background-primary px-3 text-xs font-semibold text-muted-foreground">
 			<Checkbox
 				data-testid="timeline-select-all"
-				aria-label="Select all rows"
+				aria-label={someSelected ? "Clear selection" : "Select all rows"}
 				checked={allSelected}
-				onCheckedChange={() => selectAll(orderedIds)}
+				indeterminate={someSelected && !allSelected}
+				// Any selection → clear all immediately; otherwise select everything.
+				onClick={() => (someSelected ? clear() : selectAll(orderedIds))}
 			/>
 			<span className="flex-1">Name</span>
 			<span className="w-24 shrink-0">Assignee</span>
@@ -43,7 +46,7 @@ export default function TimelineTable() {
 	const { items } = useTimelineItems();
 	const { rows } = useMemo(() => layoutItems(items, today), [items, today]);
 	const orderedIds = useMemo(() => rows.map((r) => r.item.id), [rows]);
-	const { isSelected, hoveredId, selectOne, selectTo, toggle, setHovered } =
+	const { isSelected, hoveredId, selectTo, toggle, setHovered } =
 		useRowSelection();
 
 	return (
@@ -52,7 +55,8 @@ export default function TimelineTable() {
 			style={{ height: contentHeight(rows.length) }}
 		>
 			{rows.map((row) => {
-				const top = rowTop(row.rowIndex);
+				// Full-lane row so the table row height matches the timeline row band.
+				const top = row.rowIndex * ROW_HEIGHT;
 				const { item } = row;
 				const selected = isSelected(item.id);
 				return (
@@ -60,26 +64,27 @@ export default function TimelineTable() {
 						key={item.id}
 						data-testid="timeline-table-row"
 						data-selected={selected}
-						onClick={(e) =>
-							e.shiftKey ? selectTo(item.id, orderedIds) : selectOne(item.id)
-						}
 						onMouseEnter={() => setHovered(item.id)}
 						onMouseLeave={() => setHovered(null)}
 						className={cn(
-							"absolute inset-x-0 flex cursor-pointer items-center gap-2 px-3 text-xs",
+							"absolute inset-x-0 flex items-center gap-2 px-3 text-xs",
 							selected
 								? "bg-accent"
 								: hoveredId === item.id
 									? "bg-muted/50"
 									: "",
 						)}
-						style={{ top, height: ROW_HEIGHT - ROW_PADDING * 2 }}
+						style={{ top, height: ROW_HEIGHT }}
 					>
 						<Checkbox
 							aria-label={`Select ${item.name}`}
 							checked={selected}
-							onCheckedChange={() => toggle(item.id)}
-							onClick={(e) => e.stopPropagation()}
+							// Selection happens only via the checkbox; shift-click extends a range.
+							onClick={(e) => {
+								e.stopPropagation();
+								if (e.shiftKey) selectTo(item.id, orderedIds);
+								else toggle(item.id);
+							}}
 						/>
 						<span
 							className="flex min-w-0 flex-1 items-center gap-1.5"

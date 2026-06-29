@@ -38,9 +38,7 @@ export default function ItemsLayer() {
 		[items, today],
 	);
 
-	const { isSelected, hoveredId, selectOne, selectTo, setHovered } =
-		useRowSelection();
-	const orderedIds = rows.map((r) => r.item.id);
+	const { isSelected, hoveredId, setHovered } = useRowSelection();
 
 	const { draft, active, pointer, beginGesture } = useBarInteraction({
 		onCommitMove: (id, days) => moveDays(id, days),
@@ -85,18 +83,21 @@ export default function ItemsLayer() {
 			className="pointer-events-none relative w-full"
 			style={{ height: contentHeight(rows.length) }}
 		>
-			{/* selection / hover row bands (behind bars) */}
+			{/* per-row lanes (behind bars): capture hover anywhere on the row and
+			    render the selection/hover highlight */}
 			{rows.map((row) => {
 				const selected = isSelected(row.item.id);
 				const hovered = hoveredId === row.item.id;
-				if (!selected && !hovered) return null;
 				return (
 					<div
-						key={`band-${row.item.id}`}
-						data-testid="timeline-row-band"
+						key={`lane-${row.item.id}`}
+						data-testid="timeline-row-lane"
+						data-selected={selected}
+						onMouseEnter={() => setHovered(row.item.id)}
+						onMouseLeave={() => setHovered(null)}
 						className={cn(
-							"pointer-events-none absolute inset-x-0",
-							selected ? "bg-accent" : "bg-muted/50",
+							"pointer-events-auto absolute inset-x-0",
+							selected ? "bg-accent" : hovered ? "bg-muted/50" : "",
 						)}
 						style={{ top: row.rowIndex * ROW_HEIGHT, height: ROW_HEIGHT }}
 					/>
@@ -180,11 +181,6 @@ export default function ItemsLayer() {
 								onPointerDown={(e) => beginGesture(e, moveTarget)}
 								onMouseEnter={() => setHovered(item.id)}
 								onMouseLeave={() => setHovered(null)}
-								onClick={(e) =>
-									e.shiftKey
-										? selectTo(item.id, orderedIds)
-										: selectOne(item.id)
-								}
 								style={{ left: `${markerLeft}%`, top: top + barHeight / 2 }}
 								className="pointer-events-auto absolute z-10 -translate-x-1/2 -translate-y-1/2 size-3 rotate-45 cursor-grab rounded-[2px] active:cursor-grabbing"
 							>
@@ -230,9 +226,6 @@ export default function ItemsLayer() {
 							onPointerDown={(e) => beginGesture(e, moveTarget)}
 							onMouseEnter={() => setHovered(item.id)}
 							onMouseLeave={() => setHovered(null)}
-							onClick={(e) =>
-								e.shiftKey ? selectTo(item.id, orderedIds) : selectOne(item.id)
-							}
 							style={{
 								left: `${left}%`,
 								width: `${Math.max(right - left, 0)}%`,
