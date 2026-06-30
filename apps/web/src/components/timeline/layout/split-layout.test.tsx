@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render } from "@testing-library/react";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { TimelineDataProvider } from "../data/context";
 import SplitLayout from "./split-layout";
 import TimelineTable, { TimelineTableHeader } from "./timeline-table";
 
@@ -37,10 +38,12 @@ function renderShell() {
 	});
 	return render(
 		<QueryClientProvider client={client}>
-			<SplitLayout
-				tableHeader={<TimelineTableHeader />}
-				table={<TimelineTable />}
-			/>
+			<TimelineDataProvider>
+				<SplitLayout
+					tableHeader={<TimelineTableHeader />}
+					table={<TimelineTable />}
+				/>
+			</TimelineDataProvider>
 		</QueryClientProvider>,
 	);
 }

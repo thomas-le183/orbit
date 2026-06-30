@@ -1,12 +1,18 @@
 // apps/web/src/components/timeline/items-layer.test.tsx
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect } from "react";
 import { describe, expect, it } from "vitest";
 import { TimelineProvider, useTimelineController } from "./controller/context";
+import { TimelineDataProvider } from "./data/context";
 import ItemsLayer from "./items-layer";
 import TimelineTable from "./layout/timeline-table";
 import { RowSelectionProvider } from "./selection/context";
+
+function makeQc() {
+	return new QueryClient({ defaultOptions: { queries: { retry: false } } });
+}
 
 function SizeViewport({ width }: { width: number }) {
 	const { setViewportWidth } = useTimelineController();
@@ -17,10 +23,14 @@ function SizeViewport({ width }: { width: number }) {
 function renderLayer(width = 100000, zoom: "weeks" | "months" = "weeks") {
 	// huge width so the whole seed span is on-screen (no fly-outs)
 	return render(
-		<TimelineProvider initialZoom={zoom}>
-			<SizeViewport width={width} />
-			<ItemsLayer />
-		</TimelineProvider>,
+		<QueryClientProvider client={makeQc()}>
+			<TimelineDataProvider>
+				<TimelineProvider initialZoom={zoom}>
+					<SizeViewport width={width} />
+					<ItemsLayer />
+				</TimelineProvider>
+			</TimelineDataProvider>
+		</QueryClientProvider>,
 	);
 }
 
@@ -160,13 +170,17 @@ describe("ItemsLayer row lanes", () => {
 	it("highlights exactly one lane after a table row is selected", async () => {
 		const user = userEvent.setup();
 		const { container } = render(
-			<TimelineProvider initialZoom="weeks">
-				<RowSelectionProvider>
-					<SizeViewport width={800} />
-					<TimelineTable />
-					<ItemsLayer />
-				</RowSelectionProvider>
-			</TimelineProvider>,
+			<QueryClientProvider client={makeQc()}>
+				<TimelineDataProvider>
+					<TimelineProvider initialZoom="weeks">
+						<RowSelectionProvider>
+							<SizeViewport width={800} />
+							<TimelineTable />
+							<ItemsLayer />
+						</RowSelectionProvider>
+					</TimelineProvider>
+				</TimelineDataProvider>
+			</QueryClientProvider>,
 		);
 		expect(selectedLaneCount(container)).toBe(0);
 		const firstCheckbox = container.querySelector<HTMLElement>(
@@ -180,12 +194,16 @@ describe("ItemsLayer row lanes", () => {
 	it("applies a hover background when a timeline lane is hovered", async () => {
 		const user = userEvent.setup();
 		const { container } = render(
-			<TimelineProvider initialZoom="weeks">
-				<RowSelectionProvider>
-					<SizeViewport width={800} />
-					<ItemsLayer />
-				</RowSelectionProvider>
-			</TimelineProvider>,
+			<QueryClientProvider client={makeQc()}>
+				<TimelineDataProvider>
+					<TimelineProvider initialZoom="weeks">
+						<RowSelectionProvider>
+							<SizeViewport width={800} />
+							<ItemsLayer />
+						</RowSelectionProvider>
+					</TimelineProvider>
+				</TimelineDataProvider>
+			</QueryClientProvider>,
 		);
 		const lane = container.querySelector<HTMLElement>(
 			"[data-testid='timeline-row-lane']",

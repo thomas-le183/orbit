@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { TimelineDataProvider } from "../data/context";
 import TimelineContainer from "./index";
 
 function renderWithClient(ui: ReactNode) {
@@ -9,7 +10,9 @@ function renderWithClient(ui: ReactNode) {
 		defaultOptions: { queries: { retry: false } },
 	});
 	return render(
-		<QueryClientProvider client={client}>{ui}</QueryClientProvider>,
+		<QueryClientProvider client={client}>
+			<TimelineDataProvider>{ui}</TimelineDataProvider>
+		</QueryClientProvider>,
 	);
 }
 

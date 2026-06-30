@@ -11,6 +11,7 @@ import {
 	layoutItems,
 	type RenderRow,
 } from "./controller/layout";
+import { useTimelineData } from "./data/context";
 import {
 	contentHeight,
 	ROW_HEIGHT,
@@ -25,13 +26,12 @@ import {
 	rangeToDates,
 	useBarInteraction,
 } from "./use-bar-interaction";
-import { useTimelineItems } from "./use-timeline-items";
 
 export default function ItemsLayer() {
 	const { today, offsetMs, zoomLevel, viewportWidth, scrollToMs } =
 		useTimelineController();
 	const { getPercentageOffset } = useHorizontalPercentageOffset();
-	const { items, updateItem, moveDays } = useTimelineItems();
+	const { items, updateItem, moveDays } = useTimelineData();
 
 	const { rows, containers } = useMemo(
 		() => layoutItems(items, today),
