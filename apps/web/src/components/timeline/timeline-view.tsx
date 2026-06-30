@@ -2,10 +2,12 @@ import { useTimelineData } from "./data/context";
 import SplitLayout from "./layout/split-layout";
 import TimelineTable, { TimelineTableHeader } from "./layout/timeline-table";
 import TimelineEmptyState from "./timeline-empty-state";
+import TimelineSkeleton from "./timeline-skeleton";
 
 export default function TimelineView() {
 	const { projectId, items, undatedTaskRows, isLoading, isError } =
 		useTimelineData();
+	const isLoadingProject = !!projectId && isLoading;
 	const isEmptyProject =
 		!!projectId &&
 		!isLoading &&
@@ -15,7 +17,9 @@ export default function TimelineView() {
 
 	return (
 		<div className="h-full">
-			{isEmptyProject ? (
+			{isLoadingProject ? (
+				<TimelineSkeleton />
+			) : isEmptyProject ? (
 				<TimelineEmptyState projectId={projectId} />
 			) : (
 				<SplitLayout

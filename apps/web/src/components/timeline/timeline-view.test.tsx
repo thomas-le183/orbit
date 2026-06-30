@@ -14,6 +14,9 @@ vi.mock("./layout/timeline-table", () => ({
 	default: () => null,
 	TimelineTableHeader: () => null,
 }));
+vi.mock("./timeline-skeleton", () => ({
+	default: () => <div>skeleton</div>,
+}));
 
 const dataMock = useTimelineData as unknown as ReturnType<typeof vi.fn>;
 
@@ -56,11 +59,13 @@ describe("TimelineView", () => {
 		expect(screen.getByText("split-layout")).toBeInTheDocument();
 	});
 
-	it("shows the timeline while loading (no empty flash)", () => {
+	it("shows the skeleton while a project is loading", () => {
 		dataMock.mockReturnValue(
 			value({ projectId: "p1", items: [], isLoading: true }),
 		);
 		render(<TimelineView />);
-		expect(screen.getByText("split-layout")).toBeInTheDocument();
+		expect(screen.getByText("skeleton")).toBeInTheDocument();
+		expect(screen.queryByText("split-layout")).toBeNull();
+		expect(screen.queryByText("empty-state")).toBeNull();
 	});
 });
