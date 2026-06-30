@@ -13,9 +13,9 @@
     "docker:down": "docker compose -f docker-compose-local.yml down"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.5",
-    "turbo": "^2.9.7",
-    "typescript": "5.9.2"
+    "@biomejs/biome": "2.5.1",
+    "turbo": "^2.10.0",
+    "typescript": "6.0.3"
   },
   "engines": {
     "node": ">=24"
