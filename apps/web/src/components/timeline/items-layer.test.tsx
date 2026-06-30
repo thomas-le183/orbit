@@ -1,12 +1,23 @@
 // apps/web/src/components/timeline/items-layer.test.tsx
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect } from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { TimelineProvider, useTimelineController } from "./controller/context";
+import { TimelineDataProvider, useTimelineData } from "./data/context";
 import ItemsLayer from "./items-layer";
 import TimelineTable from "./layout/timeline-table";
 import { RowSelectionProvider } from "./selection/context";
+
+vi.mock("./data/context", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("./data/context")>();
+	return { ...actual, useTimelineData: vi.fn(actual.useTimelineData) };
+});
+
+function makeQc() {
+	return new QueryClient({ defaultOptions: { queries: { retry: false } } });
+}
 
 function SizeViewport({ width }: { width: number }) {
 	const { setViewportWidth } = useTimelineController();
@@ -17,10 +28,14 @@ function SizeViewport({ width }: { width: number }) {
 function renderLayer(width = 100000, zoom: "weeks" | "months" = "weeks") {
 	// huge width so the whole seed span is on-screen (no fly-outs)
 	return render(
-		<TimelineProvider initialZoom={zoom}>
-			<SizeViewport width={width} />
-			<ItemsLayer />
-		</TimelineProvider>,
+		<QueryClientProvider client={makeQc()}>
+			<TimelineDataProvider>
+				<TimelineProvider initialZoom={zoom}>
+					<SizeViewport width={width} />
+					<ItemsLayer />
+				</TimelineProvider>
+			</TimelineDataProvider>
+		</QueryClientProvider>,
 	);
 }
 
@@ -160,13 +175,17 @@ describe("ItemsLayer row lanes", () => {
 	it("highlights exactly one lane after a table row is selected", async () => {
 		const user = userEvent.setup();
 		const { container } = render(
-			<TimelineProvider initialZoom="weeks">
-				<RowSelectionProvider>
-					<SizeViewport width={800} />
-					<TimelineTable />
-					<ItemsLayer />
-				</RowSelectionProvider>
-			</TimelineProvider>,
+			<QueryClientProvider client={makeQc()}>
+				<TimelineDataProvider>
+					<TimelineProvider initialZoom="weeks">
+						<RowSelectionProvider>
+							<SizeViewport width={800} />
+							<TimelineTable />
+							<ItemsLayer />
+						</RowSelectionProvider>
+					</TimelineProvider>
+				</TimelineDataProvider>
+			</QueryClientProvider>,
 		);
 		expect(selectedLaneCount(container)).toBe(0);
 		const firstCheckbox = container.querySelector<HTMLElement>(
@@ -180,12 +199,16 @@ describe("ItemsLayer row lanes", () => {
 	it("applies a hover background when a timeline lane is hovered", async () => {
 		const user = userEvent.setup();
 		const { container } = render(
-			<TimelineProvider initialZoom="weeks">
-				<RowSelectionProvider>
-					<SizeViewport width={800} />
-					<ItemsLayer />
-				</RowSelectionProvider>
-			</TimelineProvider>,
+			<QueryClientProvider client={makeQc()}>
+				<TimelineDataProvider>
+					<TimelineProvider initialZoom="weeks">
+						<RowSelectionProvider>
+							<SizeViewport width={800} />
+							<ItemsLayer />
+						</RowSelectionProvider>
+					</TimelineProvider>
+				</TimelineDataProvider>
+			</QueryClientProvider>,
 		);
 		const lane = container.querySelector<HTMLElement>(
 			"[data-testid='timeline-row-lane']",
@@ -195,5 +218,112 @@ describe("ItemsLayer row lanes", () => {
 		expect(lane.className).toContain("bg-muted/50");
 		await user.unhover(lane);
 		expect(lane.className).not.toContain("bg-muted/50");
+	});
+});
+
+describe("ItemsLayer state overlays", () => {
+	function renderWithMock(
+		overrides: Partial<ReturnType<typeof useTimelineData>>,
+	) {
+		const base: ReturnType<typeof useTimelineData> = {
+			items: [],
+			updateItem: vi.fn(),
+			moveDays: vi.fn(),
+			undatedTaskRows: [],
+			milestoneMarkers: [],
+			isLoading: false,
+			isError: false,
+			...overrides,
+		};
+		vi.mocked(useTimelineData).mockReturnValue(base);
+		return render(
+			<QueryClientProvider client={makeQc()}>
+				<TimelineDataProvider>
+					<TimelineProvider initialZoom="weeks">
+						<RowSelectionProvider>
+							<SizeViewport width={100000} />
+							<ItemsLayer />
+						</RowSelectionProvider>
+					</TimelineProvider>
+				</TimelineDataProvider>
+			</QueryClientProvider>,
+		);
+	}
+
+	it("shows the error overlay when isError is true", () => {
+		const { container } = renderWithMock({ isError: true });
+		expect(
+			container.querySelector("[data-testid='timeline-items-error']"),
+		).not.toBeNull();
+		expect(
+			container.querySelector("[data-testid='timeline-items-empty']"),
+		).toBeNull();
+	});
+
+	it("shows the empty state when there are no tasks and not loading", () => {
+		const { container } = renderWithMock({
+			items: [],
+			isLoading: false,
+			isError: false,
+		});
+		expect(
+			container.querySelector("[data-testid='timeline-items-empty']"),
+		).not.toBeNull();
+		expect(
+			container.querySelector("[data-testid='timeline-items-error']"),
+		).toBeNull();
+	});
+
+	it("does not show the empty state while loading", () => {
+		const { container } = renderWithMock({
+			items: [],
+			isLoading: true,
+			isError: false,
+		});
+		expect(
+			container.querySelector("[data-testid='timeline-items-empty']"),
+		).toBeNull();
+	});
+
+	it("does not show the empty state when there is an error", () => {
+		const { container } = renderWithMock({
+			items: [],
+			isLoading: false,
+			isError: true,
+		});
+		expect(
+			container.querySelector("[data-testid='timeline-items-empty']"),
+		).toBeNull();
+	});
+
+	it("shows the unscheduled note when undatedTaskRows is non-empty", () => {
+		const { container } = renderWithMock({
+			undatedTaskRows: [{ id: "u1", name: "Undated Task", parentId: null }],
+		});
+		const note = container.querySelector(
+			"[data-testid='timeline-items-unscheduled']",
+		);
+		expect(note).not.toBeNull();
+		expect(note?.textContent).toContain("1 unscheduled task");
+	});
+
+	it("uses plural 'tasks' when there are multiple unscheduled tasks", () => {
+		const { container } = renderWithMock({
+			undatedTaskRows: [
+				{ id: "u1", name: "Undated Task 1", parentId: null },
+				{ id: "u2", name: "Undated Task 2", parentId: null },
+			],
+		});
+		const note = container.querySelector(
+			"[data-testid='timeline-items-unscheduled']",
+		);
+		expect(note?.textContent).toContain("2 unscheduled tasks");
+	});
+
+	it("does not show the unscheduled note when undatedTaskRows is empty", () => {
+		const { container } = renderWithMock({ undatedTaskRows: [] });
+		expect(
+			container.querySelector("[data-testid='timeline-items-unscheduled']"),
+		).toBeNull();
 	});
 });

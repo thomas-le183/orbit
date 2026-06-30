@@ -3,14 +3,14 @@ import { Checkbox } from "@orbit/ui/components/checkbox";
 import { useMemo } from "react";
 import { useTimelineController } from "../controller/context";
 import { layoutItems } from "../controller/layout";
+import { useTimelineData } from "../data/context";
 import { useRowSelection } from "../selection/context";
-import { useTimelineItems } from "../use-timeline-items";
 import { contentHeight, ROW_HEIGHT } from "./row-metrics";
 
 /** Ordered visible row ids — the shared order both panes select against. */
 function useOrderedIds(): string[] {
 	const { today } = useTimelineController();
-	const { items } = useTimelineItems();
+	const { items } = useTimelineData();
 	const { rows } = useMemo(() => layoutItems(items, today), [items, today]);
 	return useMemo(() => rows.map((r) => r.item.id), [rows]);
 }
@@ -43,7 +43,7 @@ export function TimelineTableHeader() {
 /** Left table column: one selectable cell per timeline row, aligned to ItemsLayer rows. */
 export default function TimelineTable() {
 	const { today } = useTimelineController();
-	const { items } = useTimelineItems();
+	const { items } = useTimelineData();
 	const { rows } = useMemo(() => layoutItems(items, today), [items, today]);
 	const orderedIds = useMemo(() => rows.map((r) => r.item.id), [rows]);
 	const { isSelected, hoveredId, selectTo, toggle, setHovered } =
