@@ -19,6 +19,15 @@ vi.mock("./create-project-dialog", () => ({
 	CreateProjectDialog: ({ open }: { open: boolean }) =>
 		open ? <div>create-project-dialog-open</div> : null,
 }));
+vi.mock("../timeline/create-task-dialog", () => ({
+	CreateTaskDialog: ({
+		open,
+		projectId,
+	}: {
+		open: boolean;
+		projectId: string;
+	}) => (open ? <div data-testid="create-task-dialog">{projectId}</div> : null),
+}));
 
 const useProjectsMock = useProjects as unknown as ReturnType<typeof vi.fn>;
 
@@ -60,5 +69,18 @@ describe("ProjectsNavSection", () => {
 		renderWithSidebar(<ProjectsNavSection orgSlug="acme" />);
 		fireEvent.click(screen.getByRole("button", { name: /new project/i }));
 		expect(screen.getByText("create-project-dialog-open")).toBeInTheDocument();
+	});
+
+	it("opens the create-task dialog for a project row when the + button is clicked", () => {
+		useProjectsMock.mockReturnValue({
+			data: [{ id: "p1", name: "Alpha", color: null }],
+			isLoading: false,
+			isError: false,
+		});
+		renderWithSidebar(<ProjectsNavSection orgSlug="acme" />);
+		expect(screen.queryByTestId("create-task-dialog")).toBeNull();
+		fireEvent.click(screen.getByRole("button", { name: /new task in alpha/i }));
+		expect(screen.getByTestId("create-task-dialog")).toBeInTheDocument();
+		expect(screen.getByTestId("create-task-dialog").textContent).toBe("p1");
 	});
 });

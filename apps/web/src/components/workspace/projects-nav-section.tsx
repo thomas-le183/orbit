@@ -17,14 +17,73 @@ import { ChevronRightIcon, PlusIcon } from "lucide-react";
 import { type MouseEventHandler, useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { useProjects } from "@/hooks/use-projects";
+import { CreateTaskDialog } from "../timeline/create-task-dialog";
 import { CreateProjectDialog } from "./create-project-dialog";
+
+type Project = { id: string; name: string; color: string | null };
+
+function ProjectNavItem({
+	project,
+	orgSlug,
+}: {
+	project: Project;
+	orgSlug: string;
+}) {
+	const [dialogOpen, setDialogOpen] = useState(false);
+	const navigate = useNavigate();
+	const matchRoute = useMatchRoute();
+
+	return (
+		<SidebarMenuItem>
+			<SidebarMenuButton
+				tooltip={project.name}
+				isActive={
+					!!matchRoute({
+						to: "/$orgSlug/projects/$projectId",
+						params: { orgSlug, projectId: project.id },
+					})
+				}
+				onClick={() =>
+					navigate({
+						to: "/$orgSlug/projects/$projectId",
+						params: { orgSlug, projectId: project.id },
+					})
+				}
+				className="group/item"
+			>
+				<span
+					className="size-2 shrink-0 rounded-full"
+					style={{
+						backgroundColor: project.color ?? "var(--color-muted-foreground)",
+					}}
+				/>
+				<span className="truncate">{project.name}</span>
+				<Button
+					variant="ghost"
+					size="icon-xs"
+					aria-label={`New task in ${project.name}`}
+					className="ml-auto hidden group-hover/item:flex"
+					onClick={(e) => {
+						e.stopPropagation();
+						setDialogOpen(true);
+					}}
+				>
+					<PlusIcon />
+				</Button>
+			</SidebarMenuButton>
+			<CreateTaskDialog
+				projectId={project.id}
+				open={dialogOpen}
+				onOpenChange={setDialogOpen}
+			/>
+		</SidebarMenuItem>
+	);
+}
 
 export function ProjectsNavSection({ orgSlug }: { orgSlug: string }) {
 	const { data: projects, isLoading, isError } = useProjects(orgSlug);
 	const [open, setOpen] = useLocalStorage("sidebar:section:Projects", true);
 	const [dialogOpen, setDialogOpen] = useState(false);
-	const navigate = useNavigate();
-	const matchRoute = useMatchRoute();
 
 	const openDialog: MouseEventHandler = (e) => {
 		e.stopPropagation();
@@ -79,32 +138,11 @@ export function ProjectsNavSection({ orgSlug }: { orgSlug: string }) {
 							</div>
 						)}
 						{projects?.map((project) => (
-							<SidebarMenuItem key={project.id}>
-								<SidebarMenuButton
-									tooltip={project.name}
-									isActive={
-										!!matchRoute({
-											to: "/$orgSlug/projects/$projectId",
-											params: { orgSlug, projectId: project.id },
-										})
-									}
-									onClick={() =>
-										navigate({
-											to: "/$orgSlug/projects/$projectId",
-											params: { orgSlug, projectId: project.id },
-										})
-									}
-								>
-									<span
-										className="size-2 shrink-0 rounded-full"
-										style={{
-											backgroundColor:
-												project.color ?? "var(--color-muted-foreground)",
-										}}
-									/>
-									<span className="truncate">{project.name}</span>
-								</SidebarMenuButton>
-							</SidebarMenuItem>
+							<ProjectNavItem
+								key={project.id}
+								project={project}
+								orgSlug={orgSlug}
+							/>
 						))}
 					</SidebarMenu>
 				</CollapsibleContent>
