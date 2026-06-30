@@ -1,4 +1,5 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@orbit/ui/components/button";
+import { ChevronLeft, ChevronRight, PlusIcon } from "lucide-react";
 import { type ReactNode, type RefObject, useEffect, useRef } from "react";
 import { useResizeObserver } from "usehooks-ts";
 import { usePreferences } from "@/hooks/use-preferences";
@@ -19,6 +20,7 @@ type SplitLayoutProps = {
 	tableHeader: ReactNode;
 	table: ReactNode;
 	initialTableWidth?: number;
+	onNewTask?: () => void;
 };
 
 /** Fraction of a viewport the arrow buttons / keys pan per step. */
@@ -41,6 +43,7 @@ function SplitLayoutInner({
 	tableHeader,
 	table,
 	initialTableWidth,
+	onNewTask,
 }: SplitLayoutProps) {
 	const {
 		setViewportWidth,
@@ -107,6 +110,12 @@ function SplitLayoutInner({
 			{/* toolbar */}
 			<div className="flex items-center justify-between border-b border-border p-2">
 				<div className="flex items-center gap-1.5">
+					{onNewTask && (
+						<Button variant="outline" size="sm" onClick={onNewTask}>
+							<PlusIcon className="size-3.5" />
+							New task
+						</Button>
+					)}
 					<button
 						type="button"
 						aria-label="Scroll to earlier dates"

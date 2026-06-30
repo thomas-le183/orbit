@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render } from "@testing-library/react";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { TimelineDataProvider } from "../data/context";
 import SplitLayout from "./split-layout";
 import TimelineTable, { TimelineTableHeader } from "./timeline-table";
@@ -80,5 +80,34 @@ describe("SplitLayout", () => {
 		fireEvent.pointerUp(window);
 		const after = Number.parseFloat(col.style.width);
 		expect(after).toBeGreaterThan(before);
+	});
+});
+
+describe("SplitLayout toolbar: onNewTask", () => {
+	it("renders a 'New task' button when onNewTask is provided", () => {
+		const onNewTask = vi.fn();
+		const client = new QueryClient({
+			defaultOptions: { queries: { retry: false } },
+		});
+		const { getByRole } = render(
+			<QueryClientProvider client={client}>
+				<TimelineDataProvider>
+					<SplitLayout
+						tableHeader={<TimelineTableHeader />}
+						table={<TimelineTable />}
+						onNewTask={onNewTask}
+					/>
+				</TimelineDataProvider>
+			</QueryClientProvider>,
+		);
+		const btn = getByRole("button", { name: /new task/i });
+		expect(btn).toBeInTheDocument();
+		fireEvent.click(btn);
+		expect(onNewTask).toHaveBeenCalledOnce();
+	});
+
+	it("does not render a 'New task' button when onNewTask is not provided", () => {
+		const { queryByRole } = renderShell();
+		expect(queryByRole("button", { name: /new task/i })).toBeNull();
 	});
 });
