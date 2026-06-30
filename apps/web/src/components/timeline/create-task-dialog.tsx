@@ -54,8 +54,6 @@ export function CreateTaskDialog({
 						validators={{
 							onChange: ({ value }: { value: string }) =>
 								value.trim().length === 0 ? "Name is required" : undefined,
-							onBlur: ({ value }: { value: string }) =>
-								value.trim().length === 0 ? "Name is required" : undefined,
 						}}
 					>
 						{(field) => {

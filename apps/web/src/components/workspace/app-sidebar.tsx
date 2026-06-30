@@ -379,7 +379,6 @@ function CollapsibleSection({
 				<CollapsibleTrigger
 					render={
 						<SidebarMenuButton
-							size="sm"
 							tooltip={section.label}
 							className="group-data-[collapsible=icon]:hidden"
 						/>

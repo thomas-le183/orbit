@@ -14,7 +14,7 @@ import {
 } from "@orbit/ui/components/sidebar";
 import { useMatchRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronRightIcon, PlusIcon } from "lucide-react";
-import { useState } from "react";
+import { type MouseEventHandler, useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { useProjects } from "@/hooks/use-projects";
 import { CreateProjectDialog } from "./create-project-dialog";
@@ -26,6 +26,11 @@ export function ProjectsNavSection({ orgSlug }: { orgSlug: string }) {
 	const navigate = useNavigate();
 	const matchRoute = useMatchRoute();
 
+	const openDialog: MouseEventHandler = (e) => {
+		e.stopPropagation();
+		setDialogOpen(true);
+	};
+
 	return (
 		<SidebarGroup>
 			<Collapsible
@@ -33,29 +38,28 @@ export function ProjectsNavSection({ orgSlug }: { orgSlug: string }) {
 				onOpenChange={setOpen}
 				className="group/collapsible"
 			>
-				<div className="flex items-center">
-					<CollapsibleTrigger
-						render={
-							<SidebarMenuButton
-								size="sm"
-								tooltip="Projects"
-								className="flex-1 group-data-[collapsible=icon]:hidden"
-							/>
-						}
-					>
-						<SidebarGroupLabel>Projects</SidebarGroupLabel>
+				<CollapsibleTrigger
+					render={
+						<SidebarMenuButton
+							tooltip="Projects"
+							className="flex-1 group-data-[collapsible=icon]:hidden justify-between group/item"
+						/>
+					}
+				>
+					<SidebarGroupLabel>Projects</SidebarGroupLabel>
+					<div className="flex items-center gap-2">
+						<Button
+							variant="ghost"
+							size="icon-xs"
+							aria-label="New project"
+							className="hidden group-hover/item:flex"
+							onClick={openDialog}
+						>
+							<PlusIcon />
+						</Button>
 						<ChevronRightIcon className="ml-auto size-3.5 transition-transform ease-in-out group-data-open/collapsible:rotate-90" />
-					</CollapsibleTrigger>
-					<Button
-						variant="ghost"
-						size="icon-sm"
-						aria-label="New project"
-						className="group-data-[collapsible=icon]:hidden"
-						onClick={() => setDialogOpen(true)}
-					>
-						<PlusIcon />
-					</Button>
-				</div>
+					</div>
+				</CollapsibleTrigger>
 				<CollapsibleContent className="mt-0.5 overflow-hidden">
 					<SidebarMenu>
 						{isLoading &&
