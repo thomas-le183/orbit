@@ -7,6 +7,7 @@ import { TimelineProvider, useTimelineController } from "../controller/context";
 import { msPerViewport } from "../controller/geometry";
 import TimeUnitsBar from "../header/time-units-bar";
 import ItemsLayer from "../items-layer";
+import MilestoneMarkers from "../milestone-markers";
 import NowLine from "../now-line";
 import TimelineScrollbar from "../scrollbar";
 import { RowSelectionProvider, useRowSelection } from "../selection/context";
@@ -158,6 +159,7 @@ function SplitLayoutInner({
 					>
 						<TimelineGrid />
 						<NowLine />
+						<MilestoneMarkers />
 					</div>
 					{/* shared vertical scroll: table column + items layer move together */}
 					<div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
