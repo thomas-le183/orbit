@@ -6,7 +6,8 @@ describe("TimelineSkeleton", () => {
 	it("renders 7 skeleton rows", () => {
 		const { container } = render(<TimelineSkeleton />);
 		expect(
-			container.querySelectorAll("[data-testid='timeline-skeleton-row']").length,
+			container.querySelectorAll("[data-testid='timeline-skeleton-row']")
+				.length,
 		).toBe(7);
 	});
 
