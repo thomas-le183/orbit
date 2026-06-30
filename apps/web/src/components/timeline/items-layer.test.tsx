@@ -233,6 +233,7 @@ describe("ItemsLayer state overlays", () => {
 			milestoneMarkers: [],
 			isLoading: false,
 			isError: false,
+			projectId: undefined,
 			...overrides,
 		};
 		vi.mocked(useTimelineData).mockReturnValue(base);

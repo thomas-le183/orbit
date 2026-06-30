@@ -35,6 +35,7 @@ type TimelineDataValue = {
 	milestoneMarkers: MilestoneMarker[];
 	isLoading: boolean;
 	isError: boolean;
+	projectId: string | undefined;
 };
 
 const TimelineDataContext = createContext<TimelineDataValue | null>(null);
@@ -117,6 +118,7 @@ export function TimelineDataProvider({
 			isError: projectId
 				? tasksQuery.isError || milestonesQuery.isError
 				: false,
+			projectId,
 		}),
 		[
 			items,
