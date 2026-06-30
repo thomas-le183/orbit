@@ -22,13 +22,11 @@ describe("autoStartTrial", () => {
 					}),
 				},
 			},
-			update: jest
-				.fn()
-				.mockReturnValue({
-					set: jest
-						.fn()
-						.mockReturnValue({ where: jest.fn().mockResolvedValue(undefined) }),
-				}),
+			update: jest.fn().mockReturnValue({
+				set: jest
+					.fn()
+					.mockReturnValue({ where: jest.fn().mockResolvedValue(undefined) }),
+			}),
 			insert: jest
 				.fn()
 				.mockReturnValue({ values: jest.fn().mockResolvedValue(undefined) }),

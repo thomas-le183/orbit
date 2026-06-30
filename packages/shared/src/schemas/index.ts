@@ -1,3 +1,4 @@
+export * from "./milestones.js";
 export {
 	type Theme,
 	themeSchema,
@@ -9,14 +10,12 @@ export {
 	weekStartSchema,
 } from "./preferences.js";
 
+export * from "./projects.js";
+export * from "./tasks.js";
+export * from "./taxonomy.js";
 export {
 	type CreateUserInput,
 	createUserSchema,
 	type UpdateUserInput,
 	updateUserSchema,
 } from "./user.js";
-
-export * from "./projects.js";
-export * from "./tasks.js";
-export * from "./milestones.js";
-export * from "./taxonomy.js";
