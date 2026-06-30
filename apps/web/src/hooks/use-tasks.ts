@@ -1,5 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import type { CreateTaskInput } from "@orbit/shared";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { api, getErrorMessage } from "@/lib/api";
 
 export type Task = {
 	id: string;
@@ -59,5 +61,25 @@ export function useProjectMilestones(projectId: string) {
 			return data;
 		},
 		enabled: !!projectId,
+	});
+}
+
+export function useCreateTask(projectId: string) {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async (input: CreateTaskInput) => {
+			const { data } = await api.post<Task>(
+				`/projects/${projectId}/tasks`,
+				input,
+			);
+			return data;
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+			toast.success("Task created");
+		},
+		onError: (err) => {
+			toast.error(getErrorMessage(err, "Couldn't create task"));
+		},
 	});
 }

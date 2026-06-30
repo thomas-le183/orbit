@@ -3,9 +3,18 @@ import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/lib/api";
-import { useProjectMilestones, useProjectTasks } from "./use-tasks";
+import {
+	taskKeys,
+	useCreateTask,
+	useProjectMilestones,
+	useProjectTasks,
+} from "./use-tasks";
 
-vi.mock("@/lib/api", () => ({ api: { get: vi.fn() } }));
+vi.mock("@/lib/api", () => ({
+	api: { get: vi.fn(), post: vi.fn() },
+	getErrorMessage: () => "error",
+}));
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 function makeWrapper() {
 	const qc = new QueryClient({
@@ -56,5 +65,32 @@ describe("useProjectMilestones", () => {
 		});
 		await waitFor(() => expect(result.current.isSuccess).toBe(true));
 		expect(api.get).toHaveBeenCalledWith("/projects/proj1/milestones");
+	});
+});
+
+describe("useCreateTask", () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it("posts to the project tasks endpoint and invalidates the list", async () => {
+		(api.post as ReturnType<typeof vi.fn>).mockResolvedValue({
+			data: { id: "t9", name: "New" },
+		});
+		const qc = new QueryClient({
+			defaultOptions: { queries: { retry: false } },
+		});
+		const invalidate = vi.spyOn(qc, "invalidateQueries");
+		const Wrapper = ({ children }: { children: ReactNode }) => (
+			<QueryClientProvider client={qc}>{children}</QueryClientProvider>
+		);
+		const { result } = renderHook(() => useCreateTask("proj1"), {
+			wrapper: Wrapper,
+		});
+		await result.current.mutateAsync({ name: "New" });
+		expect(api.post).toHaveBeenCalledWith("/projects/proj1/tasks", {
+			name: "New",
+		});
+		expect(invalidate).toHaveBeenCalledWith({
+			queryKey: taskKeys.list("proj1"),
+		});
 	});
 });
