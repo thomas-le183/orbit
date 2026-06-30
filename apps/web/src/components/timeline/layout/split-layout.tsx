@@ -163,10 +163,10 @@ function SplitLayoutInner({
 					</div>
 					{/* shared vertical scroll: table column + items layer move together */}
 					<div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
-						<div className="flex">
+						<div className="flex min-h-full">
 							<div
 								data-testid="timeline-table-column"
-								className="relative z-20 shrink-0 overflow-hidden border-r border-border bg-background-primary"
+								className="relative z-20 min-h-full shrink-0 overflow-hidden border-r border-border bg-background-primary"
 								style={{ width: tableWidth }}
 							>
 								{table}

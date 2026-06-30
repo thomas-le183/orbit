@@ -233,6 +233,7 @@ describe("ItemsLayer state overlays", () => {
 			milestoneMarkers: [],
 			isLoading: false,
 			isError: false,
+			projectId: undefined,
 			...overrides,
 		};
 		vi.mocked(useTimelineData).mockReturnValue(base);
@@ -255,45 +256,6 @@ describe("ItemsLayer state overlays", () => {
 		expect(
 			container.querySelector("[data-testid='timeline-items-error']"),
 		).not.toBeNull();
-		expect(
-			container.querySelector("[data-testid='timeline-items-empty']"),
-		).toBeNull();
-	});
-
-	it("shows the empty state when there are no tasks and not loading", () => {
-		const { container } = renderWithMock({
-			items: [],
-			isLoading: false,
-			isError: false,
-		});
-		expect(
-			container.querySelector("[data-testid='timeline-items-empty']"),
-		).not.toBeNull();
-		expect(
-			container.querySelector("[data-testid='timeline-items-error']"),
-		).toBeNull();
-	});
-
-	it("does not show the empty state while loading", () => {
-		const { container } = renderWithMock({
-			items: [],
-			isLoading: true,
-			isError: false,
-		});
-		expect(
-			container.querySelector("[data-testid='timeline-items-empty']"),
-		).toBeNull();
-	});
-
-	it("does not show the empty state when there is an error", () => {
-		const { container } = renderWithMock({
-			items: [],
-			isLoading: false,
-			isError: true,
-		});
-		expect(
-			container.querySelector("[data-testid='timeline-items-empty']"),
-		).toBeNull();
 	});
 
 	it("shows the unscheduled note when undatedTaskRows is non-empty", () => {

@@ -141,4 +141,13 @@ describe("TimelineDataProvider", () => {
 		});
 		expect(result.current.isLoading).toBe(true);
 	});
+
+	it("exposes the projectId in project mode and undefined in seed mode", () => {
+		const project = renderHook(() => useTimelineData(), {
+			wrapper: wrapper("p"),
+		});
+		expect(project.result.current.projectId).toBe("p");
+		const seed = renderHook(() => useTimelineData(), { wrapper: wrapper() });
+		expect(seed.result.current.projectId).toBeUndefined();
+	});
 });

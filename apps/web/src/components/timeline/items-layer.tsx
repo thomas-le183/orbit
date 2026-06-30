@@ -31,7 +31,7 @@ export default function ItemsLayer() {
 	const { today, offsetMs, zoomLevel, viewportWidth, scrollToMs } =
 		useTimelineController();
 	const { getPercentageOffset } = useHorizontalPercentageOffset();
-	const { items, updateItem, moveDays, isLoading, isError, undatedTaskRows } =
+	const { items, updateItem, moveDays, isError, undatedTaskRows } =
 		useTimelineData();
 
 	const { rows, containers } = useMemo(
@@ -90,14 +90,6 @@ export default function ItemsLayer() {
 					className="pointer-events-none absolute inset-x-0 top-6 text-center text-sm text-muted-foreground"
 				>
 					Couldn't load tasks
-				</div>
-			)}
-			{!isError && !isLoading && items.length === 0 && (
-				<div
-					data-testid="timeline-items-empty"
-					className="pointer-events-none absolute inset-x-0 top-6 text-center text-sm text-muted-foreground"
-				>
-					No tasks yet
 				</div>
 			)}
 			{undatedTaskRows.length > 0 && (
