@@ -31,7 +31,8 @@ export default function ItemsLayer() {
 	const { today, offsetMs, zoomLevel, viewportWidth, scrollToMs } =
 		useTimelineController();
 	const { getPercentageOffset } = useHorizontalPercentageOffset();
-	const { items, updateItem, moveDays } = useTimelineData();
+	const { items, updateItem, moveDays, isLoading, isError, undatedTaskRows } =
+		useTimelineData();
 
 	const { rows, containers } = useMemo(
 		() => layoutItems(items, today),
@@ -83,6 +84,31 @@ export default function ItemsLayer() {
 			className="pointer-events-none relative w-full"
 			style={{ height: contentHeight(rows.length) }}
 		>
+			{isError && (
+				<div
+					data-testid="timeline-items-error"
+					className="pointer-events-none absolute inset-x-0 top-6 text-center text-sm text-muted-foreground"
+				>
+					Couldn't load tasks
+				</div>
+			)}
+			{!isError && !isLoading && items.length === 0 && (
+				<div
+					data-testid="timeline-items-empty"
+					className="pointer-events-none absolute inset-x-0 top-6 text-center text-sm text-muted-foreground"
+				>
+					No tasks yet
+				</div>
+			)}
+			{undatedTaskRows.length > 0 && (
+				<div
+					data-testid="timeline-items-unscheduled"
+					className="pointer-events-none absolute inset-x-0 bottom-1 text-center text-xs text-muted-foreground"
+				>
+					{undatedTaskRows.length} unscheduled task
+					{undatedTaskRows.length === 1 ? "" : "s"}
+				</div>
+			)}
 			{/* per-row lanes (behind bars): capture hover anywhere on the row and
 			    render the selection/hover highlight */}
 			{rows.map((row) => {
