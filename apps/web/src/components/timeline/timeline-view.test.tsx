@@ -8,7 +8,9 @@ vi.mock("./timeline-empty-state", () => ({
 	default: () => <div>empty-state</div>,
 }));
 vi.mock("./layout/split-layout", () => ({
-	default: () => <div>split-layout</div>,
+	default: ({ onNewTask }: { onNewTask?: () => void }) => (
+		<div>{onNewTask ? "split-layout-with-new-task" : "split-layout"}</div>
+	),
 }));
 vi.mock("./layout/timeline-table", () => ({
 	default: () => null,
@@ -16,6 +18,10 @@ vi.mock("./layout/timeline-table", () => ({
 }));
 vi.mock("./timeline-skeleton", () => ({
 	default: () => <div>skeleton</div>,
+}));
+vi.mock("./create-task-dialog", () => ({
+	CreateTaskDialog: ({ open }: { open: boolean }) =>
+		open ? <div>create-task-dialog-open</div> : null,
 }));
 
 const dataMock = useTimelineData as unknown as ReturnType<typeof vi.fn>;
@@ -49,8 +55,21 @@ describe("TimelineView", () => {
 	it("shows the timeline when the project has tasks", () => {
 		dataMock.mockReturnValue(value({ projectId: "p1", items: [{ id: "t1" }] }));
 		render(<TimelineView />);
-		expect(screen.getByText("split-layout")).toBeInTheDocument();
+		expect(screen.getByText("split-layout-with-new-task")).toBeInTheDocument();
 		expect(screen.queryByText("empty-state")).toBeNull();
+	});
+
+	it("passes onNewTask to SplitLayout when a project has tasks", () => {
+		dataMock.mockReturnValue(value({ projectId: "p1", items: [{ id: "t1" }] }));
+		render(<TimelineView />);
+		expect(screen.getByText("split-layout-with-new-task")).toBeInTheDocument();
+	});
+
+	it("does not pass onNewTask to SplitLayout in seed mode", () => {
+		dataMock.mockReturnValue(value({ projectId: undefined, items: [] }));
+		render(<TimelineView />);
+		expect(screen.getByText("split-layout")).toBeInTheDocument();
+		expect(screen.queryByText("split-layout-with-new-task")).toBeNull();
 	});
 
 	it("shows the timeline in seed mode (no projectId) even with zero items", () => {
