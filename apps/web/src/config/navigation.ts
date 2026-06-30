@@ -182,6 +182,7 @@ export function resolveModule(
 		case "inbox":
 		case "activity":
 		case "timeline":
+		case "projects":
 		case "starred":
 		case "recent":
 			return getHomeConfig(orgSlug);
