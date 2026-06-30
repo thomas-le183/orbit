@@ -230,6 +230,7 @@ describe("ItemsLayer state overlays", () => {
 			updateItem: vi.fn(),
 			moveDays: vi.fn(),
 			undatedTaskRows: [],
+			scheduleTask: vi.fn(),
 			milestoneMarkers: [],
 			isLoading: false,
 			isError: false,
@@ -258,31 +259,83 @@ describe("ItemsLayer state overlays", () => {
 		).not.toBeNull();
 	});
 
-	it("shows the unscheduled note when undatedTaskRows is non-empty", () => {
+	it("renders a clickable lane for each undated task row", () => {
 		const { container } = renderWithMock({
 			undatedTaskRows: [{ id: "u1", name: "Undated Task", parentId: null }],
 		});
-		const note = container.querySelector(
-			"[data-testid='timeline-items-unscheduled']",
+		const lanes = container.querySelectorAll(
+			"[data-testid='timeline-undated-lane']",
 		);
-		expect(note).not.toBeNull();
-		expect(note?.textContent).toContain("1 unscheduled task");
+		expect(lanes.length).toBe(1);
 	});
 
-	it("uses plural 'tasks' when there are multiple unscheduled tasks", () => {
+	it("shows a ghost preview bar while hovering an undated lane", () => {
 		const { container } = renderWithMock({
-			undatedTaskRows: [
-				{ id: "u1", name: "Undated Task 1", parentId: null },
-				{ id: "u2", name: "Undated Task 2", parentId: null },
-			],
+			undatedTaskRows: [{ id: "u1", name: "Undated Task", parentId: null }],
 		});
-		const note = container.querySelector(
-			"[data-testid='timeline-items-unscheduled']",
-		);
-		expect(note?.textContent).toContain("2 unscheduled tasks");
+		const lane = container.querySelector(
+			"[data-testid='timeline-undated-lane']",
+		) as HTMLElement;
+		lane.getBoundingClientRect = () => ({ left: 0, width: 1000 }) as DOMRect;
+		expect(
+			container.querySelector("[data-testid='timeline-undated-preview']"),
+		).toBeNull();
+		fireEvent.mouseMove(lane, { clientX: 200 });
+		expect(
+			container.querySelector("[data-testid='timeline-undated-preview']"),
+		).not.toBeNull();
 	});
 
-	it("does not show the unscheduled note when undatedTaskRows is empty", () => {
+	it("schedules an undated task when its lane is clicked", () => {
+		const scheduleTask = vi.fn();
+		const { container } = renderWithMock({
+			undatedTaskRows: [{ id: "u1", name: "Undated Task", parentId: null }],
+			scheduleTask,
+		});
+		const lane = container.querySelector(
+			"[data-testid='timeline-undated-lane']",
+		) as HTMLElement;
+		// jsdom reports a zero-size rect; stub a real width so the click maps to a date.
+		lane.getBoundingClientRect = () => ({ left: 0, width: 1000 }) as DOMRect;
+		fireEvent.click(lane, { clientX: 200 });
+		expect(scheduleTask).toHaveBeenCalledTimes(1);
+		const [id, startDate, endDate] = scheduleTask.mock.calls[0];
+		expect(id).toBe("u1");
+		// 7-day inclusive span → end is 6 days after start
+		expect(Date.parse(endDate) - Date.parse(startDate)).toBe(6 * 86_400_000);
+	});
+
+	it("extends content height to include undated task rows", () => {
+		const datedRows = [
+			{
+				kind: "task" as const,
+				id: "t1",
+				name: "Dated",
+				parentId: null,
+				startDate: "2024-01-01",
+				endDate: "2024-01-07",
+				progress: 0,
+				color: "#000",
+			},
+		];
+		const { container: c1 } = renderWithMock({
+			items: datedRows,
+			undatedTaskRows: [],
+		});
+		const { container: c2 } = renderWithMock({
+			items: datedRows,
+			undatedTaskRows: [{ id: "u1", name: "Undated", parentId: null }],
+		});
+		const h1 = (
+			c1.querySelector("[data-testid='timeline-items-content']") as HTMLElement
+		)?.style.height;
+		const h2 = (
+			c2.querySelector("[data-testid='timeline-items-content']") as HTMLElement
+		)?.style.height;
+		expect(h1).not.toBe(h2);
+	});
+
+	it("does not render the unscheduled count note", () => {
 		const { container } = renderWithMock({ undatedTaskRows: [] });
 		expect(
 			container.querySelector("[data-testid='timeline-items-unscheduled']"),

@@ -1,10 +1,14 @@
 // apps/web/src/components/timeline/items-layer.tsx
 import { cn } from "@orbit/shared";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Fragment, type ReactNode, useMemo } from "react";
+import { Fragment, type ReactNode, useMemo, useState } from "react";
 import { labelFitsInside, measureTextWidth } from "./bar-label";
 import { useTimelineController } from "./controller/context";
-import { type Geometry, rangeVisibility } from "./controller/geometry";
+import {
+	type Geometry,
+	percentToMs,
+	rangeVisibility,
+} from "./controller/geometry";
 import { useHorizontalPercentageOffset } from "./controller/hooks";
 import {
 	type ContainerRect,
@@ -19,6 +23,7 @@ import {
 	rowTop,
 } from "./layout/row-metrics";
 import { useRowSelection } from "./selection/context";
+import { ONE_DAY, startOfUtcDay, toUtcDateString } from "./units/make-units";
 import type { RelativeTimeRangeOffset } from "./units/types";
 import {
 	type GestureTarget,
@@ -27,12 +32,21 @@ import {
 	useBarInteraction,
 } from "./use-bar-interaction";
 
+/** Default span (inclusive days) applied when scheduling an undated task by click. */
+const DEFAULT_SCHEDULE_SPAN_DAYS = 7;
+
 export default function ItemsLayer() {
 	const { today, offsetMs, zoomLevel, viewportWidth, scrollToMs } =
 		useTimelineController();
 	const { getPercentageOffset } = useHorizontalPercentageOffset();
-	const { items, updateItem, moveDays, isError, undatedTaskRows } =
-		useTimelineData();
+	const {
+		items,
+		updateItem,
+		moveDays,
+		isError,
+		undatedTaskRows,
+		scheduleTask,
+	} = useTimelineData();
 
 	const { rows, containers } = useMemo(
 		() => layoutItems(items, today),
@@ -40,6 +54,13 @@ export default function ItemsLayer() {
 	);
 
 	const { isSelected, hoveredId, setHovered } = useRowSelection();
+
+	// Ghost bar shown while hovering an undated lane: the span a click would create.
+	const [schedulePreview, setSchedulePreview] = useState<{
+		id: string;
+		left: number;
+		width: number;
+	} | null>(null);
 
 	const { draft, active, pointer, beginGesture } = useBarInteraction({
 		onCommitMove: (id, days) => moveDays(id, days),
@@ -49,6 +70,49 @@ export default function ItemsLayer() {
 
 	if (viewportWidth <= 0) return null;
 	const geom: Geometry = { offsetMs, zoom: zoomLevel, viewportWidth };
+
+	// Start-of-day timestamp under the cursor within an undated lane, or null.
+	const startTsFromClientX = (
+		lane: HTMLElement,
+		clientX: number,
+	): number | null => {
+		const rect = lane.getBoundingClientRect();
+		if (rect.width <= 0) return null;
+		const percent = ((clientX - rect.left) / rect.width) * 100;
+		return startOfUtcDay(today + percentToMs(percent, geom));
+	};
+
+	// Click an undated lane to schedule the task: the clicked day becomes the
+	// start, spanning a default week. The PATCH refetch moves it into `items`.
+	const scheduleFromClick = (
+		taskId: string,
+		lane: HTMLElement,
+		clientX: number,
+	) => {
+		const startTs = startTsFromClientX(lane, clientX);
+		if (startTs === null) return;
+		scheduleTask(
+			taskId,
+			toUtcDateString(startTs),
+			toUtcDateString(startTs + (DEFAULT_SCHEDULE_SPAN_DAYS - 1) * ONE_DAY),
+		);
+	};
+
+	// Update the ghost preview as the cursor moves across an undated lane.
+	const previewFromMove = (
+		taskId: string,
+		lane: HTMLElement,
+		clientX: number,
+	) => {
+		const startTs = startTsFromClientX(lane, clientX);
+		if (startTs === null) return;
+		const startOffset = startTs - today;
+		const left = getPercentageOffset(startOffset);
+		const right = getPercentageOffset(
+			startOffset + DEFAULT_SCHEDULE_SPAN_DAYS * ONE_DAY,
+		);
+		setSchedulePreview({ id: taskId, left, width: right - left });
+	};
 
 	// effective range = draft override (live drag) else laid-out range
 	const rangeOf = (row: RenderRow): RelativeTimeRangeOffset =>
@@ -82,7 +146,7 @@ export default function ItemsLayer() {
 		<div
 			data-testid="timeline-items-content"
 			className="pointer-events-none relative w-full"
-			style={{ height: contentHeight(rows.length) }}
+			style={{ height: contentHeight(rows.length + undatedTaskRows.length) }}
 		>
 			{isError && (
 				<div
@@ -90,15 +154,6 @@ export default function ItemsLayer() {
 					className="pointer-events-none absolute inset-x-0 top-6 text-center text-sm text-muted-foreground"
 				>
 					Couldn't load tasks
-				</div>
-			)}
-			{undatedTaskRows.length > 0 && (
-				<div
-					data-testid="timeline-items-unscheduled"
-					className="pointer-events-none absolute inset-x-0 bottom-1 text-center text-xs text-muted-foreground"
-				>
-					{undatedTaskRows.length} unscheduled task
-					{undatedTaskRows.length === 1 ? "" : "s"}
 				</div>
 			)}
 			{/* per-row lanes (behind bars): capture hover anywhere on the row and
@@ -119,6 +174,53 @@ export default function ItemsLayer() {
 						)}
 						style={{ top: row.rowIndex * ROW_HEIGHT, height: ROW_HEIGHT }}
 					/>
+				);
+			})}
+
+			{/* clickable lanes for undated tasks: click a position to schedule the task */}
+			{undatedTaskRows.map((task, i) => {
+				const rowIndex = rows.length + i;
+				const selected = isSelected(task.id);
+				const hovered = hoveredId === task.id;
+				return (
+					<button
+						type="button"
+						key={`lane-${task.id}`}
+						data-testid="timeline-undated-lane"
+						data-selected={selected}
+						title="Click to schedule"
+						onMouseEnter={() => setHovered(task.id)}
+						onMouseLeave={() => {
+							setHovered(null);
+							setSchedulePreview(null);
+						}}
+						onMouseMove={(e) =>
+							previewFromMove(task.id, e.currentTarget, e.clientX)
+						}
+						onClick={(e) =>
+							scheduleFromClick(task.id, e.currentTarget, e.clientX)
+						}
+						className={cn(
+							"pointer-events-auto absolute inset-x-0 cursor-pointer",
+							selected ? "bg-accent" : hovered ? "bg-muted/50" : "",
+						)}
+						style={{ top: rowIndex * ROW_HEIGHT, height: ROW_HEIGHT }}
+					>
+						{schedulePreview?.id === task.id && (
+							<span
+								data-testid="timeline-undated-preview"
+								className="pointer-events-none absolute flex items-center justify-center rounded-md border-2 border-dashed border-primary/60 bg-primary/15 text-xs font-medium text-muted-foreground"
+								style={{
+									left: `${schedulePreview.left}%`,
+									width: `${schedulePreview.width}%`,
+									top: ROW_PADDING,
+									height: ROW_HEIGHT - ROW_PADDING * 2,
+								}}
+							>
+								{task.name}
+							</span>
+						)}
+					</button>
 				);
 			})}
 

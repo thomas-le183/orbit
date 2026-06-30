@@ -10,9 +10,12 @@ import { contentHeight, ROW_HEIGHT } from "./row-metrics";
 /** Ordered visible row ids — the shared order both panes select against. */
 function useOrderedIds(): string[] {
 	const { today } = useTimelineController();
-	const { items } = useTimelineData();
+	const { items, undatedTaskRows } = useTimelineData();
 	const { rows } = useMemo(() => layoutItems(items, today), [items, today]);
-	return useMemo(() => rows.map((r) => r.item.id), [rows]);
+	return useMemo(
+		() => [...rows.map((r) => r.item.id), ...undatedTaskRows.map((u) => u.id)],
+		[rows, undatedTaskRows],
+	);
 }
 
 /** Column titles + select-all checkbox for the header band. */
@@ -43,16 +46,21 @@ export function TimelineTableHeader() {
 /** Left table column: one selectable cell per timeline row, aligned to ItemsLayer rows. */
 export default function TimelineTable() {
 	const { today } = useTimelineController();
-	const { items } = useTimelineData();
+	const { items, undatedTaskRows } = useTimelineData();
 	const { rows } = useMemo(() => layoutItems(items, today), [items, today]);
-	const orderedIds = useMemo(() => rows.map((r) => r.item.id), [rows]);
+	const orderedIds = useMemo(
+		() => [...rows.map((r) => r.item.id), ...undatedTaskRows.map((u) => u.id)],
+		[rows, undatedTaskRows],
+	);
 	const { isSelected, hoveredId, selectTo, toggle, setHovered } =
 		useRowSelection();
+
+	const totalRows = rows.length + undatedTaskRows.length;
 
 	return (
 		<div
 			className="relative w-full"
-			style={{ height: contentHeight(rows.length) }}
+			style={{ height: contentHeight(totalRows) }}
 		>
 			{rows.map((row) => {
 				// Full-lane row so the table row height matches the timeline row band.
@@ -110,6 +118,49 @@ export default function TimelineTable() {
 						</span>
 						<span className="w-28 shrink-0 truncate text-muted-foreground">
 							{item.startDate} → {item.endDate}
+						</span>
+					</div>
+				);
+			})}
+
+			{undatedTaskRows.map((task, i) => {
+				const top = (rows.length + i) * ROW_HEIGHT;
+				const selected = isSelected(task.id);
+				return (
+					<div
+						key={task.id}
+						data-testid="timeline-table-row"
+						data-selected={selected}
+						onMouseEnter={() => setHovered(task.id)}
+						onMouseLeave={() => setHovered(null)}
+						className={cn(
+							"absolute inset-x-0 flex items-center gap-2 px-3 text-xs",
+							selected
+								? "bg-accent"
+								: hoveredId === task.id
+									? "bg-muted/50"
+									: "",
+						)}
+						style={{ top, height: ROW_HEIGHT }}
+					>
+						<Checkbox
+							aria-label={`Select ${task.name}`}
+							checked={selected}
+							onClick={(e) => {
+								e.stopPropagation();
+								if (e.shiftKey) selectTo(task.id, orderedIds);
+								else toggle(task.id);
+							}}
+						/>
+						<span className="flex min-w-0 flex-1 items-center gap-1.5">
+							<span className="size-2 shrink-0 rounded-full bg-muted-foreground/30" />
+							<span className="min-w-0 truncate text-foreground">
+								{task.name}
+							</span>
+						</span>
+						<span className="w-24 shrink-0 truncate text-muted-foreground" />
+						<span className="w-28 shrink-0 truncate text-muted-foreground">
+							—
 						</span>
 					</div>
 				);
