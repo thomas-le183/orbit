@@ -8,10 +8,11 @@ import {
 	useCreateTask,
 	useProjectMilestones,
 	useProjectTasks,
+	useUpdateTask,
 } from "./use-tasks";
 
 vi.mock("@/lib/api", () => ({
-	api: { get: vi.fn(), post: vi.fn() },
+	api: { get: vi.fn(), post: vi.fn(), patch: vi.fn() },
 	getErrorMessage: () => "error",
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
@@ -88,6 +89,37 @@ describe("useCreateTask", () => {
 		await result.current.mutateAsync({ name: "New" });
 		expect(api.post).toHaveBeenCalledWith("/projects/proj1/tasks", {
 			name: "New",
+		});
+		expect(invalidate).toHaveBeenCalledWith({
+			queryKey: taskKeys.list("proj1"),
+		});
+	});
+});
+
+describe("useUpdateTask", () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it("patches the task endpoint and invalidates the list", async () => {
+		(api.patch as ReturnType<typeof vi.fn>).mockResolvedValue({
+			data: { id: "t1", name: "Task" },
+		});
+		const qc = new QueryClient({
+			defaultOptions: { queries: { retry: false } },
+		});
+		const invalidate = vi.spyOn(qc, "invalidateQueries");
+		const Wrapper = ({ children }: { children: ReactNode }) => (
+			<QueryClientProvider client={qc}>{children}</QueryClientProvider>
+		);
+		const { result } = renderHook(() => useUpdateTask("proj1"), {
+			wrapper: Wrapper,
+		});
+		await result.current.mutateAsync({
+			id: "t1",
+			input: { startDate: "2026-07-01", endDate: "2026-07-07" },
+		});
+		expect(api.patch).toHaveBeenCalledWith("/tasks/t1", {
+			startDate: "2026-07-01",
+			endDate: "2026-07-07",
 		});
 		expect(invalidate).toHaveBeenCalledWith({
 			queryKey: taskKeys.list("proj1"),

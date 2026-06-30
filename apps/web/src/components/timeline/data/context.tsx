@@ -8,7 +8,11 @@ import {
 	useState,
 } from "react";
 import { type TimelineItem, timelineItems } from "@/data/timeline-items";
-import { useProjectMilestones, useProjectTasks } from "@/hooks/use-tasks";
+import {
+	useProjectMilestones,
+	useProjectTasks,
+	useUpdateTask,
+} from "@/hooks/use-tasks";
 import { ONE_DAY, startOfUtcDay, toUtcDateString } from "../units/make-units";
 import {
 	type MilestoneMarker,
@@ -32,6 +36,8 @@ type TimelineDataValue = {
 	updateItem: (id: string, patch: Partial<TimelineItem>) => void;
 	moveDays: (id: string, days: number) => void;
 	undatedTaskRows: UndatedTaskRow[];
+	/** Assign dates to an undated task, scheduling it onto the timeline. */
+	scheduleTask: (id: string, startDate: string, endDate: string) => void;
 	milestoneMarkers: MilestoneMarker[];
 	isLoading: boolean;
 	isError: boolean;
@@ -49,6 +55,7 @@ export function TimelineDataProvider({
 }) {
 	const tasksQuery = useProjectTasks(projectId ?? "");
 	const milestonesQuery = useProjectMilestones(projectId ?? "");
+	const updateTask = useUpdateTask(projectId ?? "");
 
 	const mapped = useMemo(() => {
 		if (!projectId) {
@@ -74,6 +81,13 @@ export function TimelineDataProvider({
 	const updateItem = useCallback((id: string, patch: Partial<TimelineItem>) => {
 		setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)));
 	}, []);
+
+	const scheduleTask = useCallback(
+		(id: string, startDate: string, endDate: string) => {
+			updateTask.mutate({ id, input: { startDate, endDate } });
+		},
+		[updateTask],
+	);
 
 	const moveDays = useCallback((id: string, days: number) => {
 		if (days === 0) return;
@@ -111,6 +125,7 @@ export function TimelineDataProvider({
 			updateItem,
 			moveDays,
 			undatedTaskRows: mapped.undatedTaskRows,
+			scheduleTask,
 			milestoneMarkers: mapped.milestoneMarkers,
 			isLoading: projectId
 				? tasksQuery.isLoading || milestonesQuery.isLoading
@@ -125,6 +140,7 @@ export function TimelineDataProvider({
 			updateItem,
 			moveDays,
 			mapped.undatedTaskRows,
+			scheduleTask,
 			mapped.milestoneMarkers,
 			projectId,
 			tasksQuery.isLoading,

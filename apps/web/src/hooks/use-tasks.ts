@@ -1,4 +1,4 @@
-import type { CreateTaskInput } from "@orbit/shared";
+import type { CreateTaskInput, UpdateTaskInput } from "@orbit/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api, getErrorMessage } from "@/lib/api";
@@ -80,6 +80,28 @@ export function useCreateTask(projectId: string) {
 		},
 		onError: (err) => {
 			toast.error(getErrorMessage(err, "Couldn't create task"));
+		},
+	});
+}
+
+export function useUpdateTask(projectId: string) {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async ({
+			id,
+			input,
+		}: {
+			id: string;
+			input: UpdateTaskInput;
+		}) => {
+			const { data } = await api.patch<Task>(`/tasks/${id}`, input);
+			return data;
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+		},
+		onError: (err) => {
+			toast.error(getErrorMessage(err, "Couldn't update task"));
 		},
 	});
 }

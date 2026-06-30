@@ -7,6 +7,7 @@ import { TimelineDataProvider, useTimelineData } from "./context";
 vi.mock("@/hooks/use-tasks", () => ({
 	useProjectTasks: vi.fn(),
 	useProjectMilestones: vi.fn(),
+	useUpdateTask: vi.fn(() => ({ mutate: vi.fn() })),
 }));
 
 const tasksMock = useProjectTasks as unknown as ReturnType<typeof vi.fn>;
