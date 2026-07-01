@@ -60,6 +60,10 @@ export function useLinkInteraction(opts: {
 		if (activeRef.current) return;
 		e.stopPropagation();
 		e.preventDefault();
+		const captureTarget = e.currentTarget;
+		try {
+			captureTarget.setPointerCapture(e.pointerId);
+		} catch {}
 		setLinkDraft({ from, pointer: { x: e.clientX, y: e.clientY } });
 
 		const onMove = (ev: PointerEvent) => {
@@ -73,6 +77,9 @@ export function useLinkInteraction(opts: {
 				optsRef.current.onCreate(from, target);
 			}
 			setLinkDraft(null);
+			try {
+				captureTarget.releasePointerCapture(ev.pointerId);
+			} catch {}
 			window.removeEventListener("pointermove", onMove);
 			window.removeEventListener("pointerup", onUp);
 			activeRef.current = null;
