@@ -441,10 +441,13 @@ export default function ItemsLayer() {
 						{!row.isParent &&
 							(
 								[
-									["start", left],
-									["finish", right],
-								] as [Anchor, number][]
-							).map(([anchor, xPercent]) => (
+									// Sit each node just OUTSIDE its bar end (start = left of the
+									// left edge, finish = right of the right edge) so it clears the
+									// bar's inner resize handles instead of overlapping them.
+									["start", left, "translate(calc(-100% - 5px), -50%)"],
+									["finish", right, "translate(5px, -50%)"],
+								] as [Anchor, number, string][]
+							).map(([anchor, xPercent, transform]) => (
 								<span
 									key={anchor}
 									data-testid="timeline-link-node"
@@ -453,9 +456,13 @@ export default function ItemsLayer() {
 									onPointerDown={(e) =>
 										beginLink(e, { taskId: item.id, anchor })
 									}
-									style={{ left: `${xPercent}%`, top: top + barHeight / 2 }}
+									style={{
+										left: `${xPercent}%`,
+										top: top + barHeight / 2,
+										transform,
+									}}
 									className={cn(
-										"absolute z-20 size-2.5 -translate-x-1/2 -translate-y-1/2 cursor-crosshair rounded-full border-2 border-primary bg-background",
+										"absolute z-20 size-3.5 cursor-crosshair rounded-full border-2 border-primary bg-background shadow-sm transition-shadow hover:ring-2 hover:ring-primary/40",
 										hoveredId === item.id || linkDraft
 											? "pointer-events-auto opacity-100"
 											: "pointer-events-none opacity-0",
