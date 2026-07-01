@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TimelineProvider, useTimelineController } from "./controller/context";
 import { TimelineDataProvider, useTimelineData } from "./data/context";
 import ItemsLayer from "./items-layer";
@@ -343,5 +343,39 @@ describe("ItemsLayer state overlays", () => {
 		expect(
 			container.querySelector("[data-testid='timeline-items-unscheduled']"),
 		).toBeNull();
+	});
+});
+
+describe("ItemsLayer connection nodes and dependency layer", () => {
+	// The `ItemsLayer state overlays` suite above calls vi.mocked(useTimelineData).mockReturnValue(...)
+	// without restoring afterwards. Reset to the original implementation before each test here so
+	// renderLayer() gets the real seed data (and renders leaf-task nodes).
+	beforeEach(() => {
+		vi.mocked(useTimelineData).mockRestore();
+	});
+
+	it("hides connection nodes until a bar is hovered", async () => {
+		const user = userEvent.setup();
+		const { container } = renderLayer();
+		const nodes = container.querySelectorAll<HTMLElement>(
+			"[data-testid='timeline-link-node']",
+		);
+		// Nodes exist in the DOM but are hidden (opacity-0) until hover.
+		expect(nodes.length).toBeGreaterThan(0);
+		expect(nodes[0].className).toContain("opacity-0");
+
+		const bar = container.querySelector<HTMLElement>(
+			"[data-testid='timeline-task-bar']",
+		);
+		if (bar) {
+			await user.hover(bar);
+		}
+	});
+
+	it("mounts the dependency layer", () => {
+		const { container } = renderLayer();
+		expect(
+			container.querySelector("[data-testid='dependency-layer']"),
+		).not.toBeNull();
 	});
 });

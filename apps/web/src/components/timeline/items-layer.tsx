@@ -16,12 +16,15 @@ import {
 	type RenderRow,
 } from "./controller/layout";
 import { useTimelineData } from "./data/context";
+import { DependencyLayer } from "./dependencies/dependency-layer";
+import type { Anchor } from "./dependencies/geometry";
 import {
 	contentHeight,
 	ROW_HEIGHT,
 	ROW_PADDING,
 	rowTop,
 } from "./layout/row-metrics";
+import { useVirtualRows } from "./layout/virtual-rows";
 import { useRowSelection } from "./selection/context";
 import { ONE_DAY, startOfUtcDay, toUtcDateString } from "./units/make-units";
 import type { RelativeTimeRangeOffset } from "./units/types";
@@ -31,6 +34,7 @@ import {
 	rangeToDates,
 	useBarInteraction,
 } from "./use-bar-interaction";
+import { dependencyType, useLinkInteraction } from "./use-link-interaction";
 
 /** Default span (inclusive days) applied when scheduling an undated task by click. */
 const DEFAULT_SCHEDULE_SPAN_DAYS = 7;
@@ -46,6 +50,7 @@ export default function ItemsLayer() {
 		isError,
 		undatedTaskRows,
 		scheduleTask,
+		createDependency,
 	} = useTimelineData();
 
 	const { rows, containers } = useMemo(
@@ -54,6 +59,7 @@ export default function ItemsLayer() {
 	);
 
 	const { isSelected, hoveredId, setHovered } = useRowSelection();
+	const { isVisible, isSpanVisible } = useVirtualRows();
 
 	// Ghost bar shown while hovering an undated lane: the span a click would create.
 	const [schedulePreview, setSchedulePreview] = useState<{
@@ -66,6 +72,15 @@ export default function ItemsLayer() {
 		onCommitMove: (id, days) => moveDays(id, days),
 		onCommitResize: (id, range) =>
 			updateItem(id, rangeToDatesPatch(range, today)),
+	});
+
+	const { linkDraft, beginLink } = useLinkInteraction({
+		onCreate: (from, to) =>
+			createDependency({
+				predecessorId: from.taskId,
+				successorId: to.taskId,
+				type: dependencyType(from.anchor, to.anchor),
+			}),
 	});
 
 	if (viewportWidth <= 0) return null;
@@ -159,6 +174,7 @@ export default function ItemsLayer() {
 			{/* per-row lanes (behind bars): capture hover anywhere on the row and
 			    render the selection/hover highlight */}
 			{rows.map((row) => {
+				if (!isVisible(row.rowIndex)) return null;
 				const selected = isSelected(row.item.id);
 				const hovered = hoveredId === row.item.id;
 				return (
@@ -180,6 +196,7 @@ export default function ItemsLayer() {
 			{/* clickable lanes for undated tasks: click a position to schedule the task */}
 			{undatedTaskRows.map((task, i) => {
 				const rowIndex = rows.length + i;
+				if (!isVisible(rowIndex)) return null;
 				const selected = isSelected(task.id);
 				const hovered = hoveredId === task.id;
 				return (
@@ -226,6 +243,7 @@ export default function ItemsLayer() {
 
 			{/* parent container rects (behind bars) */}
 			{containers.map((c: ContainerRect) => {
+				if (!isSpanVisible(c.rowStart, c.rowEnd)) return null;
 				const left = getPercentageOffset(c.range.from);
 				const right = getPercentageOffset(c.range.to);
 				if (!Number.isFinite(left) || !Number.isFinite(right)) return null;
@@ -246,6 +264,7 @@ export default function ItemsLayer() {
 
 			{/* rows */}
 			{rows.map((row) => {
+				if (!isVisible(row.rowIndex)) return null;
 				const range = rangeOf(row);
 				const top = rowTop(row.rowIndex);
 				const barHeight = ROW_HEIGHT - ROW_PADDING * 2;
@@ -418,10 +437,36 @@ export default function ItemsLayer() {
 								{item.name}
 							</span>
 						)}
+
+						{!row.isParent &&
+							(
+								[
+									["start", left],
+									["finish", right],
+								] as [Anchor, number][]
+							).map(([anchor, xPercent]) => (
+								<span
+									key={anchor}
+									data-testid="timeline-link-node"
+									data-link-target={item.id}
+									data-link-anchor={anchor}
+									onPointerDown={(e) =>
+										beginLink(e, { taskId: item.id, anchor })
+									}
+									style={{ left: `${xPercent}%`, top: top + barHeight / 2 }}
+									className={cn(
+										"absolute z-20 size-2.5 -translate-x-1/2 -translate-y-1/2 cursor-crosshair rounded-full border-2 border-primary bg-background",
+										hoveredId === item.id || linkDraft
+											? "pointer-events-auto opacity-100"
+											: "pointer-events-none opacity-0",
+									)}
+								/>
+							))}
 					</Fragment>
 				);
 			})}
 
+			<DependencyLayer draft={draft} linkDraft={linkDraft} />
 			{dragTooltip}
 		</div>
 	);
