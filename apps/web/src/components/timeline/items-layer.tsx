@@ -441,14 +441,16 @@ export default function ItemsLayer() {
 						{!row.isParent &&
 							(
 								[
-									// Sit each node just OUTSIDE its bar end (start = left of the
-									// left edge, finish = right of the right edge) so it clears the
-									// bar's inner resize handles instead of overlapping them.
-									["start", left, "translate(calc(-100% - 5px), -50%)"],
-									["finish", right, "translate(5px, -50%)"],
-								] as [Anchor, number, string][]
-							).map(([anchor, xPercent, transform]) => {
-								// The node the cursor is dragging over → highlight it as the drop target.
+									// Each node is a transparent hit ZONE that sits just outside its
+									// bar end and bridges the gap back to the bar edge, with the
+									// visible dot at the outer end (clear of the inner resize
+									// handle). The bridge keeps the node hoverable with no dead gap.
+									// [anchor, xPercent, zoneTransform, dotAlign]
+									["start", left, "translate(-100%, -50%)", "justify-start"],
+									["finish", right, "translate(0%, -50%)", "justify-end"],
+								] as [Anchor, number, string, string][]
+							).map(([anchor, xPercent, transform, dotAlign]) => {
+								// The node the cursor is dragging over → highlight the drop target.
 								const isDropTarget =
 									linkDraft?.over?.taskId === item.id &&
 									linkDraft.over.anchor === anchor;
@@ -461,8 +463,8 @@ export default function ItemsLayer() {
 										onPointerDown={(e) =>
 											beginLink(e, { taskId: item.id, anchor })
 										}
-										// Keep the node visible while the pointer is on it (not just
-										// while the bar is hovered).
+										// Keep the node visible while the pointer is anywhere on the
+										// zone (bar → bridge → dot), not just while the bar is hovered.
 										onMouseEnter={() => setHovered(item.id)}
 										style={{
 											left: `${xPercent}%`,
@@ -470,15 +472,22 @@ export default function ItemsLayer() {
 											transform,
 										}}
 										className={cn(
-											"absolute z-20 size-3.5 cursor-crosshair rounded-full border-2 border-primary shadow-sm transition-shadow hover:ring-2 hover:ring-primary/40",
-											isDropTarget
-												? "bg-primary ring-2 ring-primary/50"
-												: "bg-background",
+											"group absolute z-20 flex h-4 w-5 cursor-crosshair items-center",
+											dotAlign,
 											hoveredId === item.id || linkDraft
 												? "pointer-events-auto opacity-100"
 												: "pointer-events-none opacity-0",
 										)}
-									/>
+									>
+										<span
+											className={cn(
+												"size-3.5 rounded-full border-2 border-primary shadow-sm transition-shadow group-hover:ring-2 group-hover:ring-primary/40",
+												isDropTarget
+													? "bg-primary ring-2 ring-primary/50"
+													: "bg-background",
+											)}
+										/>
+									</span>
 								);
 							})}
 					</Fragment>
