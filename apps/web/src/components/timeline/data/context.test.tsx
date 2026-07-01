@@ -10,6 +10,12 @@ vi.mock("@/hooks/use-tasks", () => ({
 	useUpdateTask: vi.fn(() => ({ mutate: vi.fn() })),
 }));
 
+vi.mock("@/hooks/use-dependencies", () => ({
+	useProjectDependencies: vi.fn(() => ({ data: undefined })),
+	useCreateDependency: vi.fn(() => ({ mutate: vi.fn() })),
+	useDeleteDependency: vi.fn(() => ({ mutate: vi.fn() })),
+}));
+
 const tasksMock = useProjectTasks as unknown as ReturnType<typeof vi.fn>;
 const milestonesMock = useProjectMilestones as unknown as ReturnType<
 	typeof vi.fn

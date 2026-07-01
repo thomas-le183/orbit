@@ -9,10 +9,17 @@ import {
 } from "react";
 import { type TimelineItem, timelineItems } from "@/data/timeline-items";
 import {
+	type Dependency,
+	useCreateDependency,
+	useDeleteDependency,
+	useProjectDependencies,
+} from "@/hooks/use-dependencies";
+import {
 	useProjectMilestones,
 	useProjectTasks,
 	useUpdateTask,
 } from "@/hooks/use-tasks";
+import type { CreateDependencyInput } from "@orbit/shared";
 import { ONE_DAY, startOfUtcDay, toUtcDateString } from "../units/make-units";
 import {
 	type MilestoneMarker,
@@ -42,6 +49,9 @@ type TimelineDataValue = {
 	isLoading: boolean;
 	isError: boolean;
 	projectId: string | undefined;
+	dependencies: Dependency[];
+	createDependency: (input: CreateDependencyInput) => void;
+	deleteDependency: (id: string) => void;
 };
 
 const TimelineDataContext = createContext<TimelineDataValue | null>(null);
@@ -56,6 +66,9 @@ export function TimelineDataProvider({
 	const tasksQuery = useProjectTasks(projectId ?? "");
 	const milestonesQuery = useProjectMilestones(projectId ?? "");
 	const updateTask = useUpdateTask(projectId ?? "");
+	const dependenciesQuery = useProjectDependencies(projectId ?? "");
+	const createDependencyMut = useCreateDependency(projectId ?? "");
+	const deleteDependencyMut = useDeleteDependency(projectId ?? "");
 
 	const mapped = useMemo(() => {
 		if (!projectId) {
@@ -134,6 +147,9 @@ export function TimelineDataProvider({
 				? tasksQuery.isError || milestonesQuery.isError
 				: false,
 			projectId,
+			dependencies: projectId ? (dependenciesQuery.data ?? []) : [],
+			createDependency: (input) => createDependencyMut.mutate(input),
+			deleteDependency: (id) => deleteDependencyMut.mutate(id),
 		}),
 		[
 			items,
@@ -147,6 +163,9 @@ export function TimelineDataProvider({
 			tasksQuery.isError,
 			milestonesQuery.isLoading,
 			milestonesQuery.isError,
+			dependenciesQuery.data,
+			createDependencyMut,
+			deleteDependencyMut,
 		],
 	);
 

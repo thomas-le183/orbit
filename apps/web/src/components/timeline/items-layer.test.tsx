@@ -235,6 +235,9 @@ describe("ItemsLayer state overlays", () => {
 			isLoading: false,
 			isError: false,
 			projectId: undefined,
+			dependencies: [],
+			createDependency: vi.fn(),
+			deleteDependency: vi.fn(),
 			...overrides,
 		};
 		vi.mocked(useTimelineData).mockReturnValue(base);
