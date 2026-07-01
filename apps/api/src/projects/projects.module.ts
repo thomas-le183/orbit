@@ -1,5 +1,7 @@
 import { Module } from "@nestjs/common";
 import { AuthModule } from "../auth/auth.module";
+import { DependenciesController } from "./dependencies/dependencies.controller";
+import { DependenciesService } from "./dependencies/dependencies.service";
 import { LabelsController } from "./labels/labels.controller";
 import { LabelsService } from "./labels/labels.service";
 import { MilestonesController } from "./milestones/milestones.controller";
@@ -19,6 +21,7 @@ import { TasksService } from "./tasks/tasks.service";
 		MilestonesController,
 		StatusesController,
 		LabelsController,
+		DependenciesController,
 	],
 	providers: [
 		ProjectsService,
@@ -26,6 +29,7 @@ import { TasksService } from "./tasks/tasks.service";
 		MilestonesService,
 		StatusesService,
 		LabelsService,
+		DependenciesService,
 	],
 })
 export class ProjectsModule {}
