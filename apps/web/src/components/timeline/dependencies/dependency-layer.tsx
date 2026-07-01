@@ -149,9 +149,10 @@ export function DependencyLayer({
 					return (
 						<path
 							data-testid="dependency-ghost"
-							d={elbowPath(p1, p2)}
+							// Straight line from the source node to the cursor while dragging;
+							// committed links use the elbow routing.
+							d={`M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`}
 							fill="none"
-							strokeLinejoin="round"
 							strokeDasharray="4 3"
 							className="stroke-primary"
 							strokeWidth={1.5}
