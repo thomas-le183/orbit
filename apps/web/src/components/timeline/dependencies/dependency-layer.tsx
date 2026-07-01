@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useTimelineController } from "../controller/context";
 import { useHorizontalPercentageOffset } from "../controller/hooks";
 import { layoutItems } from "../controller/layout";
@@ -24,6 +24,8 @@ export function DependencyLayer({
 	const { getPercentageOffset } = useHorizontalPercentageOffset();
 	const { isSpanVisible } = useVirtualRows();
 
+	const svgRef = useRef<SVGSVGElement>(null);
+
 	const { rows } = useMemo(() => layoutItems(items, today), [items, today]);
 	const rowByTask = useMemo(() => {
 		const map = new Map<string, RowInfo>();
@@ -40,6 +42,7 @@ export function DependencyLayer({
 
 	return (
 		<svg
+			ref={svgRef}
 			data-testid="dependency-layer"
 			className="pointer-events-none absolute inset-0 z-10"
 			width="100%"
@@ -116,8 +119,7 @@ export function DependencyLayer({
 				const fromInfo = withDraft(from, draft, linkDraft.from.taskId);
 				const p1 = { x: anchorXOf(fromInfo, linkDraft.from.anchor, getPercentageOffset, pxX), y: rowCenterY(from.rowIndex) };
 				// Convert pointer (client coords) into the svg's local coords.
-				const svg = document.querySelector<SVGSVGElement>("[data-testid='dependency-layer']");
-				const rect = svg?.getBoundingClientRect();
+				const rect = svgRef.current?.getBoundingClientRect();
 				const p2 = {
 					x: rect ? linkDraft.pointer.x - rect.left : p1.x,
 					y: rect ? linkDraft.pointer.y - rect.top : p1.y,
