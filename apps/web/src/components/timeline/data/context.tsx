@@ -102,6 +102,16 @@ export function TimelineDataProvider({
 		[updateTask],
 	);
 
+	const createDependency = useCallback(
+		(input: CreateDependencyInput) => createDependencyMut.mutate(input),
+		[createDependencyMut.mutate],
+	);
+
+	const deleteDependency = useCallback(
+		(id: string) => deleteDependencyMut.mutate(id),
+		[deleteDependencyMut.mutate],
+	);
+
 	const moveDays = useCallback((id: string, days: number) => {
 		if (days === 0) return;
 		setItems((prev) => {
@@ -148,8 +158,8 @@ export function TimelineDataProvider({
 				: false,
 			projectId,
 			dependencies: projectId ? (dependenciesQuery.data ?? []) : [],
-			createDependency: (input) => createDependencyMut.mutate(input),
-			deleteDependency: (id) => deleteDependencyMut.mutate(id),
+			createDependency,
+			deleteDependency,
 		}),
 		[
 			items,
@@ -164,8 +174,8 @@ export function TimelineDataProvider({
 			milestonesQuery.isLoading,
 			milestonesQuery.isError,
 			dependenciesQuery.data,
-			createDependencyMut,
-			deleteDependencyMut,
+			createDependency,
+			deleteDependency,
 		],
 	);
 
