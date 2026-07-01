@@ -7,6 +7,7 @@ import {
 	primaryKey,
 	text,
 	timestamp,
+	unique,
 	uuid,
 } from "drizzle-orm/pg-core";
 import { organization, team, user } from "./auth";
@@ -158,6 +159,52 @@ export const taskLabelLink = pgTable(
 	},
 	(t) => [primaryKey({ columns: [t.taskId, t.taskLabelId] })],
 );
+
+export const taskDependency = pgTable(
+	"task_dependency",
+	{
+		id: text("id").primaryKey(),
+		projectId: text("project_id")
+			.notNull()
+			.references(() => project.id, { onDelete: "cascade" }),
+		predecessorId: text("predecessor_id")
+			.notNull()
+			.references((): AnyPgColumn => task.id, { onDelete: "cascade" }),
+		successorId: text("successor_id")
+			.notNull()
+			.references((): AnyPgColumn => task.id, { onDelete: "cascade" }),
+		// Two-letter anchor code: FS | SS | FF | SF (predecessor anchor + successor anchor).
+		type: text("type").notNull().default("FS"),
+		createdBy: uuid("created_by")
+			.notNull()
+			.references(() => user.id),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+	},
+	(t) => [
+		unique("task_dependency_edge_unique").on(
+			t.predecessorId,
+			t.successorId,
+			t.type,
+		),
+	],
+);
+
+export const taskDependencyRelations = relations(taskDependency, ({ one }) => ({
+	project: one(project, {
+		fields: [taskDependency.projectId],
+		references: [project.id],
+	}),
+	predecessor: one(task, {
+		fields: [taskDependency.predecessorId],
+		references: [task.id],
+		relationName: "predecessor",
+	}),
+	successor: one(task, {
+		fields: [taskDependency.successorId],
+		references: [task.id],
+		relationName: "successor",
+	}),
+}));
 
 // ---------- Milestone ----------
 
