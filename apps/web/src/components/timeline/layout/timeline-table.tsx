@@ -6,6 +6,7 @@ import { layoutItems } from "../controller/layout";
 import { useTimelineData } from "../data/context";
 import { useRowSelection } from "../selection/context";
 import { contentHeight, ROW_HEIGHT } from "./row-metrics";
+import { useVirtualRows } from "./virtual-rows";
 
 /** Ordered visible row ids — the shared order both panes select against. */
 function useOrderedIds(): string[] {
@@ -54,6 +55,7 @@ export default function TimelineTable() {
 	);
 	const { isSelected, hoveredId, selectTo, toggle, setHovered } =
 		useRowSelection();
+	const { isVisible } = useVirtualRows();
 
 	const totalRows = rows.length + undatedTaskRows.length;
 
@@ -63,6 +65,7 @@ export default function TimelineTable() {
 			style={{ height: contentHeight(totalRows) }}
 		>
 			{rows.map((row) => {
+				if (!isVisible(row.rowIndex)) return null;
 				// Full-lane row so the table row height matches the timeline row band.
 				const top = row.rowIndex * ROW_HEIGHT;
 				const { item } = row;
@@ -124,6 +127,7 @@ export default function TimelineTable() {
 			})}
 
 			{undatedTaskRows.map((task, i) => {
+				if (!isVisible(rows.length + i)) return null;
 				const top = (rows.length + i) * ROW_HEIGHT;
 				const selected = isSelected(task.id);
 				return (

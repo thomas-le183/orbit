@@ -1,11 +1,19 @@
 import { Button } from "@orbit/ui/components/button";
 import { ChevronLeft, ChevronRight, PlusIcon } from "lucide-react";
-import { type ReactNode, type RefObject, useEffect, useRef } from "react";
+import {
+	type ReactNode,
+	type RefObject,
+	useEffect,
+	useMemo,
+	useRef,
+} from "react";
 import { useResizeObserver } from "usehooks-ts";
 import { usePreferences } from "@/hooks/use-preferences";
 import TimelineGrid from "../axis/grid";
 import { TimelineProvider, useTimelineController } from "../controller/context";
 import { msPerViewport } from "../controller/geometry";
+import { layoutItems } from "../controller/layout";
+import { useTimelineData } from "../data/context";
 import TimeUnitsBar from "../header/time-units-bar";
 import ItemsLayer from "../items-layer";
 import MilestoneMarkers from "../milestone-markers";
@@ -15,6 +23,7 @@ import { RowSelectionProvider, useRowSelection } from "../selection/context";
 import { usePan } from "../use-pan";
 import ZoomControl from "../zoom-control";
 import { useResizableDivider } from "./use-resizable-divider";
+import { VirtualRowsProvider } from "./virtual-rows";
 
 type SplitLayoutProps = {
 	tableHeader: ReactNode;
@@ -51,11 +60,21 @@ function SplitLayoutInner({
 		setOffsetMs,
 		zoomLevel,
 		viewportWidth,
+		today,
 	} = useTimelineController();
 	const { tableWidth, onDividerPointerDown } =
 		useResizableDivider(initialTableWidth);
 	const { onWheel } = usePan();
 	const { clear } = useRowSelection();
+	const { items, undatedTaskRows } = useTimelineData();
+
+	// Total stacked rows both panes render, driving the shared virtualizer.
+	const { rows } = useMemo(() => layoutItems(items, today), [items, today]);
+	const rowCount = rows.length + undatedTaskRows.length;
+
+	// Shared vertical scroll container: the table column and items layer window
+	// against its measured height in lockstep.
+	const scrollRef = useRef<HTMLDivElement>(null);
 
 	// Measure the timeline (right) region so viewportWidth excludes the table column.
 	const rightRef = useRef<HTMLDivElement>(null);
@@ -171,23 +190,28 @@ function SplitLayoutInner({
 						<MilestoneMarkers />
 					</div>
 					{/* shared vertical scroll: table column + items layer move together */}
-					<div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
-						<div className="flex min-h-full">
-							<div
-								data-testid="timeline-table-column"
-								className="relative z-20 min-h-full shrink-0 overflow-hidden border-r border-border bg-background-primary"
-								style={{ width: tableWidth }}
-							>
-								{table}
+					<div
+						ref={scrollRef}
+						className="absolute inset-0 overflow-y-auto overflow-x-hidden"
+					>
+						<VirtualRowsProvider scrollRef={scrollRef} count={rowCount}>
+							<div className="flex min-h-full">
+								<div
+									data-testid="timeline-table-column"
+									className="relative z-20 min-h-full shrink-0 overflow-hidden border-r border-border bg-background-primary"
+									style={{ width: tableWidth }}
+								>
+									{table}
+								</div>
+								<div
+									ref={rightRef}
+									className="relative flex-1 touch-none select-none"
+									onWheel={onWheel}
+								>
+									<ItemsLayer />
+								</div>
 							</div>
-							<div
-								ref={rightRef}
-								className="relative flex-1 touch-none select-none"
-								onWheel={onWheel}
-							>
-								<ItemsLayer />
-							</div>
-						</div>
+						</VirtualRowsProvider>
 					</div>
 				</div>
 
