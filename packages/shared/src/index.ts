@@ -1,3 +1,4 @@
+export * from "./schemas/dependencies.js";
 export {
 	type CreateUserInput,
 	createUserSchema,
@@ -12,11 +13,10 @@ export {
 	type WeekStart,
 	weekStartSchema,
 } from "./schemas/index.js";
-export * from "./schemas/dependencies.js";
 export * from "./schemas/milestones.js";
 export * from "./schemas/projects.js";
-export * from "./schemas/taxonomy.js";
 export * from "./schemas/tasks.js";
+export * from "./schemas/taxonomy.js";
 export {
 	type ApiResponse,
 	type ApiResponseError,

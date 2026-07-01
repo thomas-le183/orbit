@@ -46,9 +46,7 @@ export class DependenciesService {
 			),
 		});
 		if (found.length !== 2) {
-			throw new BadRequestException(
-				"Both tasks must belong to this project",
-			);
+			throw new BadRequestException("Both tasks must belong to this project");
 		}
 
 		const existing = await this.db.query.taskDependency.findFirst({

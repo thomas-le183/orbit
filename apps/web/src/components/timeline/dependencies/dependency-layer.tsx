@@ -66,18 +66,26 @@ export function DependencyLayer({
 				const from = rowByTask.get(dep.predecessorId);
 				const to = rowByTask.get(dep.successorId);
 				if (!from || !to) return null;
-				if (!isSpanVisible(
-					Math.min(from.rowIndex, to.rowIndex),
-					Math.max(from.rowIndex, to.rowIndex),
-				))
+				if (
+					!isSpanVisible(
+						Math.min(from.rowIndex, to.rowIndex),
+						Math.max(from.rowIndex, to.rowIndex),
+					)
+				)
 					return null;
 
 				const fromAnchor: Anchor = dep.type[0] === "F" ? "finish" : "start";
 				const toAnchor: Anchor = dep.type[1] === "F" ? "finish" : "start";
 				const fromInfo = withDraft(from, draft, dep.predecessorId);
 				const toInfo = withDraft(to, draft, dep.successorId);
-				const p1 = { x: anchorXOf(fromInfo, fromAnchor, getPercentageOffset, pxX), y: rowCenterY(from.rowIndex) };
-				const p2 = { x: anchorXOf(toInfo, toAnchor, getPercentageOffset, pxX), y: rowCenterY(to.rowIndex) };
+				const p1 = {
+					x: anchorXOf(fromInfo, fromAnchor, getPercentageOffset, pxX),
+					y: rowCenterY(from.rowIndex),
+				};
+				const p2 = {
+					x: anchorXOf(toInfo, toAnchor, getPercentageOffset, pxX),
+					y: rowCenterY(to.rowIndex),
+				};
 				const midX = (p1.x + p2.x) / 2;
 
 				return (
@@ -102,7 +110,12 @@ export function DependencyLayer({
 							className="pointer-events-auto cursor-pointer opacity-0 group-hover:opacity-100"
 							onClick={() => deleteDependency(dep.id)}
 						>
-							<circle cx={midX} cy={(p1.y + p2.y) / 2} r={7} className="fill-background stroke-muted-foreground" />
+							<circle
+								cx={midX}
+								cy={(p1.y + p2.y) / 2}
+								r={7}
+								className="fill-background stroke-muted-foreground"
+							/>
 							<path
 								d={`M ${midX - 3} ${(p1.y + p2.y) / 2 - 3} L ${midX + 3} ${(p1.y + p2.y) / 2 + 3} M ${midX + 3} ${(p1.y + p2.y) / 2 - 3} L ${midX - 3} ${(p1.y + p2.y) / 2 + 3}`}
 								className="stroke-muted-foreground"
@@ -113,30 +126,39 @@ export function DependencyLayer({
 				);
 			})}
 
-			{linkDraft && (() => {
-				const from = rowByTask.get(linkDraft.from.taskId);
-				if (!from) return null;
-				const fromInfo = withDraft(from, draft, linkDraft.from.taskId);
-				const p1 = { x: anchorXOf(fromInfo, linkDraft.from.anchor, getPercentageOffset, pxX), y: rowCenterY(from.rowIndex) };
-				// Convert pointer (client coords) into the svg's local coords.
-				const rect = svgRef.current?.getBoundingClientRect();
-				const p2 = {
-					x: rect ? linkDraft.pointer.x - rect.left : p1.x,
-					y: rect ? linkDraft.pointer.y - rect.top : p1.y,
-				};
-				return (
-					<path
-						data-testid="dependency-ghost"
-						d={elbowPath(p1, p2)}
-						fill="none"
-						strokeLinejoin="round"
-						strokeDasharray="4 3"
-						className="stroke-primary"
-						strokeWidth={1.5}
-						markerEnd="url(#dep-arrow)"
-					/>
-				);
-			})()}
+			{linkDraft &&
+				(() => {
+					const from = rowByTask.get(linkDraft.from.taskId);
+					if (!from) return null;
+					const fromInfo = withDraft(from, draft, linkDraft.from.taskId);
+					const p1 = {
+						x: anchorXOf(
+							fromInfo,
+							linkDraft.from.anchor,
+							getPercentageOffset,
+							pxX,
+						),
+						y: rowCenterY(from.rowIndex),
+					};
+					// Convert pointer (client coords) into the svg's local coords.
+					const rect = svgRef.current?.getBoundingClientRect();
+					const p2 = {
+						x: rect ? linkDraft.pointer.x - rect.left : p1.x,
+						y: rect ? linkDraft.pointer.y - rect.top : p1.y,
+					};
+					return (
+						<path
+							data-testid="dependency-ghost"
+							d={elbowPath(p1, p2)}
+							fill="none"
+							strokeLinejoin="round"
+							strokeDasharray="4 3"
+							className="stroke-primary"
+							strokeWidth={1.5}
+							markerEnd="url(#dep-arrow)"
+						/>
+					);
+				})()}
 		</svg>
 	);
 }

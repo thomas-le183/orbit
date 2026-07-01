@@ -2,10 +2,7 @@ import { render } from "@testing-library/react";
 import { useEffect } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { timelineItems } from "@/data/timeline-items";
-import {
-	TimelineProvider,
-	useTimelineController,
-} from "../controller/context";
+import { TimelineProvider, useTimelineController } from "../controller/context";
 import { useTimelineData } from "../data/context";
 import { DependencyLayer } from "./dependency-layer";
 
@@ -35,7 +32,13 @@ function renderLayer() {
 		moveDays: vi.fn(),
 		scheduleTask: vi.fn(),
 		dependencies: [
-			{ id: "d1", projectId: "p1", predecessorId: a.id, successorId: b.id, type: "FS" },
+			{
+				id: "d1",
+				projectId: "p1",
+				predecessorId: a.id,
+				successorId: b.id,
+				type: "FS",
+			},
 		],
 		createDependency: vi.fn(),
 		deleteDependency: vi.fn(),

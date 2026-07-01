@@ -3,10 +3,9 @@ import { DependenciesService } from "./dependencies.service";
 
 type Row = { id: string; projectId: string };
 
-function createService(opts: {
-	tasksInProject?: string[];
-	existingEdge?: boolean;
-} = {}) {
+function createService(
+	opts: { tasksInProject?: string[]; existingEdge?: boolean } = {},
+) {
 	const tasksInProject = new Set(opts.tasksInProject ?? ["t1", "t2"]);
 	const insertValues = jest.fn().mockResolvedValue(undefined);
 	const db = {
@@ -20,13 +19,17 @@ function createService(opts: {
 				findFirst: jest.fn(async () =>
 					opts.existingEdge ? { id: "dep-existing" } : undefined,
 				),
-				findMany: jest.fn(async () => [{ id: "dep1", projectId: "p1" }] as Row[]),
+				findMany: jest.fn(
+					async () => [{ id: "dep1", projectId: "p1" }] as Row[],
+				),
 			},
 		},
 		insert: jest.fn(() => ({ values: insertValues })),
 		delete: jest.fn(() => ({ where: jest.fn().mockResolvedValue(undefined) })),
 	};
-	const projects = { assertProjectInOrg: jest.fn().mockResolvedValue(undefined) };
+	const projects = {
+		assertProjectInOrg: jest.fn().mockResolvedValue(undefined),
+	};
 	const service = new DependenciesService(db as never, projects as never);
 	return { service, db, projects, insertValues };
 }

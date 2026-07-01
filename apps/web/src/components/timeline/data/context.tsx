@@ -1,3 +1,4 @@
+import type { CreateDependencyInput } from "@orbit/shared";
 import {
 	createContext,
 	type ReactNode,
@@ -19,7 +20,6 @@ import {
 	useProjectTasks,
 	useUpdateTask,
 } from "@/hooks/use-tasks";
-import type { CreateDependencyInput } from "@orbit/shared";
 import { ONE_DAY, startOfUtcDay, toUtcDateString } from "../units/make-units";
 import {
 	type MilestoneMarker,
