@@ -76,6 +76,8 @@ export function DependencyLayer({
 
 				const fromAnchor: Anchor = dep.type[0] === "F" ? "finish" : "start";
 				const toAnchor: Anchor = dep.type[1] === "F" ? "finish" : "start";
+				// Outward direction of the target edge: finish/right → +1, start/left → -1.
+				const toDir: -1 | 1 = toAnchor === "finish" ? 1 : -1;
 				const fromInfo = withDraft(from, draft, dep.predecessorId);
 				const toInfo = withDraft(to, draft, dep.successorId);
 				const p1 = {
@@ -85,6 +87,7 @@ export function DependencyLayer({
 				const p2 = {
 					x: anchorXOf(toInfo, toAnchor, getPercentageOffset, pxX),
 					y: rowCenterY(to.rowIndex),
+					dir: toDir,
 				};
 				const midX = (p1.x + p2.x) / 2;
 
