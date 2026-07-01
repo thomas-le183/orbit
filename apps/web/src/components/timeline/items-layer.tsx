@@ -447,28 +447,40 @@ export default function ItemsLayer() {
 									["start", left, "translate(calc(-100% - 5px), -50%)"],
 									["finish", right, "translate(5px, -50%)"],
 								] as [Anchor, number, string][]
-							).map(([anchor, xPercent, transform]) => (
-								<span
-									key={anchor}
-									data-testid="timeline-link-node"
-									data-link-target={item.id}
-									data-link-anchor={anchor}
-									onPointerDown={(e) =>
-										beginLink(e, { taskId: item.id, anchor })
-									}
-									style={{
-										left: `${xPercent}%`,
-										top: top + barHeight / 2,
-										transform,
-									}}
-									className={cn(
-										"absolute z-20 size-3.5 cursor-crosshair rounded-full border-2 border-primary bg-background shadow-sm transition-shadow hover:ring-2 hover:ring-primary/40",
-										hoveredId === item.id || linkDraft
-											? "pointer-events-auto opacity-100"
-											: "pointer-events-none opacity-0",
-									)}
-								/>
-							))}
+							).map(([anchor, xPercent, transform]) => {
+								// The node the cursor is dragging over → highlight it as the drop target.
+								const isDropTarget =
+									linkDraft?.over?.taskId === item.id &&
+									linkDraft.over.anchor === anchor;
+								return (
+									<span
+										key={anchor}
+										data-testid="timeline-link-node"
+										data-link-target={item.id}
+										data-link-anchor={anchor}
+										onPointerDown={(e) =>
+											beginLink(e, { taskId: item.id, anchor })
+										}
+										// Keep the node visible while the pointer is on it (not just
+										// while the bar is hovered).
+										onMouseEnter={() => setHovered(item.id)}
+										style={{
+											left: `${xPercent}%`,
+											top: top + barHeight / 2,
+											transform,
+										}}
+										className={cn(
+											"absolute z-20 size-3.5 cursor-crosshair rounded-full border-2 border-primary shadow-sm transition-shadow hover:ring-2 hover:ring-primary/40",
+											isDropTarget
+												? "bg-primary ring-2 ring-primary/50"
+												: "bg-background",
+											hoveredId === item.id || linkDraft
+												? "pointer-events-auto opacity-100"
+												: "pointer-events-none opacity-0",
+										)}
+									/>
+								);
+							})}
 					</Fragment>
 				);
 			})}

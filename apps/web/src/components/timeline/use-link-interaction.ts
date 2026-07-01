@@ -24,6 +24,8 @@ export function resolveLinkTarget(el: Element | null): LinkEndpoint | null {
 export type LinkDraft = {
 	from: LinkEndpoint;
 	pointer: { x: number; y: number };
+	/** Valid drop target currently under the cursor (a different task's node). */
+	over: LinkEndpoint | null;
 };
 
 /**
@@ -64,16 +66,24 @@ export function useLinkInteraction(opts: {
 		try {
 			captureTarget.setPointerCapture(e.pointerId);
 		} catch {}
-		setLinkDraft({ from, pointer: { x: e.clientX, y: e.clientY } });
+		// Valid drop target under the cursor: a node belonging to a DIFFERENT task.
+		const targetAt = (x: number, y: number): LinkEndpoint | null => {
+			const t = resolveLinkTarget(document.elementFromPoint(x, y));
+			return t && t.taskId !== from.taskId ? t : null;
+		};
+
+		setLinkDraft({ from, pointer: { x: e.clientX, y: e.clientY }, over: null });
 
 		const onMove = (ev: PointerEvent) => {
-			setLinkDraft({ from, pointer: { x: ev.clientX, y: ev.clientY } });
+			setLinkDraft({
+				from,
+				pointer: { x: ev.clientX, y: ev.clientY },
+				over: targetAt(ev.clientX, ev.clientY),
+			});
 		};
 		const onUp = (ev: PointerEvent) => {
-			const target = resolveLinkTarget(
-				document.elementFromPoint(ev.clientX, ev.clientY),
-			);
-			if (target && target.taskId !== from.taskId) {
+			const target = targetAt(ev.clientX, ev.clientY);
+			if (target) {
 				optsRef.current.onCreate(from, target);
 			}
 			setLinkDraft(null);
