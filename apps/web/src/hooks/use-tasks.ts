@@ -97,10 +97,27 @@ export function useUpdateTask(projectId: string) {
 			const { data } = await api.patch<Task>(`/tasks/${id}`, input);
 			return data;
 		},
-		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+		onMutate: async ({ id, input }) => {
+			// Optimistically apply the patch so the timeline reflects it instantly,
+			// before the PATCH + refetch round-trip completes.
+			await qc.cancelQueries({ queryKey: taskKeys.list(projectId) });
+			const previous = qc.getQueryData<Task[]>(taskKeys.list(projectId));
+			qc.setQueryData<Task[]>(taskKeys.list(projectId), (tasks) =>
+				tasks?.map((t) => (t.id === id ? { ...t, ...input } : t)),
+			);
+			return { previous };
 		},
-		onError: (err) => {
+		onSuccess: (updated) => {
+			// Reconcile with the server's authoritative row in place — no refetch.
+			qc.setQueryData<Task[]>(taskKeys.list(projectId), (tasks) =>
+				tasks?.map((t) => (t.id === updated.id ? updated : t)),
+			);
+		},
+		onError: (err, _vars, context) => {
+			// Roll back to the pre-mutation snapshot.
+			if (context?.previous) {
+				qc.setQueryData(taskKeys.list(projectId), context.previous);
+			}
 			toast.error(getErrorMessage(err, "Couldn't update task"));
 		},
 	});
