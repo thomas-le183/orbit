@@ -8,6 +8,7 @@ import {
 } from "@orbit/ui/components/dialog";
 import { Field, FieldError, FieldLabel } from "@orbit/ui/components/field";
 import { Input } from "@orbit/ui/components/input";
+import { Spinner } from "@orbit/ui/components/spinner";
 import { useForm } from "@tanstack/react-form";
 import { useCreateTask } from "@/hooks/use-tasks";
 
@@ -105,16 +106,25 @@ export function CreateTaskDialog({
 					</div>
 
 					<DialogFooter>
-						<Button
-							type="button"
-							variant="outline"
-							onClick={() => onOpenChange(false)}
-						>
-							Cancel
-						</Button>
-						<Button type="submit" disabled={create.isPending}>
-							Create task
-						</Button>
+						<form.Subscribe
+							selector={(state) => [state.isSubmitting]}
+							children={([isSubmitting]) => (
+								<>
+									<Button
+										type="button"
+										variant="outline"
+										onClick={() => onOpenChange(false)}
+										disabled={isSubmitting}
+									>
+										Cancel
+									</Button>
+									<Button type="submit" disabled={isSubmitting}>
+										{isSubmitting && <Spinner />}
+										{isSubmitting ? "Creating…" : "Create task"}
+									</Button>
+								</>
+							)}
+						/>
 					</DialogFooter>
 				</form>
 			</DialogContent>
