@@ -1,6 +1,7 @@
 import {
 	createContext,
 	type ReactNode,
+	type RefObject,
 	useCallback,
 	useContext,
 	useMemo,
@@ -17,6 +18,16 @@ export type TimelineControllerValue = {
 	offsetMs: number;
 	zoomLevel: ZoomLevel;
 	viewportWidth: number;
+	/**
+	 * The pannable viewport element. Attach it to the scrolling canvas so
+	 * gestures can measure its horizontal edges for edge-triggered auto-scroll.
+	 */
+	viewportRef: RefObject<HTMLDivElement | null>;
+	/**
+	 * The vertically-scrolling rows container. Gestures measure its top/bottom
+	 * edges and drive its `scrollTop` for edge-triggered vertical auto-scroll.
+	 */
+	scrollContainerRef: RefObject<HTMLDivElement | null>;
 	/** Day the week begins on, 0 = Sunday … 6 = Saturday (user preference). */
 	weekStart: number;
 	setZoomLevel: (z: ZoomLevel) => void;
@@ -61,6 +72,8 @@ export function TimelineProvider({
 	const [zoomLevel, setZoomLevelState] = useState<ZoomLevel>(initialZoom);
 	const [viewportWidth, setViewportWidthState] = useState(0);
 	const [offsetMs, setOffsetMsState] = useState(0);
+	const viewportRef = useRef<HTMLDivElement | null>(null);
+	const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
 	const zoomLevelRef = useRef(zoomLevel);
 	zoomLevelRef.current = zoomLevel;
@@ -110,6 +123,8 @@ export function TimelineProvider({
 			offsetMs,
 			zoomLevel,
 			viewportWidth,
+			viewportRef,
+			scrollContainerRef,
 			weekStart,
 			setZoomLevel,
 			setOffsetMs,

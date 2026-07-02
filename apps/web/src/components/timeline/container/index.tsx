@@ -35,11 +35,11 @@ function TimelineCanvas() {
 		setOffsetMs,
 		zoomLevel,
 		viewportWidth,
+		viewportRef,
 	} = useTimelineController();
-	const ref = useRef<HTMLDivElement>(null);
 	const { onWheel } = usePan();
 	const { width = 0 } = useResizeObserver({
-		ref: ref as RefObject<HTMLDivElement>,
+		ref: viewportRef as RefObject<HTMLDivElement>,
 	});
 
 	useEffect(() => {
@@ -109,7 +109,7 @@ function TimelineCanvas() {
 				<ZoomControl />
 			</div>
 			<div
-				ref={ref}
+				ref={viewportRef}
 				className="relative flex-1 touch-none select-none overflow-hidden"
 				onWheel={onWheel}
 			>

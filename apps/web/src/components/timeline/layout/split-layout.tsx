@@ -64,6 +64,8 @@ function SplitLayoutInner({
 		setOffsetMs,
 		zoomLevel,
 		viewportWidth,
+		viewportRef,
+		scrollContainerRef,
 		today,
 	} = useTimelineController();
 	const { tableWidth, collapsed, toggleCollapsed, onDividerPointerDown } =
@@ -77,13 +79,15 @@ function SplitLayoutInner({
 	const rowCount = rows.length + undatedTaskRows.length;
 
 	// Shared vertical scroll container: the table column and items layer window
-	// against its measured height in lockstep.
-	const scrollRef = useRef<HTMLDivElement>(null);
+	// against its measured height in lockstep. Bound to the controller ref so
+	// edge auto-scroll can drive its `scrollTop` near the top/bottom edges.
+	const scrollRef = scrollContainerRef;
 
-	// Measure the timeline (right) region so viewportWidth excludes the table column.
-	const rightRef = useRef<HTMLDivElement>(null);
+	// Measure the timeline (right) region so viewportWidth excludes the table
+	// column. This is also the pannable viewport that edge auto-scroll measures
+	// against (shared via the controller), so bind the controller's ref here.
 	const { width = 0 } = useResizeObserver({
-		ref: rightRef as RefObject<HTMLDivElement>,
+		ref: viewportRef as RefObject<HTMLDivElement>,
 	});
 	useEffect(() => {
 		setViewportWidth(width);
@@ -178,7 +182,7 @@ function SplitLayoutInner({
 				{/* header band */}
 				<div className="relative z-20 flex h-12 shrink-0 border-b border-border">
 					<div
-						className="relative z-20 shrink-0 overflow-hidden border-r border-border bg-muted/40"
+						className="relative z-30 shrink-0 overflow-hidden border-r border-border bg-muted/40"
 						style={{ width: tableWidth }}
 					>
 						{tableHeader}
@@ -208,13 +212,13 @@ function SplitLayoutInner({
 							<div className="flex min-h-full">
 								<div
 									data-testid="timeline-table-column"
-									className="relative z-20 min-h-full shrink-0 overflow-hidden border-r border-border bg-background-primary"
+									className="relative z-30 min-h-full shrink-0 overflow-hidden border-r border-border bg-background-primary"
 									style={{ width: tableWidth }}
 								>
 									{table}
 								</div>
 								<div
-									ref={rightRef}
+									ref={viewportRef}
 									className="relative flex-1 touch-none select-none"
 									onWheel={onWheel}
 								>
@@ -230,7 +234,7 @@ function SplitLayoutInner({
 					<div
 						data-testid="timeline-split-divider"
 						onPointerDown={onDividerPointerDown}
-						className="absolute inset-y-0 z-30 w-3 -translate-x-1/2 cursor-col-resize hover:bg-border"
+						className="absolute inset-y-0 z-40 w-3 -translate-x-1/2 cursor-col-resize hover:bg-border"
 						style={{ left: tableWidth }}
 					/>
 				)}

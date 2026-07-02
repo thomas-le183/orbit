@@ -2,6 +2,7 @@ import type { DependencyType } from "@orbit/shared";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Anchor } from "./dependencies/geometry";
+import { useEdgeAutoScroll } from "./use-edge-autoscroll";
 
 export type LinkEndpoint = { taskId: string; anchor: Anchor };
 
@@ -46,6 +47,7 @@ export function useLinkInteraction(opts: {
 		move: (e: PointerEvent) => void;
 		up: (e: PointerEvent) => void;
 	} | null>(null);
+	const edgeScroll = useEdgeAutoScroll();
 	const [linkDraft, setLinkDraft] = useState<LinkDraft | null>(null);
 
 	useEffect(() => {
@@ -58,46 +60,69 @@ export function useLinkInteraction(opts: {
 		};
 	}, []);
 
-	const beginLink = useCallback((e: ReactPointerEvent, from: LinkEndpoint) => {
-		if (activeRef.current) return;
-		e.stopPropagation();
-		e.preventDefault();
-		const captureTarget = e.currentTarget;
-		try {
-			captureTarget.setPointerCapture(e.pointerId);
-		} catch {}
-		// Valid drop target under the cursor: a node belonging to a DIFFERENT task.
-		const targetAt = (x: number, y: number): LinkEndpoint | null => {
-			const t = resolveLinkTarget(document.elementFromPoint(x, y));
-			return t && t.taskId !== from.taskId ? t : null;
-		};
+	const beginLink = useCallback(
+		(e: ReactPointerEvent, from: LinkEndpoint) => {
+			if (activeRef.current) return;
+			e.stopPropagation();
+			e.preventDefault();
+			const captureTarget = e.currentTarget;
+			try {
+				captureTarget.setPointerCapture(e.pointerId);
+			} catch {}
+			// Valid drop target under the cursor: a node belonging to a DIFFERENT task.
+			const targetAt = (x: number, y: number): LinkEndpoint | null => {
+				const t = resolveLinkTarget(document.elementFromPoint(x, y));
+				return t && t.taskId !== from.taskId ? t : null;
+			};
 
-		setLinkDraft({ from, pointer: { x: e.clientX, y: e.clientY }, over: null });
-
-		const onMove = (ev: PointerEvent) => {
 			setLinkDraft({
 				from,
-				pointer: { x: ev.clientX, y: ev.clientY },
-				over: targetAt(ev.clientX, ev.clientY),
+				pointer: { x: e.clientX, y: e.clientY },
+				over: null,
 			});
-		};
-		const onUp = (ev: PointerEvent) => {
-			const target = targetAt(ev.clientX, ev.clientY);
-			if (target) {
-				optsRef.current.onCreate(from, target);
-			}
-			setLinkDraft(null);
-			try {
-				captureTarget.releasePointerCapture(ev.pointerId);
-			} catch {}
-			window.removeEventListener("pointermove", onMove);
-			window.removeEventListener("pointerup", onUp);
-			activeRef.current = null;
-		};
-		window.addEventListener("pointermove", onMove);
-		window.addEventListener("pointerup", onUp);
-		activeRef.current = { move: onMove, up: onUp };
-	}, []);
+
+			// Latest cursor position, so the auto-scroll loop can re-run the drop-target
+			// hit test as new bars scroll under a stationary cursor.
+			let lastX = e.clientX;
+			let lastY = e.clientY;
+
+			const onMove = (ev: PointerEvent) => {
+				lastX = ev.clientX;
+				lastY = ev.clientY;
+				edgeScroll.setPointer(ev.clientX, ev.clientY);
+				setLinkDraft({
+					from,
+					pointer: { x: ev.clientX, y: ev.clientY },
+					over: targetAt(ev.clientX, ev.clientY),
+				});
+			};
+			const onUp = (ev: PointerEvent) => {
+				edgeScroll.stop();
+				const target = targetAt(ev.clientX, ev.clientY);
+				if (target) {
+					optsRef.current.onCreate(from, target);
+				}
+				setLinkDraft(null);
+				try {
+					captureTarget.releasePointerCapture(ev.pointerId);
+				} catch {}
+				window.removeEventListener("pointermove", onMove);
+				window.removeEventListener("pointerup", onUp);
+				activeRef.current = null;
+			};
+			window.addEventListener("pointermove", onMove);
+			window.addEventListener("pointerup", onUp);
+			activeRef.current = { move: onMove, up: onUp };
+			// Dragging a link toward a viewport edge scrolls the timeline so off-screen
+			// tasks can be reached; the connector end stays under the cursor.
+			edgeScroll.start(e.clientX, e.clientY, () => {
+				setLinkDraft((prev) =>
+					prev ? { ...prev, over: targetAt(lastX, lastY) } : prev,
+				);
+			});
+		},
+		[edgeScroll.start, edgeScroll.stop, edgeScroll.setPointer],
+	);
 
 	return { linkDraft, beginLink };
 }

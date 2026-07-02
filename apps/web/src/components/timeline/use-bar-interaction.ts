@@ -1,9 +1,10 @@
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTimelineController } from "./controller/context";
-import { PX_PER_DAY } from "./controller/geometry";
+import { PX_PER_DAY, pxPerMs } from "./controller/geometry";
 import { ONE_DAY, toUtcDateString } from "./units/make-units";
 import type { RelativeTimeRangeOffset, ZoomLevel } from "./units/types";
+import { useEdgeAutoScroll } from "./use-edge-autoscroll";
 
 export type ResizeEdge = "start" | "end";
 
@@ -111,6 +112,7 @@ export function useBarInteraction(opts: {
 	const { zoomLevel } = useTimelineController();
 	const zoomRef = useRef(zoomLevel);
 	zoomRef.current = zoomLevel;
+	const edgeScroll = useEdgeAutoScroll();
 	const [draft, setDraft] = useState<Record<string, RelativeTimeRangeOffset>>(
 		{},
 	);
@@ -151,8 +153,20 @@ export function useBarInteraction(opts: {
 			setDraft({ [target.id]: target.range });
 			setPointer({ x: e.clientX, y: e.clientY });
 
-			const compute = (dx: number): Record<string, RelativeTimeRangeOffset> => {
-				const days = pxToDays(dx, zoomRef.current);
+			// ms the timeline has auto-scrolled since the gesture began. The bar's
+			// day delta is driven by pointer movement PLUS this pan, so a task keeps
+			// advancing in time while the dates scroll beneath a stationary cursor.
+			let panAccumMs = 0;
+			let lastPointerX = startX;
+
+			const totalDays = (): number =>
+				pxToDays(
+					lastPointerX - startX + panAccumMs * pxPerMs(zoomRef.current),
+					zoomRef.current,
+				);
+
+			const compute = (): Record<string, RelativeTimeRangeOffset> => {
+				const days = totalDays();
 				if (target.role === "move") {
 					return { [target.id]: applyMove(target.range, days) };
 				}
@@ -160,12 +174,24 @@ export function useBarInteraction(opts: {
 				return { [target.id]: applyResize(target.range, edge, days) };
 			};
 
+			// While the pointer sits near a viewport edge, pan the timeline toward it
+			// each frame; grow `panAccumMs` and re-run the draft in the same step so
+			// the bar tracks the cursor across the newly revealed dates.
+			edgeScroll.start(startX, e.clientY, (panMs) => {
+				panAccumMs += panMs;
+				setDraft(compute());
+			});
+
 			const onMove = (ev: PointerEvent) => {
-				setDraft(compute(ev.clientX - startX));
+				lastPointerX = ev.clientX;
+				edgeScroll.setPointer(ev.clientX, ev.clientY);
+				setDraft(compute());
 				setPointer({ x: ev.clientX, y: ev.clientY });
 			};
 			const onUp = (ev: PointerEvent) => {
-				const days = pxToDays(ev.clientX - startX, zoomRef.current);
+				edgeScroll.stop();
+				lastPointerX = ev.clientX;
+				const days = totalDays();
 				if (target.role === "move")
 					optsRef.current.onCommitMove(target.id, days);
 				else
@@ -191,7 +217,7 @@ export function useBarInteraction(opts: {
 			window.addEventListener("pointerup", onUp);
 			activeListenersRef.current = { move: onMove, up: onUp };
 		},
-		[],
+		[edgeScroll.start, edgeScroll.stop, edgeScroll.setPointer],
 	);
 
 	return { draft, active, pointer, beginGesture };
