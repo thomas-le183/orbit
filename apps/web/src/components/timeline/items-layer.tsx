@@ -2,7 +2,9 @@
 import { cn } from "@orbit/shared";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Fragment, type ReactNode, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { labelFitsInside, measureTextWidth } from "./bar-label";
+import { MIN_BAR_WIDTH_PX, RESIZE_HANDLE_MIN_BAR_PX } from "./constants";
 import { useTimelineController } from "./controller/context";
 import {
 	type Geometry,
@@ -51,6 +53,7 @@ export default function ItemsLayer() {
 		undatedTaskRows,
 		scheduleTask,
 		createDependency,
+		dependencies,
 	} = useTimelineData();
 
 	const { rows, containers } = useMemo(
@@ -75,12 +78,24 @@ export default function ItemsLayer() {
 	});
 
 	const { linkDraft, beginLink } = useLinkInteraction({
-		onCreate: (from, to) =>
+		onCreate: (from, to) => {
+			// A pair of tasks may have only one dependency between them (either
+			// direction), matching the API rule — skip a link that would duplicate it.
+			const alreadyLinked = dependencies.some(
+				(d) =>
+					(d.predecessorId === from.taskId && d.successorId === to.taskId) ||
+					(d.predecessorId === to.taskId && d.successorId === from.taskId),
+			);
+			if (alreadyLinked) {
+				toast.error("These tasks already have a dependency");
+				return;
+			}
 			createDependency({
 				predecessorId: from.taskId,
 				successorId: to.taskId,
 				type: dependencyType(from.anchor, to.anchor),
-			}),
+			});
+		},
 	});
 
 	if (viewportWidth <= 0) return null;
@@ -349,13 +364,24 @@ export default function ItemsLayer() {
 					descendantIds: row.isParent ? descendantsOf(item.id) : [],
 				};
 
+				// At far-out zooms a short task collapses to a sub-pixel sliver. Floor
+				// the rendered width so every bar stays visible and grabbable.
+				// `effectiveRight` is the bar's right edge after that floor — reused for
+				// the outside label and finish link node so they track the visible bar.
+				const minWidthPercent = (MIN_BAR_WIDTH_PX / viewportWidth) * 100;
+				const effectiveRight = Math.max(right, left + minWidthPercent);
+				const barWidthPx = ((effectiveRight - left) / 100) * viewportWidth;
+
 				// When the name is wider than the bar, render it beside the bar
 				// instead of clipping it inside.
-				const barWidthPx = ((right - left) / 100) * viewportWidth;
 				const fitsInside = labelFitsInside(
 					barWidthPx,
 					measureTextWidth(item.name),
 				);
+				// Once the bar is too narrow to hold both resize handles plus a move
+				// zone, drop the handles so they don't overlap and swallow the move area.
+				const showResizeHandles =
+					!row.isParent && barWidthPx >= RESIZE_HANDLE_MIN_BAR_PX;
 
 				return (
 					<Fragment key={item.id}>
@@ -367,7 +393,7 @@ export default function ItemsLayer() {
 							onMouseLeave={() => setHovered(null)}
 							style={{
 								left: `${left}%`,
-								width: `${Math.max(right - left, 0)}%`,
+								width: `${effectiveRight - left}%`,
 								top,
 								height: barHeight,
 								backgroundColor: row.isParent ? "transparent" : item.color,
@@ -397,8 +423,8 @@ export default function ItemsLayer() {
 								</span>
 							)}
 
-							{/* resize handles (leaf tasks only) */}
-							{!row.isParent && (
+							{/* resize handles (leaf tasks only, wide enough to hold them) */}
+							{showResizeHandles && (
 								<>
 									<span
 										data-testid="timeline-resize-start"
@@ -432,7 +458,7 @@ export default function ItemsLayer() {
 							<span
 								data-testid="timeline-task-label-outside"
 								className="pointer-events-none absolute z-10 flex items-center whitespace-nowrap pl-1.5 text-xs font-medium text-foreground"
-								style={{ left: `${right}%`, top, height: barHeight }}
+								style={{ left: `${effectiveRight}%`, top, height: barHeight }}
 							>
 								{item.name}
 							</span>
@@ -447,7 +473,12 @@ export default function ItemsLayer() {
 									// handle). The bridge keeps the node hoverable with no dead gap.
 									// [anchor, xPercent, zoneTransform, dotAlign]
 									["start", left, "translate(-100%, -50%)", "justify-start"],
-									["finish", right, "translate(0%, -50%)", "justify-end"],
+									[
+										"finish",
+										effectiveRight,
+										"translate(0%, -50%)",
+										"justify-end",
+									],
 								] as [Anchor, number, string, string][]
 							).map(([anchor, xPercent, transform, dotAlign]) => {
 								// The node the cursor is dragging over → highlight the drop target.

@@ -7,7 +7,7 @@ import { contentHeight } from "../layout/row-metrics";
 import { useVirtualRows } from "../layout/virtual-rows";
 import type { RelativeTimeRangeOffset } from "../units/types";
 import type { LinkDraft } from "../use-link-interaction";
-import { type Anchor, elbowPath, rowCenterY } from "./geometry";
+import { type Anchor, elbowMidpoint, elbowPath, rowCenterY } from "./geometry";
 
 type RowInfo = { rowIndex: number; range: RelativeTimeRangeOffset };
 
@@ -76,20 +76,22 @@ export function DependencyLayer({
 
 				const fromAnchor: Anchor = dep.type[0] === "F" ? "finish" : "start";
 				const toAnchor: Anchor = dep.type[1] === "F" ? "finish" : "start";
-				// Outward direction of the target edge: finish/right → +1, start/left → -1.
+				// Outward direction of each edge: finish/right → +1, start/left → -1.
+				const fromDir: -1 | 1 = fromAnchor === "finish" ? 1 : -1;
 				const toDir: -1 | 1 = toAnchor === "finish" ? 1 : -1;
 				const fromInfo = withDraft(from, draft, dep.predecessorId);
 				const toInfo = withDraft(to, draft, dep.successorId);
 				const p1 = {
 					x: anchorXOf(fromInfo, fromAnchor, getPercentageOffset, pxX),
 					y: rowCenterY(from.rowIndex),
+					dir: fromDir,
 				};
 				const p2 = {
 					x: anchorXOf(toInfo, toAnchor, getPercentageOffset, pxX),
 					y: rowCenterY(to.rowIndex),
 					dir: toDir,
 				};
-				const midX = (p1.x + p2.x) / 2;
+				const mid = elbowMidpoint(p1, p2);
 
 				return (
 					<g key={dep.id} data-testid="dependency-link" className="group">
@@ -110,17 +112,17 @@ export function DependencyLayer({
 							className="pointer-events-auto cursor-pointer"
 						/>
 						<g
-							className="pointer-events-auto cursor-pointer opacity-0 group-hover:opacity-100"
+							className="cursor-pointer opacity-0 group-hover:pointer-events-auto group-hover:opacity-100"
 							onClick={() => deleteDependency(dep.id)}
 						>
 							<circle
-								cx={midX}
-								cy={(p1.y + p2.y) / 2}
+								cx={mid.x}
+								cy={mid.y}
 								r={7}
 								className="fill-background stroke-muted-foreground"
 							/>
 							<path
-								d={`M ${midX - 3} ${(p1.y + p2.y) / 2 - 3} L ${midX + 3} ${(p1.y + p2.y) / 2 + 3} M ${midX + 3} ${(p1.y + p2.y) / 2 - 3} L ${midX - 3} ${(p1.y + p2.y) / 2 + 3}`}
+								d={`M ${mid.x - 3} ${mid.y - 3} L ${mid.x + 3} ${mid.y + 3} M ${mid.x + 3} ${mid.y - 3} L ${mid.x - 3} ${mid.y + 3}`}
 								className="stroke-muted-foreground"
 								strokeWidth={1.5}
 							/>

@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
+    "predev": "for p in 8000 5173; do lsof -ti :$p | xargs -r kill -9; done || true",
     "dev": "turbo run dev",
     "typecheck": "turbo run typecheck",
     "format": "biome format",

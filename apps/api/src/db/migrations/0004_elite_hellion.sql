@@ -1,0 +1,2 @@
+ALTER TABLE "task_dependency" DROP CONSTRAINT "task_dependency_edge_unique";--> statement-breakpoint
+ALTER TABLE "task_dependency" ADD CONSTRAINT "task_dependency_edge_unique" UNIQUE("predecessor_id","successor_id");

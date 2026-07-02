@@ -6,7 +6,7 @@ import {
 	Injectable,
 } from "@nestjs/common";
 import type { CreateDependencyInput } from "@orbit/shared";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, or } from "drizzle-orm";
 import { DB, type Db } from "../../db/db.module";
 import * as schema from "../../db/schema";
 import { ProjectsService } from "../projects/projects.service";
@@ -49,16 +49,26 @@ export class DependenciesService {
 			throw new BadRequestException("Both tasks must belong to this project");
 		}
 
+		// A pair of tasks may have at most one dependency between them, in either
+		// direction and regardless of type — not just an identical edge.
 		const existing = await this.db.query.taskDependency.findFirst({
 			columns: { id: true },
 			where: and(
-				eq(schema.taskDependency.predecessorId, input.predecessorId),
-				eq(schema.taskDependency.successorId, input.successorId),
-				eq(schema.taskDependency.type, input.type),
+				eq(schema.taskDependency.projectId, projectId),
+				or(
+					and(
+						eq(schema.taskDependency.predecessorId, input.predecessorId),
+						eq(schema.taskDependency.successorId, input.successorId),
+					),
+					and(
+						eq(schema.taskDependency.predecessorId, input.successorId),
+						eq(schema.taskDependency.successorId, input.predecessorId),
+					),
+				),
 			),
 		});
 		if (existing) {
-			throw new ConflictException("This dependency already exists");
+			throw new ConflictException("These tasks already have a dependency");
 		}
 
 		const id = randomUUID();

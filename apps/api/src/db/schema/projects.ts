@@ -181,11 +181,9 @@ export const taskDependency = pgTable(
 		createdAt: timestamp("created_at").notNull().defaultNow(),
 	},
 	(t) => [
-		unique("task_dependency_edge_unique").on(
-			t.predecessorId,
-			t.successorId,
-			t.type,
-		),
+		// One dependency per ordered pair, regardless of type. The reverse
+		// direction is blocked in the service (a plain unique can't span both).
+		unique("task_dependency_edge_unique").on(t.predecessorId, t.successorId),
 	],
 );
 

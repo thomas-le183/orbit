@@ -12,6 +12,14 @@ export function usePan() {
 	const msPerPx = () => 1 / pxPerMs(zoomRef.current);
 
 	const onWheel = (e: ReactWheelEvent) => {
+		// Shift + wheel scrolls horizontally. Some browsers already remap the
+		// delta onto deltaX, others leave it on deltaY with shiftKey set, so
+		// take whichever axis carries the scroll.
+		if (e.shiftKey) {
+			const delta = e.deltaX !== 0 ? e.deltaX : e.deltaY;
+			setOffsetMs((prev) => prev + delta * msPerPx());
+			return;
+		}
 		// Horizontal-intent wheel pans time; vertical wheel falls through to the
 		// native vertical scroll of the rows container.
 		if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;

@@ -1,5 +1,11 @@
 import { Button } from "@orbit/ui/components/button";
-import { ChevronLeft, ChevronRight, PlusIcon } from "lucide-react";
+import {
+	ChevronLeft,
+	ChevronRight,
+	PanelLeftClose,
+	PanelLeftOpen,
+	PlusIcon,
+} from "lucide-react";
 import {
 	type ReactNode,
 	type RefObject,
@@ -62,7 +68,7 @@ function SplitLayoutInner({
 		viewportWidth,
 		today,
 	} = useTimelineController();
-	const { tableWidth, onDividerPointerDown } =
+	const { tableWidth, collapsed, toggleCollapsed, onDividerPointerDown } =
 		useResizableDivider(initialTableWidth);
 	const { onWheel } = usePan();
 	const { clear } = useRowSelection();
@@ -129,12 +135,28 @@ function SplitLayoutInner({
 			{/* toolbar */}
 			<div className="flex items-center justify-between border-b border-border p-2">
 				<div className="flex items-center gap-1.5">
+					<button
+						type="button"
+						aria-label={collapsed ? "Show table" : "Hide table"}
+						title={collapsed ? "Show table" : "Hide table"}
+						data-testid="timeline-toggle-table"
+						onClick={toggleCollapsed}
+						className="rounded-md border border-border p-1 hover:bg-accent"
+					>
+						{collapsed ? (
+							<PanelLeftOpen className="size-4" />
+						) : (
+							<PanelLeftClose className="size-4" />
+						)}
+					</button>
 					{onNewTask && (
 						<Button variant="outline" size="sm" onClick={onNewTask}>
 							<PlusIcon className="size-3.5" />
 							New task
 						</Button>
 					)}
+				</div>
+				<div className="flex items-center gap-1.5">
 					<button
 						type="button"
 						aria-label="Scroll to earlier dates"
@@ -160,8 +182,8 @@ function SplitLayoutInner({
 					>
 						<ChevronRight className="size-4" />
 					</button>
+					<ZoomControl />
 				</div>
-				<ZoomControl />
 			</div>
 			{/* split region (table | timeline) — divider spans only this, not the toolbar */}
 			<div className="relative flex min-h-0 flex-1 flex-col">
@@ -215,13 +237,15 @@ function SplitLayoutInner({
 					</div>
 				</div>
 
-				{/* full-height draggable divider */}
-				<div
-					data-testid="timeline-split-divider"
-					onPointerDown={onDividerPointerDown}
-					className="absolute inset-y-0 z-30 w-3 -translate-x-1/2 cursor-col-resize hover:bg-border"
-					style={{ left: tableWidth }}
-				/>
+				{/* full-height draggable divider (hidden while the table is collapsed) */}
+				{!collapsed && (
+					<div
+						data-testid="timeline-split-divider"
+						onPointerDown={onDividerPointerDown}
+						className="absolute inset-y-0 z-30 w-3 -translate-x-1/2 cursor-col-resize hover:bg-border"
+						style={{ left: tableWidth }}
+					/>
+				)}
 
 				{/* footer: horizontal scrollbar under the timeline region only */}
 				<div className="flex shrink-0">
