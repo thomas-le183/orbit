@@ -1,11 +1,5 @@
 import { Button } from "@orbit/ui/components/button";
-import {
-	ChevronLeft,
-	ChevronRight,
-	PanelLeftClose,
-	PanelLeftOpen,
-	PlusIcon,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, PlusIcon } from "lucide-react";
 import {
 	type ReactNode,
 	type RefObject,
@@ -19,6 +13,7 @@ import TimelineGrid from "../axis/grid";
 import { TimelineProvider, useTimelineController } from "../controller/context";
 import { msPerViewport } from "../controller/geometry";
 import { layoutItems } from "../controller/layout";
+import CustomizeMenu from "../customize-menu";
 import { useTimelineData } from "../data/context";
 import TimeUnitsBar from "../header/time-units-bar";
 import ItemsLayer from "../items-layer";
@@ -36,6 +31,8 @@ type SplitLayoutProps = {
 	table: ReactNode;
 	initialTableWidth?: number;
 	onNewTask?: () => void;
+	/** Layout switcher control, surfaced inside the toolbar's Customize menu. */
+	viewSwitch?: ReactNode;
 };
 
 /** Fraction of a viewport the arrow buttons / keys pan per step. */
@@ -59,6 +56,7 @@ function SplitLayoutInner({
 	table,
 	initialTableWidth,
 	onNewTask,
+	viewSwitch,
 }: SplitLayoutProps) {
 	const {
 		setViewportWidth,
@@ -135,20 +133,6 @@ function SplitLayoutInner({
 			{/* toolbar */}
 			<div className="flex items-center justify-between border-b border-border p-2">
 				<div className="flex items-center gap-1.5">
-					<button
-						type="button"
-						aria-label={collapsed ? "Show table" : "Hide table"}
-						title={collapsed ? "Show table" : "Hide table"}
-						data-testid="timeline-toggle-table"
-						onClick={toggleCollapsed}
-						className="rounded-md border border-border p-1 hover:bg-accent"
-					>
-						{collapsed ? (
-							<PanelLeftOpen className="size-4" />
-						) : (
-							<PanelLeftClose className="size-4" />
-						)}
-					</button>
 					{onNewTask && (
 						<Button variant="outline" size="sm" onClick={onNewTask}>
 							<PlusIcon className="size-3.5" />
@@ -183,6 +167,10 @@ function SplitLayoutInner({
 						<ChevronRight className="size-4" />
 					</button>
 					<ZoomControl />
+					<CustomizeMenu
+						viewSwitch={viewSwitch}
+						table={{ collapsed, onToggle: toggleCollapsed }}
+					/>
 				</div>
 			</div>
 			{/* split region (table | timeline) — divider spans only this, not the toolbar */}
