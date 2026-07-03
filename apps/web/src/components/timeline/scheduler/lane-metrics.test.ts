@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import type { TimelineItem } from "@/data/timeline-items";
 import {
 	barHeight,
-	ESTIMATE_SNAP_MIN,
 	estimateFromDrag,
 	MAX_BAR_HEIGHT,
 	MIN_BAR_HEIGHT,
