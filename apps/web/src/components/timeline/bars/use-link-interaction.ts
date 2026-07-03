@@ -1,7 +1,7 @@
 import type { DependencyType } from "@orbit/shared";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Anchor } from "./dependencies/geometry";
+import type { Anchor } from "../dependencies/geometry";
 import { useEdgeAutoScroll } from "./use-edge-autoscroll";
 
 export type LinkEndpoint = { taskId: string; anchor: Anchor };

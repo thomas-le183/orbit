@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef } from "react";
-import { EDGE_SCROLL_MAX_PX_PER_FRAME, EDGE_SCROLL_ZONE_PX } from "./constants";
-import { useTimelineController } from "./controller/context";
-import { pxPerMs } from "./controller/geometry";
+import {
+	EDGE_SCROLL_MAX_PX_PER_FRAME,
+	EDGE_SCROLL_ZONE_PX,
+} from "../constants";
+import { useTimelineController } from "../controller/context";
+import { pxPerMs } from "../controller/geometry";
 
 /** 0 at the inner edge of the zone, ramping to 1 at (or past) the viewport edge. */
 const intensity = (distanceFromEdge: number): number =>

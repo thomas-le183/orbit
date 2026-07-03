@@ -1,35 +1,35 @@
-// apps/web/src/components/timeline/items-layer.tsx
+// apps/web/src/components/timeline/bars/items-layer.tsx
 import { cn } from "@orbit/shared";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Fragment, type ReactNode, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { labelFitsInside, measureTextWidth } from "./bar-label";
-import { MIN_BAR_WIDTH_PX, RESIZE_HANDLE_MIN_BAR_PX } from "./constants";
-import { useTimelineController } from "./controller/context";
+import { MIN_BAR_WIDTH_PX, RESIZE_HANDLE_MIN_BAR_PX } from "../constants";
+import { useTimelineController } from "../controller/context";
 import {
 	type Geometry,
 	percentToMs,
 	rangeVisibility,
-} from "./controller/geometry";
-import { useHorizontalPercentageOffset } from "./controller/hooks";
+} from "../controller/geometry";
+import { useHorizontalPercentageOffset } from "../controller/hooks";
 import {
 	type ContainerRect,
 	layoutItems,
 	type RenderRow,
-} from "./controller/layout";
-import { useTimelineData } from "./data/context";
-import { DependencyLayer } from "./dependencies/dependency-layer";
-import type { Anchor } from "./dependencies/geometry";
+} from "../controller/layout";
+import { useTimelineData } from "../data/context";
+import { DependencyLayer } from "../dependencies/dependency-layer";
+import type { Anchor } from "../dependencies/geometry";
 import {
 	contentHeight,
 	ROW_HEIGHT,
 	ROW_PADDING,
 	rowTop,
-} from "./layout/row-metrics";
-import { useVirtualRows } from "./layout/virtual-rows";
-import { useRowSelection } from "./selection/context";
-import { ONE_DAY, startOfUtcDay, toUtcDateString } from "./units/make-units";
-import type { RelativeTimeRangeOffset } from "./units/types";
+} from "../layout/row-metrics";
+import { useVirtualRows } from "../layout/virtual-rows";
+import { useRowSelection } from "../selection/context";
+import { ONE_DAY, startOfUtcDay, toUtcDateString } from "../units/make-units";
+import type { RelativeTimeRangeOffset } from "../units/types";
+import { labelFitsInside, measureTextWidth } from "./bar-label";
 import {
 	type GestureTarget,
 	gestureTooltip,

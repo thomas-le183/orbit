@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { TaskAssignee, TimelineItem } from "@/data/timeline-items";
 import { startOfUtcDay } from "../units/make-units";
+import { GROUP_PADDING, LANE_HEIGHT } from "./lane-metrics";
 import { layoutScheduler } from "./layout";
-import { GROUP_PADDING, LANE_HEIGHT } from "./row-metrics";
 
 const TODAY = startOfUtcDay(Date.parse("2026-06-01"));
 const maya: TaskAssignee = { id: "u_maya", name: "Maya Chen", avatarUrl: "" };

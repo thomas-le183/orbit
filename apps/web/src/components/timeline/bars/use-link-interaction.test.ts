@@ -22,7 +22,10 @@ describe("resolveLinkTarget", () => {
 		wrap.innerHTML =
 			'<span data-link-target="t9" data-link-anchor="finish"><i></i></span>';
 		const inner = wrap.querySelector("i");
-		expect(resolveLinkTarget(inner)).toEqual({ taskId: "t9", anchor: "finish" });
+		expect(resolveLinkTarget(inner)).toEqual({
+			taskId: "t9",
+			anchor: "finish",
+		});
 	});
 
 	it("returns null when no node is under the element", () => {

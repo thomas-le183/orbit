@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { startOfUtcDay } from "./units/make-units";
+import { startOfUtcDay } from "../units/make-units";
 import {
 	applyMove,
 	applyResize,

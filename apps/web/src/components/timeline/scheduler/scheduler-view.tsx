@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import { useTimelineData } from "./data/context";
-import SchedulerLayout from "./scheduler/scheduler-layout";
-import TimelineEmptyState from "./timeline-empty-state";
-import TimelineSkeleton from "./timeline-skeleton";
+import { useTimelineData } from "../data/context";
+import TimelineEmptyState from "../timeline-empty-state";
+import TimelineSkeleton from "../timeline-skeleton";
+import SchedulerLayout from "./scheduler-layout";
 
 /**
  * Scheduler layout — one row per assignee, tasks packed into stacked sub-lanes.

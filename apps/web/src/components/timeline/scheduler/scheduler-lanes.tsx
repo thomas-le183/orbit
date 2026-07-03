@@ -5,8 +5,8 @@ import { type Geometry, rangeVisibility } from "../controller/geometry";
 import { useHorizontalPercentageOffset } from "../controller/hooks";
 import { useTimelineData } from "../data/context";
 import { useRowSelection } from "../selection/context";
+import { GROUP_PADDING, LANE_HEIGHT, LANE_PADDING } from "./lane-metrics";
 import type { SchedulerRow } from "./layout";
-import { GROUP_PADDING, LANE_HEIGHT, LANE_PADDING } from "./row-metrics";
 
 export default function SchedulerLanes({
 	rows,

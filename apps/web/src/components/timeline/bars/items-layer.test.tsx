@@ -1,17 +1,17 @@
-// apps/web/src/components/timeline/items-layer.test.tsx
+// apps/web/src/components/timeline/bars/items-layer.test.tsx
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { TimelineProvider, useTimelineController } from "./controller/context";
-import { TimelineDataProvider, useTimelineData } from "./data/context";
+import { TimelineProvider, useTimelineController } from "../controller/context";
+import { TimelineDataProvider, useTimelineData } from "../data/context";
+import TimelineTable from "../layout/timeline-table";
+import { RowSelectionProvider } from "../selection/context";
 import ItemsLayer from "./items-layer";
-import TimelineTable from "./layout/timeline-table";
-import { RowSelectionProvider } from "./selection/context";
 
-vi.mock("./data/context", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("./data/context")>();
+vi.mock("../data/context", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("../data/context")>();
 	return { ...actual, useTimelineData: vi.fn(actual.useTimelineData) };
 });
 

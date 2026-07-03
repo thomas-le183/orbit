@@ -10,13 +10,13 @@ import {
 import { useResizeObserver } from "usehooks-ts";
 import { usePreferences } from "@/hooks/use-preferences";
 import TimelineGrid from "../axis/grid";
+import ItemsLayer from "../bars/items-layer";
 import { TimelineProvider, useTimelineController } from "../controller/context";
 import { msPerViewport } from "../controller/geometry";
 import { layoutItems } from "../controller/layout";
 import CustomizeMenu from "../customize-menu";
 import { useTimelineData } from "../data/context";
 import TimeUnitsBar from "../header/time-units-bar";
-import ItemsLayer from "../items-layer";
 import MilestoneMarkers from "../milestone-markers";
 import NowLine from "../now-line";
 import TimelineScrollbar from "../scrollbar";

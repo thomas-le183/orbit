@@ -1,7 +1,7 @@
 import type { TaskAssignee, TimelineItem } from "@/data/timeline-items";
 import { buildGroupRows, type GroupingMode } from "./group-rows";
+import { groupHeight } from "./lane-metrics";
 import { type PackedBar, packLanes } from "./pack-lanes";
-import { groupHeight } from "./row-metrics";
 
 export type SchedulerRow = {
 	key: string;

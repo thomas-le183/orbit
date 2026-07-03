@@ -3,7 +3,7 @@ import { CreateTaskDialog } from "./create-task-dialog";
 import { useTimelineData } from "./data/context";
 import SplitLayout from "./layout/split-layout";
 import TimelineTable, { TimelineTableHeader } from "./layout/timeline-table";
-import SchedulerView from "./scheduler-view";
+import SchedulerView from "./scheduler/scheduler-view";
 import TimelineEmptyState from "./timeline-empty-state";
 import TimelineSkeleton from "./timeline-skeleton";
 import { useViewMode } from "./use-view-mode";

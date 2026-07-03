@@ -1,4 +1,5 @@
 import { useMemo, useRef } from "react";
+import type { LinkDraft } from "../bars/use-link-interaction";
 import { useTimelineController } from "../controller/context";
 import { useHorizontalPercentageOffset } from "../controller/hooks";
 import { layoutItems } from "../controller/layout";
@@ -6,7 +7,6 @@ import { useTimelineData } from "../data/context";
 import { contentHeight } from "../layout/row-metrics";
 import { useVirtualRows } from "../layout/virtual-rows";
 import type { RelativeTimeRangeOffset } from "../units/types";
-import type { LinkDraft } from "../use-link-interaction";
 import { type Anchor, elbowMidpoint, elbowPath, rowCenterY } from "./geometry";
 
 type RowInfo = { rowIndex: number; range: RelativeTimeRangeOffset };

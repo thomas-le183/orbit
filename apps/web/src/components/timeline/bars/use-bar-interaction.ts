@@ -1,9 +1,9 @@
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTimelineController } from "./controller/context";
-import { PX_PER_DAY, pxPerMs } from "./controller/geometry";
-import { ONE_DAY, toUtcDateString } from "./units/make-units";
-import type { RelativeTimeRangeOffset, ZoomLevel } from "./units/types";
+import { useTimelineController } from "../controller/context";
+import { PX_PER_DAY, pxPerMs } from "../controller/geometry";
+import { ONE_DAY, toUtcDateString } from "../units/make-units";
+import type { RelativeTimeRangeOffset, ZoomLevel } from "../units/types";
 import { useEdgeAutoScroll } from "./use-edge-autoscroll";
 
 export type ResizeEdge = "start" | "end";
