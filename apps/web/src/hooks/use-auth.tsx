@@ -260,6 +260,17 @@ export function useOrgMembers(organizationId: string | undefined) {
 	});
 }
 
+/**
+ * Members of the session's active organization. Reuses the `useOrgMembers`
+ * cache; returns an empty result until the session (and its
+ * `activeOrganizationId`) has loaded.
+ */
+export function useActiveOrgMembers() {
+	const { data: session } = useSession();
+	const orgId = session?.session?.activeOrganizationId ?? undefined;
+	return useOrgMembers(orgId);
+}
+
 export function useOrgRole(organizationId: string | undefined) {
 	const { data: session } = useSession();
 	const { data: org } = useOrgMembers(organizationId);

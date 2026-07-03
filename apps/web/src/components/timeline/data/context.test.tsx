@@ -16,6 +16,10 @@ vi.mock("@/hooks/use-dependencies", () => ({
 	useDeleteDependency: vi.fn(() => ({ mutate: vi.fn() })),
 }));
 
+vi.mock("@/hooks/use-auth", () => ({
+	useActiveOrgMembers: vi.fn(() => ({ data: undefined })),
+}));
+
 const tasksMock = useProjectTasks as unknown as ReturnType<typeof vi.fn>;
 const milestonesMock = useProjectMilestones as unknown as ReturnType<
 	typeof vi.fn

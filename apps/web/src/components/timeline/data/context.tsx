@@ -8,7 +8,8 @@ import {
 	useMemo,
 	useState,
 } from "react";
-import { type TimelineItem, timelineItems } from "@/data/timeline-items";
+import { type TaskAssignee, type TimelineItem, timelineItems } from "@/data/timeline-items";
+import { useActiveOrgMembers } from "@/hooks/use-auth";
 import {
 	type Dependency,
 	useCreateDependency,
@@ -69,6 +70,19 @@ export function TimelineDataProvider({
 	const dependenciesQuery = useProjectDependencies(projectId ?? "");
 	const createDependencyMut = useCreateDependency(projectId ?? "");
 	const deleteDependencyMut = useDeleteDependency(projectId ?? "");
+	const membersQuery = useActiveOrgMembers();
+
+	const assigneeById = useMemo(() => {
+		const map = new Map<string, TaskAssignee>();
+		for (const m of membersQuery.data?.members ?? []) {
+			map.set(m.userId, {
+				id: m.userId,
+				name: m.user.name,
+				avatarUrl: m.user.image ?? "",
+			});
+		}
+		return map;
+	}, [membersQuery.data]);
 
 	const mapped = useMemo(() => {
 		if (!projectId) {
@@ -78,8 +92,12 @@ export function TimelineDataProvider({
 				milestoneMarkers: [] as MilestoneMarker[],
 			};
 		}
-		return mapProjectData(tasksQuery.data ?? [], milestonesQuery.data ?? []);
-	}, [projectId, tasksQuery.data, milestonesQuery.data]);
+		return mapProjectData(
+			tasksQuery.data ?? [],
+			milestonesQuery.data ?? [],
+			assigneeById,
+		);
+	}, [projectId, tasksQuery.data, milestonesQuery.data, assigneeById]);
 
 	const [items, setItems] = useState<TimelineItem[]>(mapped.items);
 
