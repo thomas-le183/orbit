@@ -39,14 +39,12 @@ export function useBarDrag(opts: {
 	) => void;
 	resolveLaneAt?: (clientY: number) => { key: string | null; contentY: number };
 }): {
-	draft:
-		| {
-				id: string;
-				range: RelativeTimeRangeOffset;
-				targetLaneKey?: string | null;
-				pointerContentY?: number;
-		  }
-		| null;
+	draft: {
+		id: string;
+		range: RelativeTimeRangeOffset;
+		targetLaneKey?: string | null;
+		pointerContentY?: number;
+	} | null;
 	active: { id: string; role: DragRole } | null;
 	beginDrag: (e: ReactPointerEvent, target: DragTarget) => void;
 	wasDragged: () => boolean;
@@ -96,6 +94,7 @@ export function useBarDrag(opts: {
 			e.stopPropagation();
 			e.preventDefault();
 			const startX = e.clientX;
+			const startY = e.clientY;
 			const target0 = e.currentTarget;
 			try {
 				target0.setPointerCapture(e.pointerId);
@@ -125,12 +124,13 @@ export function useBarDrag(opts: {
 			const resolveLane = (
 				clientY: number,
 			): { key: string | null; contentY: number } | null => {
-				if (target.role !== "move" || !optsRef.current.resolveLaneAt) return null;
+				if (target.role !== "move" || !optsRef.current.resolveLaneAt)
+					return null;
 				return optsRef.current.resolveLaneAt(clientY);
 			};
 
 			const buildDraft = (clientY: number) => {
-				const lane = resolveLane(clientY);
+				const lane = draggedRef.current ? resolveLane(clientY) : null;
 				return {
 					id: target.id,
 					range: computeRange(),
@@ -149,7 +149,10 @@ export function useBarDrag(opts: {
 			const onMove = (ev: PointerEvent) => {
 				lastPointerX = ev.clientX;
 				lastPointerY = ev.clientY;
-				if (Math.abs(ev.clientX - startX) > DRAG_THRESHOLD_PX) {
+				if (
+					Math.hypot(ev.clientX - startX, ev.clientY - startY) >
+					DRAG_THRESHOLD_PX
+				) {
 					draggedRef.current = true;
 				}
 				edgeScroll.setPointer(ev.clientX, ev.clientY);

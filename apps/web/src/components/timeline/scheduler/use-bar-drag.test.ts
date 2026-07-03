@@ -8,7 +8,11 @@ vi.mock("../controller/context", () => ({
 	useTimelineController: () => ({ zoomLevel: "weeks", today: TODAY }),
 }));
 vi.mock("../bars/use-edge-autoscroll", () => ({
-	useEdgeAutoScroll: () => ({ start: vi.fn(), stop: vi.fn(), setPointer: vi.fn() }),
+	useEdgeAutoScroll: () => ({
+		start: vi.fn(),
+		stop: vi.fn(),
+		setPointer: vi.fn(),
+	}),
 }));
 
 import { useBarDrag } from "./use-bar-drag";
@@ -154,6 +158,25 @@ describe("useBarDrag", () => {
 		});
 		expect(result.current.wasDragged()).toBe(false);
 		expect(onCommit).not.toHaveBeenCalled();
+	});
+
+	it("reports a drag for a straight-down move with no horizontal travel", () => {
+		const onCommit = vi.fn();
+		const { result } = renderHook(() => useBarDrag({ onCommit }));
+		act(() => {
+			result.current.beginDrag(pointerDownEvent(50), {
+				id: "t1",
+				role: "move",
+				range,
+			});
+		});
+		act(() => {
+			fireEvent.pointerMove(window, { clientX: 50, clientY: 150 });
+		});
+		act(() => {
+			fireEvent.pointerUp(window, { clientX: 50, clientY: 150 });
+		});
+		expect(result.current.wasDragged()).toBe(true);
 	});
 
 	it("ignores a second beginDrag while a gesture is active", () => {
