@@ -92,6 +92,7 @@ export const timelineItems: TimelineItem[] = [
 		color: "#ec4899",
 		status: "in_progress",
 		assignee: assignees.sofia,
+		estimatedTime: 90,
 	},
 	{
 		id: "t-api",
@@ -104,6 +105,7 @@ export const timelineItems: TimelineItem[] = [
 		color: "#f59e0b",
 		status: "in_progress",
 		assignee: assignees.leo,
+		estimatedTime: 300,
 	},
 	{
 		id: "t-axis",
@@ -159,6 +161,7 @@ export const timelineItems: TimelineItem[] = [
 		color: "#ef4444",
 		status: "blocked",
 		assignee: assignees.maya,
+		estimatedTime: 900,
 	},
 	{
 		id: "t-invoicing",
@@ -171,6 +174,7 @@ export const timelineItems: TimelineItem[] = [
 		color: "#f97316",
 		status: "todo",
 		assignee: assignees.priya,
+		estimatedTime: 480,
 	},
 
 	{
@@ -193,6 +197,7 @@ export const timelineItems: TimelineItem[] = [
 		color: "#14b8a6",
 		status: "todo",
 		assignee: assignees.noah,
+		estimatedTime: 240,
 	},
 	{
 		id: "t-android-shell",
@@ -205,6 +210,7 @@ export const timelineItems: TimelineItem[] = [
 		color: "#0d9488",
 		status: "todo",
 		assignee: assignees.maya,
+		estimatedTime: 720,
 	},
 	{
 		id: "t-offline-sync",
