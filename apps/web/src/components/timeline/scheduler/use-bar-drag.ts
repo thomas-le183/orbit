@@ -122,10 +122,16 @@ export function useBarDrag(opts: {
 			const onUp = (ev: PointerEvent) => {
 				edgeScroll.stop();
 				lastPointerX = ev.clientX;
-				optsRef.current.onCommit(
-					target.id,
-					rangeToDates(computeRange(), todayRef.current),
-				);
+				const finalRange = computeRange();
+				if (
+					finalRange.from !== target.range.from ||
+					finalRange.to !== target.range.to
+				) {
+					optsRef.current.onCommit(
+						target.id,
+						rangeToDates(finalRange, todayRef.current),
+					);
+				}
 				setDraft(null);
 				setActive(null);
 				try {

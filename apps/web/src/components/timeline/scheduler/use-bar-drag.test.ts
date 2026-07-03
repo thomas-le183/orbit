@@ -90,6 +90,43 @@ describe("useBarDrag", () => {
 		});
 	});
 
+	it("resize-start moves only the start date", () => {
+		const onCommit = vi.fn();
+		const { result } = renderHook(() => useBarDrag({ onCommit }));
+		act(() => {
+			result.current.beginDrag(pointerDownEvent(0), {
+				id: "t1",
+				role: "resize-start",
+				range,
+			});
+		});
+		// +32px = +1 day.
+		act(() => {
+			fireEvent.pointerUp(window, { clientX: 32, clientY: 0 });
+		});
+		// range {1d, 3d} → start today+1, end today+3-1day.
+		expect(onCommit).toHaveBeenCalledWith("t1", {
+			startDate: "2026-06-02",
+			endDate: "2026-06-03",
+		});
+	});
+
+	it("does not commit a resize-start gesture that ends unchanged", () => {
+		const onCommit = vi.fn();
+		const { result } = renderHook(() => useBarDrag({ onCommit }));
+		act(() => {
+			result.current.beginDrag(pointerDownEvent(0), {
+				id: "t1",
+				role: "resize-start",
+				range,
+			});
+		});
+		act(() => {
+			fireEvent.pointerUp(window, { clientX: 0, clientY: 0 });
+		});
+		expect(onCommit).not.toHaveBeenCalled();
+	});
+
 	it("reports no drag for a stationary press (tap)", () => {
 		const onCommit = vi.fn();
 		const { result } = renderHook(() => useBarDrag({ onCommit }));
@@ -104,6 +141,7 @@ describe("useBarDrag", () => {
 			fireEvent.pointerUp(window, { clientX: 50, clientY: 0 });
 		});
 		expect(result.current.wasDragged()).toBe(false);
+		expect(onCommit).not.toHaveBeenCalled();
 	});
 
 	it("ignores a second beginDrag while a gesture is active", () => {
