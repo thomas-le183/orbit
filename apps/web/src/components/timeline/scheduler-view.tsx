@@ -1,34 +1,31 @@
-import { CalendarRange } from "lucide-react";
 import type { ReactNode } from "react";
-import CustomizeMenu from "./customize-menu";
+import { useTimelineData } from "./data/context";
+import SchedulerLayout from "./scheduler/scheduler-layout";
+import TimelineEmptyState from "./timeline-empty-state";
+import TimelineSkeleton from "./timeline-skeleton";
 
 /**
- * Scheduler layout — placeholder scaffold. The Customize menu carries the view
- * switcher so the user can switch back. Build the real scheduler UI in place of
- * the empty body below.
+ * Scheduler layout — one row per assignee, tasks packed into stacked sub-lanes.
+ * The Customize menu carries the view switcher so the user can switch back.
  */
 export default function SchedulerView({
 	viewSwitch,
 }: {
 	viewSwitch?: ReactNode;
 }) {
-	return (
-		<div className="relative flex h-full flex-col" data-testid="scheduler-view">
-			{/* toolbar — matches the timeline toolbar shell */}
-			<div className="flex items-center justify-between border-b border-border p-2">
-				<div className="flex items-center gap-1.5" />
-				<div className="flex items-center gap-1.5">
-					<CustomizeMenu viewSwitch={viewSwitch} />
-				</div>
-			</div>
-			{/* body */}
-			<div className="flex flex-1 items-center justify-center text-muted-foreground">
-				<div className="flex flex-col items-center gap-2">
-					<CalendarRange className="size-8 opacity-40" />
-					<p className="text-sm font-medium">Scheduler</p>
-					<p className="text-xs">Coming soon</p>
-				</div>
-			</div>
-		</div>
-	);
+	const { projectId, items, undatedTaskRows, isLoading, isError } =
+		useTimelineData();
+
+	const isLoadingProject = !!projectId && isLoading;
+	const isEmptyProject =
+		!!projectId &&
+		!isLoading &&
+		!isError &&
+		items.length === 0 &&
+		undatedTaskRows.length === 0;
+
+	if (isLoadingProject) return <TimelineSkeleton />;
+	if (isEmptyProject) return <TimelineEmptyState projectId={projectId} />;
+
+	return <SchedulerLayout viewSwitch={viewSwitch} />;
 }
