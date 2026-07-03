@@ -1,4 +1,5 @@
 import { cn } from "@orbit/shared";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import { MIN_BAR_WIDTH_PX } from "../constants";
 import { useTimelineController } from "../controller/context";
 import { type Geometry, rangeVisibility } from "../controller/geometry";
@@ -11,9 +12,14 @@ import type { SchedulerRow } from "./layout";
 export default function SchedulerLanes({
 	rows,
 	totalHeight,
+	beginResize,
 }: {
 	rows: SchedulerRow[];
 	totalHeight: number;
+	beginResize: (
+		e: ReactPointerEvent,
+		target: { id: string; startHeight: number },
+	) => void;
 }) {
 	const { offsetMs, zoomLevel, viewportWidth } = useTimelineController();
 	const { getPercentageOffset } = useHorizontalPercentageOffset();
@@ -70,7 +76,7 @@ export default function SchedulerLanes({
 									backgroundColor: item.color,
 								}}
 								className={cn(
-									"pointer-events-auto absolute flex items-center overflow-hidden rounded-md px-2 text-xs font-medium text-white shadow-sm",
+									"group pointer-events-auto absolute flex items-center overflow-hidden rounded-md px-2 text-xs font-medium text-white shadow-sm",
 									(selected || hovered) && "ring-2 ring-primary",
 								)}
 							>
@@ -81,6 +87,16 @@ export default function SchedulerLanes({
 									/>
 								)}
 								<span className="relative truncate">{item.name}</span>
+								{item.kind === "task" && (
+									<span
+										data-testid="scheduler-bar-resize"
+										onPointerDown={(e) => {
+											e.stopPropagation();
+											beginResize(e, { id: item.id, startHeight: height });
+										}}
+										className="pointer-events-auto absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
+									/>
+								)}
 							</button>
 						);
 					}),

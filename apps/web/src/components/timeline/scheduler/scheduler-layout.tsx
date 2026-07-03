@@ -24,6 +24,7 @@ import { usePan } from "../use-pan";
 import ZoomControl from "../zoom-control";
 import { layoutScheduler, type SchedulerRow } from "./layout";
 import SchedulerLanes from "./scheduler-lanes";
+import { useEstimateResize } from "./use-estimate-resize";
 
 const PAN_STEP = 0.25;
 
@@ -76,11 +77,26 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 	const { tableWidth, collapsed, onDividerPointerDown } = useResizableDivider();
 	const { onWheel } = usePan();
 	const { clear } = useRowSelection();
-	const { items } = useTimelineData();
+	const { items, updateItem } = useTimelineData();
+	const { draft, beginResize } = useEstimateResize({
+		onCommit: (id, estimatedTime) => updateItem(id, { estimatedTime }),
+	});
+
+	const effectiveItems = useMemo(
+		() =>
+			draft
+				? items.map((i) =>
+						i.id === draft.id
+							? { ...i, estimatedTime: draft.estimatedTime }
+							: i,
+					)
+				: items,
+		[items, draft],
+	);
 
 	const { rows, totalHeight } = useMemo(
-		() => layoutScheduler(items, "assignee", today),
-		[items, today],
+		() => layoutScheduler(effectiveItems, "assignee", today),
+		[effectiveItems, today],
 	);
 
 	const scrollRef = scrollContainerRef;
@@ -203,7 +219,11 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 								className="relative flex-1 touch-none select-none"
 								onWheel={onWheel}
 							>
-								<SchedulerLanes rows={rows} totalHeight={totalHeight} />
+								<SchedulerLanes
+									rows={rows}
+									totalHeight={totalHeight}
+									beginResize={beginResize}
+								/>
 							</div>
 						</div>
 					</div>
