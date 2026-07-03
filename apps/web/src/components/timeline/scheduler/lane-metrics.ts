@@ -17,3 +17,17 @@ export function barHeight(item: TimelineItem): number {
 	const raw = item.estimatedTime * PX_PER_MINUTE;
 	return Math.min(MAX_BAR_HEIGHT, Math.max(MIN_BAR_HEIGHT, raw));
 }
+
+/** Snap granularity (minutes) for the scheduler bar resizer. */
+export const ESTIMATE_SNAP_MIN = 30;
+
+/**
+ * Bottom-edge drag → snapped estimatedTime (minutes). Height is clamped to the
+ * visual band [MIN_BAR_HEIGHT, MAX_BAR_HEIGHT], so the result stays in 120..480
+ * min, then snaps to the nearest ESTIMATE_SNAP_MIN.
+ */
+export function estimateFromDrag(startHeight: number, dy: number): number {
+	const h = Math.min(MAX_BAR_HEIGHT, Math.max(MIN_BAR_HEIGHT, startHeight + dy));
+	const raw = h / PX_PER_MINUTE;
+	return Math.round(raw / ESTIMATE_SNAP_MIN) * ESTIMATE_SNAP_MIN;
+}
