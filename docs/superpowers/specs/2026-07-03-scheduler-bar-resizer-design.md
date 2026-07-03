@@ -101,26 +101,30 @@ const { rows, totalHeight } = useMemo(
 );
 ```
 
-`beginResize` and `active` are passed to `SchedulerLanes`. The handle is a child
-of the existing bar `<button>`, rendered only for `item.kind === "task"` bars.
-The bar already tracks `hovered = hoveredId === item.id` and
-`selected = isSelected(item.id)`; the handle is visible when
-`hovered || selected || active === item.id` (the last keeps it visible mid-drag
-even if the pointer leaves the bar). The bar's `height` local (already
-`barHeight(item)`) is the `startHeight`:
+`beginResize` is passed to `SchedulerLanes`. The handle is a child of the
+existing bar `<button>`, rendered only for `item.kind === "task"` bars, and
+**always present in the DOM** for those bars — visibility is handled with CSS so
+it is queryable in tests. The bar `<button>` gains the `group` class; the handle
+is transparent by default and revealed on hover or when the bar is selected (the
+button already sets `data-selected={selected}`). The bar's `height` local
+(already `barHeight(item)`) is the `startHeight`:
 
 ```tsx
-{item.kind === "task" && (hovered || selected || active === item.id) && (
+{item.kind === "task" && (
   <span
     data-testid="scheduler-bar-resize"
     onPointerDown={(e) => {
       e.stopPropagation();
       beginResize(e, { id: item.id, startHeight: height });
     }}
-    className="pointer-events-auto absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize"
+    className="pointer-events-auto absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
   />
 )}
 ```
+
+`active` from the hook is not needed for visibility (CSS covers hover/selected)
+and is not threaded into `SchedulerLanes`; it remains available on the hook for
+styling the dragged bar if desired.
 
 ## Testing
 
