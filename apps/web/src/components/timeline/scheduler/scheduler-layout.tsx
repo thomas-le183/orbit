@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
 	type ReactNode,
 	type RefObject,
+	useCallback,
 	useEffect,
 	useMemo,
 	useRef,
@@ -78,19 +79,10 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 	const { tableWidth, collapsed, onDividerPointerDown } = useResizableDivider();
 	const { onWheel } = usePan();
 	const { clear } = useRowSelection();
-	const { items, updateItem, scheduleTask } = useTimelineData();
+	const { items, updateItem, scheduleTask, reassignTask, projectId } =
+		useTimelineData();
 	const { draft, beginResize } = useEstimateResize({
 		onCommit: (id, estimatedTime) => updateItem(id, { estimatedTime }),
-	});
-	const {
-		draft: dragDraft,
-		beginDrag,
-		wasDragged,
-	} = useBarDrag({
-		onCommit: (id, dates) => {
-			updateItem(id, dates);
-			scheduleTask(id, dates.startDate, dates.endDate);
-		},
 	});
 
 	const effectiveItems = useMemo(
@@ -109,6 +101,44 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 		() => layoutScheduler(effectiveItems, "assignee", today),
 		[effectiveItems, today],
 	);
+
+	const resolveLaneAt = useCallback(
+		(clientY: number) => {
+			const top = viewportRef.current?.getBoundingClientRect().top ?? 0;
+			const contentY = clientY - top;
+			const inRow = rows.find(
+				(r) => contentY >= r.top && contentY < r.top + r.height,
+			);
+			// Clamp to first/last row so a drag past the ends still targets a lane.
+			const key =
+				inRow?.key ??
+				(rows.length === 0
+					? null
+					: contentY < rows[0].top
+						? rows[0].key
+						: rows[rows.length - 1].key);
+			return { key, contentY };
+		},
+		[rows, viewportRef],
+	);
+
+	const {
+		draft: dragDraft,
+		beginDrag,
+		wasDragged,
+	} = useBarDrag({
+		onCommit: (id, dates, targetLaneKey) => {
+			updateItem(id, dates);
+			scheduleTask(id, dates.startDate, dates.endDate);
+			if (targetLaneKey != null) {
+				const target = rows.find((r) => r.key === targetLaneKey);
+				const assignee = target?.assignee;
+				updateItem(id, { assignee });
+				if (projectId && assignee) reassignTask(id, assignee.id);
+			}
+		},
+		resolveLaneAt,
+	});
 
 	const scrollRef = scrollContainerRef;
 	const { width = 0 } = useResizeObserver({

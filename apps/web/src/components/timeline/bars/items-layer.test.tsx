@@ -231,6 +231,7 @@ describe("ItemsLayer state overlays", () => {
 			moveDays: vi.fn(),
 			undatedTaskRows: [],
 			scheduleTask: vi.fn(),
+			reassignTask: vi.fn(),
 			milestoneMarkers: [],
 			isLoading: false,
 			isError: false,

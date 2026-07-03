@@ -1,5 +1,5 @@
 import { cn } from "@orbit/shared";
-import type { PointerEvent as ReactPointerEvent } from "react";
+import { Fragment, type PointerEvent as ReactPointerEvent } from "react";
 import { MIN_BAR_WIDTH_PX } from "../constants";
 import { useTimelineController } from "../controller/context";
 import { type Geometry, rangeVisibility } from "../controller/geometry";
@@ -27,9 +27,19 @@ export default function SchedulerLanes({
 	) => void;
 	beginDrag: (
 		e: ReactPointerEvent,
-		target: { id: string; role: DragRole; range: RelativeTimeRangeOffset },
+		target: {
+			id: string;
+			role: DragRole;
+			range: RelativeTimeRangeOffset;
+			laneKey?: string;
+		},
 	) => void;
-	dragDraft: { id: string; range: RelativeTimeRangeOffset } | null;
+	dragDraft: {
+		id: string;
+		range: RelativeTimeRangeOffset;
+		targetLaneKey?: string | null;
+		pointerContentY?: number;
+	} | null;
 	wasDragged: () => boolean;
 }) {
 	const { offsetMs, zoomLevel, viewportWidth } = useTimelineController();
@@ -55,100 +65,119 @@ export default function SchedulerLanes({
 					Couldn't load tasks
 				</div>
 			)}
-			{rows.map((row) =>
-				row.lanes.map((lane) =>
-					lane.bars.map(({ item, range: ownRange }) => {
-						const range =
-							dragDraft?.id === item.id ? dragDraft.range : ownRange;
-						if (rangeVisibility(range.from, range.to, geom) !== "visible") {
-							return null;
-						}
-						const left = getPercentageOffset(range.from);
-						const right = getPercentageOffset(range.to);
-						if (!Number.isFinite(left) || !Number.isFinite(right)) return null;
-						const width = Math.max(right - left, minWidthPercent);
-						const top = row.top + GROUP_PADDING + lane.top;
-						const height = barHeight(item);
-						const selected = isSelected(item.id);
-						const hovered = hoveredId === item.id;
-						return (
-							<button
-								type="button"
-								key={item.id}
-								data-testid="scheduler-bar"
-								data-selected={selected}
-								title={item.name}
-								onMouseEnter={() => setHovered(item.id)}
-								onMouseLeave={() => setHovered(null)}
-								onClick={() => {
-									if (wasDragged()) return;
-									toggle(item.id);
-								}}
-								onPointerDown={(e) =>
-									beginDrag(e, { id: item.id, role: "move", range })
-								}
-								style={{
-									left: `${left}%`,
-									width: `${width}%`,
-									top,
-									height,
-									backgroundColor: item.color,
-								}}
-								className={cn(
-									"group pointer-events-auto absolute flex cursor-grab items-center overflow-hidden rounded-md px-2 text-xs font-medium text-white shadow-sm",
-									(selected || hovered) && "ring-2 ring-primary",
-								)}
-							>
-								{item.progress !== undefined && (
-									<span
-										className="absolute inset-y-0 left-0 bg-black/20"
-										style={{ width: `${item.progress}%` }}
-									/>
-								)}
-								<span className="relative truncate">{item.name}</span>
-								{item.kind === "task" && (
-									<span
-										data-testid="scheduler-bar-resize"
-										onPointerDown={(e) => {
-											e.stopPropagation();
-											beginResize(e, { id: item.id, startHeight: height });
-										}}
-										className="pointer-events-auto absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
-									/>
-								)}
-								{item.kind === "task" && (
-									<>
+			{rows.map((row) => (
+				<Fragment key={row.key}>
+					{dragDraft?.pointerContentY != null &&
+						dragDraft.targetLaneKey === row.key && (
+							<div
+								data-testid="scheduler-lane-drop-target"
+								className="pointer-events-none absolute inset-x-0 rounded-sm bg-primary/10 ring-1 ring-primary/40"
+								style={{ top: row.top, height: row.height }}
+							/>
+						)}
+					{row.lanes.map((lane) =>
+						lane.bars.map(({ item, range: ownRange }) => {
+							const range =
+								dragDraft?.id === item.id ? dragDraft.range : ownRange;
+							if (rangeVisibility(range.from, range.to, geom) !== "visible") {
+								return null;
+							}
+							const left = getPercentageOffset(range.from);
+							const right = getPercentageOffset(range.to);
+							if (!Number.isFinite(left) || !Number.isFinite(right)) return null;
+							const width = Math.max(right - left, minWidthPercent);
+							const height = barHeight(item);
+							const dragging = dragDraft?.id === item.id;
+							const top =
+								dragging && dragDraft?.pointerContentY != null
+									? dragDraft.pointerContentY - height / 2
+									: row.top + GROUP_PADDING + lane.top;
+							const selected = isSelected(item.id);
+							const hovered = hoveredId === item.id;
+							return (
+								<button
+									type="button"
+									key={item.id}
+									data-testid="scheduler-bar"
+									data-selected={selected}
+									title={item.name}
+									onMouseEnter={() => setHovered(item.id)}
+									onMouseLeave={() => setHovered(null)}
+									onClick={() => {
+										if (wasDragged()) return;
+										toggle(item.id);
+									}}
+									onPointerDown={(e) =>
+										beginDrag(e, {
+											id: item.id,
+											role: "move",
+											range,
+											laneKey: row.key,
+										})
+									}
+									style={{
+										left: `${left}%`,
+										width: `${width}%`,
+										top,
+										height,
+										backgroundColor: item.color,
+									}}
+									className={cn(
+										"group pointer-events-auto absolute flex cursor-grab items-center overflow-hidden rounded-md px-2 text-xs font-medium text-white shadow-sm",
+										(selected || hovered) && "ring-2 ring-primary",
+									)}
+								>
+									{item.progress !== undefined && (
 										<span
-											data-testid="scheduler-bar-resize-start"
+											className="absolute inset-y-0 left-0 bg-black/20"
+											style={{ width: `${item.progress}%` }}
+										/>
+									)}
+									<span className="relative truncate">{item.name}</span>
+									{item.kind === "task" && (
+										<span
+											data-testid="scheduler-bar-resize"
 											onPointerDown={(e) => {
 												e.stopPropagation();
-												beginDrag(e, {
-													id: item.id,
-													role: "resize-start",
-													range,
-												});
+												beginResize(e, { id: item.id, startHeight: height });
 											}}
-											className="pointer-events-auto absolute inset-y-0 left-0 w-1.5 cursor-ew-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
+											className="pointer-events-auto absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
 										/>
-										<span
-											data-testid="scheduler-bar-resize-end"
-											onPointerDown={(e) => {
-												e.stopPropagation();
-												beginDrag(e, {
-													id: item.id,
-													role: "resize-end",
-													range,
-												});
-											}}
-											className="pointer-events-auto absolute inset-y-0 right-0 w-1.5 cursor-ew-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
-										/>
-									</>
-								)}
-							</button>
-						);
-					}),
-				),
-			)}
+									)}
+									{item.kind === "task" && (
+										<>
+											<span
+												data-testid="scheduler-bar-resize-start"
+												onPointerDown={(e) => {
+													e.stopPropagation();
+													beginDrag(e, {
+														id: item.id,
+														role: "resize-start",
+														range,
+													});
+												}}
+												className="pointer-events-auto absolute inset-y-0 left-0 w-1.5 cursor-ew-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
+											/>
+											<span
+												data-testid="scheduler-bar-resize-end"
+												onPointerDown={(e) => {
+													e.stopPropagation();
+													beginDrag(e, {
+														id: item.id,
+														role: "resize-end",
+														range,
+													});
+												}}
+												className="pointer-events-auto absolute inset-y-0 right-0 w-1.5 cursor-ew-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
+											/>
+										</>
+									)}
+								</button>
+							);
+						}),
+					)}
+				</Fragment>
+			))}
 		</div>
 	);
 }

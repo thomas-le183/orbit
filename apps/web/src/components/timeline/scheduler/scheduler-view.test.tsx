@@ -87,4 +87,27 @@ describe("SchedulerView", () => {
 		// After a committed move, the task's dates changed → its rendered left moves.
 		expect(bar.style.left).not.toBe(before);
 	});
+
+	it("dragging a bar into another lane shows a drop target and reassigns it", async () => {
+		renderScheduler();
+		const headers = await screen.findAllByTestId("scheduler-group-header");
+		const firstCountBefore = headers[0].textContent;
+
+		const bar = screen.getAllByTestId("scheduler-bar")[0] as HTMLElement;
+
+		// Body drag downward far past all rows → clamps to the last lane.
+		fireEvent.pointerDown(bar, { clientX: 200, clientY: 10, pointerId: 1 });
+		fireEvent.pointerMove(window, { clientX: 200, clientY: 5000 });
+
+		// A drop-target highlight appears for the resolved lane.
+		expect(
+			screen.getByTestId("scheduler-lane-drop-target"),
+		).toBeInTheDocument();
+
+		fireEvent.pointerUp(window, { clientX: 200, clientY: 5000 });
+
+		// The first assignee's lane lost a task (it moved to the last lane).
+		const headersAfter = screen.getAllByTestId("scheduler-group-header");
+		expect(headersAfter[0].textContent).not.toBe(firstCountBefore);
+	});
 });
