@@ -1,4 +1,4 @@
-import type { TimelineItem } from "@/data/timeline-items";
+import type { TaskAssignee, TimelineItem } from "@/data/timeline-items";
 import type { Milestone, Task } from "@/hooks/use-tasks";
 
 /** Fallback bar/marker color when a task/milestone has none. */
@@ -25,6 +25,7 @@ export type MilestoneMarker = {
 export function mapProjectData(
 	tasks: Task[],
 	milestones: Milestone[],
+	assigneeById?: Map<string, TaskAssignee>,
 ): {
 	items: TimelineItem[];
 	undatedTaskRows: UndatedTaskRow[];
@@ -46,6 +47,7 @@ export function mapProjectData(
 				endDate: end,
 				progress: t.progress,
 				color: t.color ?? DEFAULT_TASK_COLOR,
+				assignee: t.assigneeId ? assigneeById?.get(t.assigneeId) : undefined,
 			});
 		} else {
 			undatedTaskRows.push({ id: t.id, name: t.name, parentId: t.parentId });

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Milestone, Task } from "@/hooks/use-tasks";
+import type { TaskAssignee } from "@/data/timeline-items";
 import { DEFAULT_TASK_COLOR, mapProjectData } from "./map-items";
 
 function task(partial: Partial<Task>): Task {
@@ -106,5 +107,44 @@ describe("mapProjectData", () => {
 				color: DEFAULT_TASK_COLOR,
 			},
 		]);
+	});
+
+	it("resolves assignee from the assigneeById map", () => {
+		const maya: TaskAssignee = {
+			id: "u_maya",
+			name: "Maya Chen",
+			avatarUrl: "https://example.com/maya.png",
+		};
+		const { items } = mapProjectData(
+			[
+				task({
+					id: "t5",
+					startDate: "2026-06-01",
+					endDate: "2026-06-02",
+					assigneeId: "u_maya",
+				}),
+			],
+			[],
+			new Map([["u_maya", maya]]),
+		);
+		expect(items[0].assignee).toEqual(maya);
+	});
+
+	it("leaves assignee undefined when the id is unknown or null", () => {
+		const maya: TaskAssignee = {
+			id: "u_maya",
+			name: "Maya Chen",
+			avatarUrl: "https://example.com/maya.png",
+		};
+		const { items } = mapProjectData(
+			[
+				task({ id: "t6", startDate: "2026-06-01", endDate: "2026-06-02", assigneeId: "ghost" }),
+				task({ id: "t7", startDate: "2026-06-01", endDate: "2026-06-02", assigneeId: null }),
+			],
+			[],
+			new Map([["u_maya", maya]]),
+		);
+		expect(items[0].assignee).toBeUndefined();
+		expect(items[1].assignee).toBeUndefined();
 	});
 });
