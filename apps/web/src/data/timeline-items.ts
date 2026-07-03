@@ -25,6 +25,8 @@ export type TimelineItem = {
 	endDate: string;
 	/** 0–100, leaf tasks only. */
 	progress?: number;
+	/** Estimated effort in minutes, leaf tasks only. Drives bar height in scheduler. */
+	estimatedTime?: number;
 	color: string;
 	assignee?: TaskAssignee;
 	status?: TaskStatus;
