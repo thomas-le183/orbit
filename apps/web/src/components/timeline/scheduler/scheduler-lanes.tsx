@@ -5,7 +5,7 @@ import { type Geometry, rangeVisibility } from "../controller/geometry";
 import { useHorizontalPercentageOffset } from "../controller/hooks";
 import { useTimelineData } from "../data/context";
 import { useRowSelection } from "../selection/context";
-import { GROUP_PADDING, LANE_HEIGHT, LANE_PADDING } from "./lane-metrics";
+import { barHeight, GROUP_PADDING } from "./lane-metrics";
 import type { SchedulerRow } from "./layout";
 
 export default function SchedulerLanes({
@@ -22,7 +22,6 @@ export default function SchedulerLanes({
 
 	if (viewportWidth <= 0) return null;
 	const geom: Geometry = { offsetMs, zoom: zoomLevel, viewportWidth };
-	const barHeight = LANE_HEIGHT - LANE_PADDING * 2;
 	const minWidthPercent = (MIN_BAR_WIDTH_PX / viewportWidth) * 100;
 
 	return (
@@ -40,8 +39,8 @@ export default function SchedulerLanes({
 				</div>
 			)}
 			{rows.map((row) =>
-				row.lanes.map((lane, laneIndex) =>
-					lane.map(({ item, range }) => {
+				row.lanes.map((lane) =>
+					lane.bars.map(({ item, range }) => {
 						if (rangeVisibility(range.from, range.to, geom) !== "visible") {
 							return null;
 						}
@@ -49,8 +48,8 @@ export default function SchedulerLanes({
 						const right = getPercentageOffset(range.to);
 						if (!Number.isFinite(left) || !Number.isFinite(right)) return null;
 						const width = Math.max(right - left, minWidthPercent);
-						const top =
-							row.top + GROUP_PADDING + laneIndex * LANE_HEIGHT + LANE_PADDING;
+						const top = row.top + GROUP_PADDING + lane.top;
+						const height = barHeight(item);
 						const selected = isSelected(item.id);
 						const hovered = hoveredId === item.id;
 						return (
@@ -67,7 +66,7 @@ export default function SchedulerLanes({
 									left: `${left}%`,
 									width: `${width}%`,
 									top,
-									height: barHeight,
+									height,
 									backgroundColor: item.color,
 								}}
 								className={cn(

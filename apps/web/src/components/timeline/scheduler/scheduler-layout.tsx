@@ -56,7 +56,7 @@ function GroupHeader({ row }: { row: SchedulerRow }) {
 				{row.label}
 			</span>
 			<span className="shrink-0 text-xs text-muted-foreground">
-				{row.lanes.reduce((n, lane) => n + lane.length, 0)}
+				{row.lanes.reduce((n, lane) => n + lane.bars.length, 0)}
 			</span>
 		</div>
 	);
