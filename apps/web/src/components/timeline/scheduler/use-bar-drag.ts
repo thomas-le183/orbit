@@ -18,6 +18,8 @@ export type DragTarget = {
 	id: string;
 	role: DragRole;
 	range: RelativeTimeRangeOffset;
+	/** The bar's current lane key; used to detect a reassign. Move role only. */
+	laneKey?: string;
 };
 
 /** Pixels of pointer travel past which a press counts as a drag, not a tap. */
@@ -30,9 +32,21 @@ const DRAG_THRESHOLD_PX = 3;
  * window listeners, unmount cleanup, single-gesture guard, edge-autoscroll).
  */
 export function useBarDrag(opts: {
-	onCommit: (id: string, dates: { startDate: string; endDate: string }) => void;
+	onCommit: (
+		id: string,
+		dates: { startDate: string; endDate: string },
+		targetLaneKey: string | null,
+	) => void;
+	resolveLaneAt?: (clientY: number) => { key: string | null; contentY: number };
 }): {
-	draft: { id: string; range: RelativeTimeRangeOffset } | null;
+	draft:
+		| {
+				id: string;
+				range: RelativeTimeRangeOffset;
+				targetLaneKey?: string | null;
+				pointerContentY?: number;
+		  }
+		| null;
 	active: { id: string; role: DragRole } | null;
 	beginDrag: (e: ReactPointerEvent, target: DragTarget) => void;
 	wasDragged: () => boolean;
@@ -56,6 +70,8 @@ export function useBarDrag(opts: {
 	const [draft, setDraft] = useState<{
 		id: string;
 		range: RelativeTimeRangeOffset;
+		targetLaneKey?: string | null;
+		pointerContentY?: number;
 	} | null>(null);
 	const [active, setActive] = useState<{ id: string; role: DragRole } | null>(
 		null,
@@ -87,10 +103,10 @@ export function useBarDrag(opts: {
 
 			draggedRef.current = false;
 			setActive({ id: target.id, role: target.role });
-			setDraft({ id: target.id, range: target.range });
 
 			let panAccumMs = 0;
 			let lastPointerX = startX;
+			let lastPointerY = e.clientY;
 
 			const totalDays = (): number =>
 				pxToDays(
@@ -106,30 +122,55 @@ export function useBarDrag(opts: {
 				return applyResize(target.range, edge, days);
 			};
 
+			const resolveLane = (
+				clientY: number,
+			): { key: string | null; contentY: number } | null => {
+				if (target.role !== "move" || !optsRef.current.resolveLaneAt) return null;
+				return optsRef.current.resolveLaneAt(clientY);
+			};
+
+			const buildDraft = (clientY: number) => {
+				const lane = resolveLane(clientY);
+				return {
+					id: target.id,
+					range: computeRange(),
+					targetLaneKey: lane ? lane.key : undefined,
+					pointerContentY: lane ? lane.contentY : undefined,
+				};
+			};
+
+			setDraft(buildDraft(e.clientY));
+
 			edgeScroll.start(startX, e.clientY, (panMs) => {
 				panAccumMs += panMs;
-				setDraft({ id: target.id, range: computeRange() });
+				setDraft(buildDraft(lastPointerY));
 			});
 
 			const onMove = (ev: PointerEvent) => {
 				lastPointerX = ev.clientX;
+				lastPointerY = ev.clientY;
 				if (Math.abs(ev.clientX - startX) > DRAG_THRESHOLD_PX) {
 					draggedRef.current = true;
 				}
 				edgeScroll.setPointer(ev.clientX, ev.clientY);
-				setDraft({ id: target.id, range: computeRange() });
+				setDraft(buildDraft(ev.clientY));
 			};
 			const onUp = (ev: PointerEvent) => {
 				edgeScroll.stop();
 				lastPointerX = ev.clientX;
+				lastPointerY = ev.clientY;
 				const finalRange = computeRange();
-				if (
+				const lane = resolveLane(ev.clientY);
+				const laneChanged =
+					lane != null && lane.key != null && lane.key !== target.laneKey;
+				const rangeChanged =
 					finalRange.from !== target.range.from ||
-					finalRange.to !== target.range.to
-				) {
+					finalRange.to !== target.range.to;
+				if (rangeChanged || laneChanged) {
 					optsRef.current.onCommit(
 						target.id,
 						rangeToDates(finalRange, todayRef.current),
+						laneChanged ? (lane?.key ?? null) : null,
 					);
 				}
 				setDraft(null);

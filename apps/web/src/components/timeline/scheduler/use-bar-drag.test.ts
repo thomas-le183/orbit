@@ -60,10 +60,14 @@ describe("useBarDrag", () => {
 			fireEvent.pointerUp(window, { clientX: 196, clientY: 0 });
 		});
 		// range {3d, 6d} → start today+3, end today+6-1day.
-		expect(onCommit).toHaveBeenCalledWith("t1", {
-			startDate: "2026-06-04",
-			endDate: "2026-06-06",
-		});
+		expect(onCommit).toHaveBeenCalledWith(
+			"t1",
+			{
+				startDate: "2026-06-04",
+				endDate: "2026-06-06",
+			},
+			null,
+		);
 		expect(result.current.draft).toBeNull();
 		expect(result.current.active).toBeNull();
 		expect(result.current.wasDragged()).toBe(true);
@@ -84,10 +88,14 @@ describe("useBarDrag", () => {
 			fireEvent.pointerUp(window, { clientX: 64, clientY: 0 });
 		});
 		// range {0, 5d} → start today, end today+5-1day.
-		expect(onCommit).toHaveBeenCalledWith("t1", {
-			startDate: "2026-06-01",
-			endDate: "2026-06-05",
-		});
+		expect(onCommit).toHaveBeenCalledWith(
+			"t1",
+			{
+				startDate: "2026-06-01",
+				endDate: "2026-06-05",
+			},
+			null,
+		);
 	});
 
 	it("resize-start moves only the start date", () => {
@@ -105,10 +113,14 @@ describe("useBarDrag", () => {
 			fireEvent.pointerUp(window, { clientX: 32, clientY: 0 });
 		});
 		// range {1d, 3d} → start today+1, end today+3-1day.
-		expect(onCommit).toHaveBeenCalledWith("t1", {
-			startDate: "2026-06-02",
-			endDate: "2026-06-03",
-		});
+		expect(onCommit).toHaveBeenCalledWith(
+			"t1",
+			{
+				startDate: "2026-06-02",
+				endDate: "2026-06-03",
+			},
+			null,
+		);
 	});
 
 	it("does not commit a resize-start gesture that ends unchanged", () => {
@@ -162,5 +174,63 @@ describe("useBarDrag", () => {
 			});
 		});
 		expect(result.current.active).toEqual({ id: "t1", role: "move" });
+	});
+});
+
+describe("useBarDrag vertical lane tracking", () => {
+	// clientY < 100 → lane "a" (contentY passthrough); >= 100 → lane "b".
+	const resolveLaneAt = (clientY: number) => ({
+		key: clientY < 100 ? "a" : "b",
+		contentY: clientY,
+	});
+
+	it("tracks the target lane + pointer position during a move and commits the lane on release", () => {
+		const onCommit = vi.fn();
+		const { result } = renderHook(() =>
+			useBarDrag({ onCommit, resolveLaneAt }),
+		);
+
+		act(() => {
+			result.current.beginDrag(pointerDownEvent(50), {
+				id: "t1",
+				role: "move",
+				range,
+				laneKey: "a",
+			});
+		});
+		// Move down into lane "b" at clientY 150 (also +? px right; keep X same here).
+		act(() => {
+			fireEvent.pointerMove(window, { clientX: 50, clientY: 150 });
+		});
+		expect(result.current.draft?.targetLaneKey).toBe("b");
+		expect(result.current.draft?.pointerContentY).toBe(150);
+
+		act(() => {
+			fireEvent.pointerUp(window, { clientX: 50, clientY: 150 });
+		});
+		// Lane changed a→b, so onCommit's 3rd arg is "b" (dates unchanged: same start/end).
+		expect(onCommit).toHaveBeenCalledTimes(1);
+		expect(onCommit.mock.calls[0][0]).toBe("t1");
+		expect(onCommit.mock.calls[0][2]).toBe("b");
+	});
+
+	it("does not commit a reassign when released in the origin lane with no move", () => {
+		const onCommit = vi.fn();
+		const { result } = renderHook(() =>
+			useBarDrag({ onCommit, resolveLaneAt }),
+		);
+		act(() => {
+			result.current.beginDrag(pointerDownEvent(50), {
+				id: "t1",
+				role: "move",
+				range,
+				laneKey: "a",
+			});
+		});
+		// Stay in lane "a" (clientY 60), no horizontal move.
+		act(() => {
+			fireEvent.pointerUp(window, { clientX: 50, clientY: 60 });
+		});
+		expect(onCommit).not.toHaveBeenCalled();
 	});
 });
