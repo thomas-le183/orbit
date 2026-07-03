@@ -26,15 +26,22 @@ reused.
   `rangeToDates`, and the `ResizeEdge` type — plus `useEdgeAutoScroll` from
   `bars/use-edge-autoscroll.ts`. No Gantt files change.
 - **Live draft:** the in-progress gesture produces a draft range that overrides
-  the bar's rendered `left`/`width`. Committed day-snapped on release.
+  the **active bar's** rendered `left`/`width` directly in `scheduler-lanes.tsx`
+  (the draft is NOT injected into `layoutScheduler`, so packing/lanes stay stable
+  and the bar slides smoothly instead of re-packing mid-drag). Committed
+  day-snapped on release.
 - **Persistence:** on commit, `updateItem(id, { startDate, endDate })` for
   instant local reflect, plus `scheduleTask(id, startDate, endDate)` (already in
   the data context → `updateTask.mutate`) to persist to the backend when a
   `projectId` is present. In seed/demo mode `scheduleTask` no-ops server-side;
   the local update still applies.
-- **Click vs drag:** a real drag releases on `window`, so no `click` fires and
-  selection is untouched; a stationary click still selects. Edge handles call
-  `stopPropagation` on `pointerdown` so they never start a body move.
+- **Click vs drag:** the bar keeps its `onClick` (so keyboard activation still
+  selects). The body `pointerdown` starts a `move` gesture with pointer capture;
+  on release the hook sets a "was dragged" flag when the pointer moved past a
+  small threshold. The bar's `onClick` consumes that flag and skips
+  `toggle(select)` when the last sequence was a drag; a stationary tap (flag
+  unset) selects normally. Edge/estimate handles call `stopPropagation` on
+  `pointerdown` so they never start a body move.
 - **Coexistence:** the bottom estimatedTime handle (existing) is unaffected;
   bars now carry left/right/bottom handles plus a body-move affordance.
 
@@ -56,6 +63,9 @@ export function useBarDrag(opts: {
     e: ReactPointerEvent,
     target: { id: string; role: DragRole; range: RelativeTimeRangeOffset },
   ) => void;
+  /** True (once) if the last pointer sequence moved past the drag threshold;
+   *  the bar's onClick calls this to skip select after a real drag. */
+  wasDragged: () => boolean;
 };
 ```
 
@@ -72,39 +82,30 @@ export function useBarDrag(opts: {
 
 ## Rendering — `scheduler-lanes.tsx`
 
-- Accept new props: `beginDrag` and `dragActive`/`draft` (enough to override the
-  active bar's range). The active bar's `range` is replaced by `draft.range`
-  when `draft?.id === item.id`, so `left`/`width` reflect the live gesture.
-- Bar `<button>`: add `onPointerDown` that starts a `move` gesture
-  (`beginDrag(e, { id, role: "move", range })`). Because a stationary press
-  fires the existing `onClick` (select) and a moved press does not, both
-  coexist.
+- Accept new props: `beginDrag`, `dragDraft: { id: string; range: RelativeTimeRangeOffset } | null`, and `wasDragged: () => boolean`.
+- When `dragDraft?.id === item.id`, compute `left`/`width` (and the visibility
+  check) from `dragDraft.range` instead of the item's own range, so the active
+  bar slides live without re-packing.
+- Bar `<button>`: `onPointerDown` starts a `move` gesture
+  (`beginDrag(e, { id, role: "move", range })`); `onClick` becomes
+  `if (wasDragged()) return; toggle(item.id)`.
 - Left/right edge handles (children of the button, task bars): thin
   `cursor-ew-resize` strips at `inset-y-0 left-0 w-1.5` / `right-0 w-1.5`, shown
   via the same CSS reveal as the bottom estimate handle (`group` +
   `group-hover`/`group-data-[selected=true]`). Each `onPointerDown` calls
   `e.stopPropagation()` then `beginDrag(e, { id, role: "resize-start" | "resize-end", range })`.
-- The `move` affordance uses `cursor-grab` on the bar body while idle.
+- The bar body uses `cursor-grab` while idle.
 
 ## Wiring — `scheduler-layout.tsx`
 
-`SchedulerLayoutInner` calls `useBarDrag({ onCommit })` where `onCommit` does
-`updateItem(id, { startDate, endDate })` and `scheduleTask(id, startDate,
-endDate)`. Like the estimate resizer, the draft is injected before layout so the
-view reflows live:
+`SchedulerLayoutInner` calls `useBarDrag({ onCommit })` where `onCommit(id,
+{ startDate, endDate })` does `updateItem(id, { startDate, endDate })` (local)
+and `scheduleTask(id, startDate, endDate)` (backend, project mode).
 
-```ts
-const effectiveItems = useMemo(() => {
-  if (!estimateDraft && !dragDraft) return items;
-  return items.map((i) => {
-    if (dragDraft?.id === i.id) return { ...i, ...rangeToDates(dragDraft.range, today) };
-    if (estimateDraft?.id === i.id) return { ...i, estimatedTime: estimateDraft.estimatedTime };
-    return i;
-  });
-}, [items, dragDraft, estimateDraft, today]);
-```
-
-`beginDrag` and the drag `draft` are threaded to `SchedulerLanes`.
+The estimate resizer's `effectiveItems` injection is unchanged (height needs a
+relayout). The drag draft is NOT injected — instead `beginDrag`, the drag
+`draft`, and `wasDragged` are threaded to `SchedulerLanes`, which overrides the
+active bar's `left`/`width` directly. This keeps lanes stable during a move.
 
 ## Testing
 
