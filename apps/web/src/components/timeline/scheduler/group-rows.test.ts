@@ -34,7 +34,10 @@ describe("buildGroupRows", () => {
 	});
 
 	it("omits the unassigned row when every task has an assignee", () => {
-		const rows = buildGroupRows([item({ id: "a", assignee: maya })], "assignee");
+		const rows = buildGroupRows(
+			[item({ id: "a", assignee: maya })],
+			"assignee",
+		);
 		expect(rows.map((r) => r.key)).toEqual(["u_maya"]);
 	});
 

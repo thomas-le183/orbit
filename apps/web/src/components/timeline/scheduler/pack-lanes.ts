@@ -20,10 +20,7 @@ function ownRange(item: TimelineItem, today: number): RelativeTimeRangeOffset {
  * first lane whose last bar ends on or before this bar's start; otherwise a new
  * lane opens. Bars within a lane never overlap.
  */
-export function packLanes(
-	tasks: TimelineItem[],
-	today: number,
-): PackedBar[][] {
+export function packLanes(tasks: TimelineItem[], today: number): PackedBar[][] {
 	const bars: PackedBar[] = tasks
 		.map((item) => ({ item, range: ownRange(item, today) }))
 		.sort((a, b) => a.range.from - b.range.from);

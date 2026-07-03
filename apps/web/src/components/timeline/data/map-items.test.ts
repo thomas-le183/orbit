@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { Milestone, Task } from "@/hooks/use-tasks";
 import type { TaskAssignee } from "@/data/timeline-items";
+import type { Milestone, Task } from "@/hooks/use-tasks";
 import { DEFAULT_TASK_COLOR, mapProjectData } from "./map-items";
 
 function task(partial: Partial<Task>): Task {
@@ -138,8 +138,18 @@ describe("mapProjectData", () => {
 		};
 		const { items } = mapProjectData(
 			[
-				task({ id: "t6", startDate: "2026-06-01", endDate: "2026-06-02", assigneeId: "ghost" }),
-				task({ id: "t7", startDate: "2026-06-01", endDate: "2026-06-02", assigneeId: null }),
+				task({
+					id: "t6",
+					startDate: "2026-06-01",
+					endDate: "2026-06-02",
+					assigneeId: "ghost",
+				}),
+				task({
+					id: "t7",
+					startDate: "2026-06-01",
+					endDate: "2026-06-02",
+					assigneeId: null,
+				}),
 			],
 			[],
 			new Map([["u_maya", maya]]),

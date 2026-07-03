@@ -1,6 +1,12 @@
 import { UserAvatar } from "@orbit/ui/custom/user-avatar";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { type ReactNode, type RefObject, useEffect, useMemo, useRef } from "react";
+import {
+	type ReactNode,
+	type RefObject,
+	useEffect,
+	useMemo,
+	useRef,
+} from "react";
 import { useResizeObserver } from "usehooks-ts";
 import { usePreferences } from "@/hooks/use-preferences";
 import TimelineGrid from "../axis/grid";
@@ -26,7 +32,10 @@ function isTypingTarget(target: EventTarget | null): boolean {
 	if (!el) return false;
 	const tag = el.tagName;
 	return (
-		tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable
+		tag === "INPUT" ||
+		tag === "TEXTAREA" ||
+		tag === "SELECT" ||
+		el.isContentEditable
 	);
 }
 
@@ -43,7 +52,9 @@ function GroupHeader({ row }: { row: SchedulerRow }) {
 				placeholder={row.label}
 				avatarUrl={row.assignee?.avatarUrl}
 			/>
-			<span className="min-w-0 flex-1 truncate text-sm font-medium">{row.label}</span>
+			<span className="min-w-0 flex-1 truncate text-sm font-medium">
+				{row.label}
+			</span>
 			<span className="shrink-0 text-xs text-muted-foreground">
 				{row.lanes.reduce((n, lane) => n + lane.length, 0)}
 			</span>
@@ -84,7 +95,8 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 		setOffsetMs(
 			(prev) =>
 				prev +
-				fraction * msPerViewport({ offsetMs: prev, zoom: zoomLevel, viewportWidth }),
+				fraction *
+					msPerViewport({ offsetMs: prev, zoom: zoomLevel, viewportWidth }),
 		);
 	};
 	const panRef = useRef(panViewports);
@@ -208,7 +220,9 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 
 				{/* footer scrollbar */}
 				<div className="flex shrink-0">
-					{!collapsed && <div className="shrink-0" style={{ width: tableWidth }} />}
+					{!collapsed && (
+						<div className="shrink-0" style={{ width: tableWidth }} />
+					)}
 					<div className="relative flex-1">
 						<TimelineScrollbar />
 					</div>
@@ -218,7 +232,11 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 	);
 }
 
-export default function SchedulerLayout({ viewSwitch }: { viewSwitch?: ReactNode }) {
+export default function SchedulerLayout({
+	viewSwitch,
+}: {
+	viewSwitch?: ReactNode;
+}) {
 	const { data: prefs } = usePreferences();
 	return (
 		<TimelineProvider weekStart={prefs?.weekStart ?? 1}>

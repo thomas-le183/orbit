@@ -8,7 +8,11 @@ import {
 	useMemo,
 	useState,
 } from "react";
-import { type TaskAssignee, type TimelineItem, timelineItems } from "@/data/timeline-items";
+import {
+	type TaskAssignee,
+	type TimelineItem,
+	timelineItems,
+} from "@/data/timeline-items";
 import { useActiveOrgMembers } from "@/hooks/use-auth";
 import {
 	type Dependency,

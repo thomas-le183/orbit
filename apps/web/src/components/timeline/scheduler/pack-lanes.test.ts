@@ -20,7 +20,10 @@ function bar(id: string, startDate: string, endDate: string): TimelineItem {
 describe("packLanes", () => {
 	it("places non-overlapping tasks on a single lane", () => {
 		const lanes = packLanes(
-			[bar("a", "2026-06-01", "2026-06-03"), bar("b", "2026-06-05", "2026-06-07")],
+			[
+				bar("a", "2026-06-01", "2026-06-03"),
+				bar("b", "2026-06-05", "2026-06-07"),
+			],
 			TODAY,
 		);
 		expect(lanes).toHaveLength(1);
@@ -29,7 +32,10 @@ describe("packLanes", () => {
 
 	it("splits overlapping tasks into separate lanes", () => {
 		const lanes = packLanes(
-			[bar("a", "2026-06-01", "2026-06-10"), bar("b", "2026-06-05", "2026-06-15")],
+			[
+				bar("a", "2026-06-01", "2026-06-10"),
+				bar("b", "2026-06-05", "2026-06-15"),
+			],
 			TODAY,
 		);
 		expect(lanes).toHaveLength(2);
@@ -38,7 +44,10 @@ describe("packLanes", () => {
 	it("keeps adjacent (touching) ranges on the same lane", () => {
 		// a ends 06-03 (inclusive → exclusive 06-04); b starts 06-04.
 		const lanes = packLanes(
-			[bar("a", "2026-06-01", "2026-06-03"), bar("b", "2026-06-04", "2026-06-06")],
+			[
+				bar("a", "2026-06-01", "2026-06-03"),
+				bar("b", "2026-06-04", "2026-06-06"),
+			],
 			TODAY,
 		);
 		expect(lanes).toHaveLength(1);
