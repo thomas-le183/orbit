@@ -71,4 +71,20 @@ describe("SchedulerView", () => {
 
 		expect(bar.style.height).toBe("96px");
 	});
+
+	it("dragging a bar body horizontally reschedules it (left shifts)", async () => {
+		renderScheduler();
+		await screen.findAllByTestId("scheduler-group-header");
+
+		const bar = screen.getAllByTestId("scheduler-bar")[0] as HTMLElement;
+		const before = bar.style.left;
+
+		// Body drag: pointerdown on the bar, move right well past a day, release.
+		fireEvent.pointerDown(bar, { clientX: 200, clientY: 50, pointerId: 1 });
+		fireEvent.pointerMove(window, { clientX: 360, clientY: 50 });
+		fireEvent.pointerUp(window, { clientX: 360, clientY: 50 });
+
+		// After a committed move, the task's dates changed → its rendered left moves.
+		expect(bar.style.left).not.toBe(before);
+	});
 });

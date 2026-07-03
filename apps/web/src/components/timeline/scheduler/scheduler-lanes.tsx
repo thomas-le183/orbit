@@ -6,13 +6,18 @@ import { type Geometry, rangeVisibility } from "../controller/geometry";
 import { useHorizontalPercentageOffset } from "../controller/hooks";
 import { useTimelineData } from "../data/context";
 import { useRowSelection } from "../selection/context";
+import type { RelativeTimeRangeOffset } from "../units/types";
 import { barHeight, GROUP_PADDING } from "./lane-metrics";
 import type { SchedulerRow } from "./layout";
+import type { DragRole } from "./use-bar-drag";
 
 export default function SchedulerLanes({
 	rows,
 	totalHeight,
 	beginResize,
+	beginDrag,
+	dragDraft,
+	wasDragged,
 }: {
 	rows: SchedulerRow[];
 	totalHeight: number;
@@ -20,6 +25,12 @@ export default function SchedulerLanes({
 		e: ReactPointerEvent,
 		target: { id: string; startHeight: number },
 	) => void;
+	beginDrag: (
+		e: ReactPointerEvent,
+		target: { id: string; role: DragRole; range: RelativeTimeRangeOffset },
+	) => void;
+	dragDraft: { id: string; range: RelativeTimeRangeOffset } | null;
+	wasDragged: () => boolean;
 }) {
 	const { offsetMs, zoomLevel, viewportWidth } = useTimelineController();
 	const { getPercentageOffset } = useHorizontalPercentageOffset();
@@ -46,7 +57,9 @@ export default function SchedulerLanes({
 			)}
 			{rows.map((row) =>
 				row.lanes.map((lane) =>
-					lane.bars.map(({ item, range }) => {
+					lane.bars.map(({ item, range: ownRange }) => {
+						const range =
+							dragDraft?.id === item.id ? dragDraft.range : ownRange;
 						if (rangeVisibility(range.from, range.to, geom) !== "visible") {
 							return null;
 						}
@@ -67,7 +80,13 @@ export default function SchedulerLanes({
 								title={item.name}
 								onMouseEnter={() => setHovered(item.id)}
 								onMouseLeave={() => setHovered(null)}
-								onClick={() => toggle(item.id)}
+								onClick={() => {
+									if (wasDragged()) return;
+									toggle(item.id);
+								}}
+								onPointerDown={(e) =>
+									beginDrag(e, { id: item.id, role: "move", range })
+								}
 								style={{
 									left: `${left}%`,
 									width: `${width}%`,
@@ -76,7 +95,7 @@ export default function SchedulerLanes({
 									backgroundColor: item.color,
 								}}
 								className={cn(
-									"group pointer-events-auto absolute flex items-center overflow-hidden rounded-md px-2 text-xs font-medium text-white shadow-sm",
+									"group pointer-events-auto absolute flex cursor-grab items-center overflow-hidden rounded-md px-2 text-xs font-medium text-white shadow-sm",
 									(selected || hovered) && "ring-2 ring-primary",
 								)}
 							>
@@ -96,6 +115,34 @@ export default function SchedulerLanes({
 										}}
 										className="pointer-events-auto absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
 									/>
+								)}
+								{item.kind === "task" && (
+									<>
+										<span
+											data-testid="scheduler-bar-resize-start"
+											onPointerDown={(e) => {
+												e.stopPropagation();
+												beginDrag(e, {
+													id: item.id,
+													role: "resize-start",
+													range,
+												});
+											}}
+											className="pointer-events-auto absolute inset-y-0 left-0 w-1.5 cursor-ew-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
+										/>
+										<span
+											data-testid="scheduler-bar-resize-end"
+											onPointerDown={(e) => {
+												e.stopPropagation();
+												beginDrag(e, {
+													id: item.id,
+													role: "resize-end",
+													range,
+												});
+											}}
+											className="pointer-events-auto absolute inset-y-0 right-0 w-1.5 cursor-ew-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
+										/>
+									</>
 								)}
 							</button>
 						);

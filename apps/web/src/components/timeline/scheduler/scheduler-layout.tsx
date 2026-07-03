@@ -24,6 +24,7 @@ import { usePan } from "../use-pan";
 import ZoomControl from "../zoom-control";
 import { layoutScheduler, type SchedulerRow } from "./layout";
 import SchedulerLanes from "./scheduler-lanes";
+import { useBarDrag } from "./use-bar-drag";
 import { useEstimateResize } from "./use-estimate-resize";
 
 const PAN_STEP = 0.25;
@@ -77,9 +78,19 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 	const { tableWidth, collapsed, onDividerPointerDown } = useResizableDivider();
 	const { onWheel } = usePan();
 	const { clear } = useRowSelection();
-	const { items, updateItem } = useTimelineData();
+	const { items, updateItem, scheduleTask } = useTimelineData();
 	const { draft, beginResize } = useEstimateResize({
 		onCommit: (id, estimatedTime) => updateItem(id, { estimatedTime }),
+	});
+	const {
+		draft: dragDraft,
+		beginDrag,
+		wasDragged,
+	} = useBarDrag({
+		onCommit: (id, dates) => {
+			updateItem(id, dates);
+			scheduleTask(id, dates.startDate, dates.endDate);
+		},
 	});
 
 	const effectiveItems = useMemo(
@@ -223,6 +234,9 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 									rows={rows}
 									totalHeight={totalHeight}
 									beginResize={beginResize}
+									beginDrag={beginDrag}
+									dragDraft={dragDraft}
+									wasDragged={wasDragged}
 								/>
 							</div>
 						</div>
