@@ -25,6 +25,7 @@ export const createTaskSchema = z.object({
 	statusId: z.string().optional(),
 	priority: z.enum(TASK_PRIORITIES).optional(),
 	progress: z.number().int().min(0).max(100).optional(),
+	estimatedTime: z.number().int().min(0).optional(),
 	startDate: z.string().date().optional(),
 	endDate: z.string().date().optional(),
 	color: z.string().max(32).optional(),
