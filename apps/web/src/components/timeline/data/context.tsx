@@ -51,6 +51,7 @@ type TimelineDataValue = {
 	/** Assign dates to an undated task, scheduling it onto the timeline. */
 	scheduleTask: (id: string, startDate: string, endDate: string) => void;
 	reassignTask: (id: string, assigneeId: string) => void;
+	setEstimate: (id: string, estimatedTime: number) => void;
 	milestoneMarkers: MilestoneMarker[];
 	isLoading: boolean;
 	isError: boolean;
@@ -132,6 +133,13 @@ export function TimelineDataProvider({
 		[updateTask],
 	);
 
+	const setEstimate = useCallback(
+		(id: string, estimatedTime: number) => {
+			updateTask.mutate({ id, input: { estimatedTime } });
+		},
+		[updateTask],
+	);
+
 	const createDependency = useCallback(
 		(input: CreateDependencyInput) => createDependencyMut.mutate(input),
 		[createDependencyMut.mutate],
@@ -180,6 +188,7 @@ export function TimelineDataProvider({
 			undatedTaskRows: mapped.undatedTaskRows,
 			scheduleTask,
 			reassignTask,
+			setEstimate,
 			milestoneMarkers: mapped.milestoneMarkers,
 			isLoading: projectId
 				? tasksQuery.isLoading || milestonesQuery.isLoading
@@ -199,6 +208,7 @@ export function TimelineDataProvider({
 			mapped.undatedTaskRows,
 			scheduleTask,
 			reassignTask,
+			setEstimate,
 			mapped.milestoneMarkers,
 			projectId,
 			tasksQuery.isLoading,

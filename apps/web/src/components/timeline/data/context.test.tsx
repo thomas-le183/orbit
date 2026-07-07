@@ -4,10 +4,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useProjectMilestones, useProjectTasks } from "@/hooks/use-tasks";
 import { TimelineDataProvider, useTimelineData } from "./context";
 
+const updateTaskMutate = vi.fn();
 vi.mock("@/hooks/use-tasks", () => ({
 	useProjectTasks: vi.fn(),
 	useProjectMilestones: vi.fn(),
-	useUpdateTask: vi.fn(() => ({ mutate: vi.fn() })),
+	useUpdateTask: vi.fn(() => ({ mutate: updateTaskMutate })),
 }));
 
 vi.mock("@/hooks/use-dependencies", () => ({
@@ -151,6 +152,18 @@ describe("TimelineDataProvider", () => {
 			wrapper: wrapper("p"),
 		});
 		expect(result.current.isLoading).toBe(true);
+	});
+
+	it("setEstimate PATCHes the task estimatedTime", () => {
+		tasksMock.mockReturnValue({ data: [], isLoading: false, isError: false });
+		const { result } = renderHook(() => useTimelineData(), {
+			wrapper: wrapper("p"),
+		});
+		act(() => result.current.setEstimate("t1", 120));
+		expect(updateTaskMutate).toHaveBeenCalledWith({
+			id: "t1",
+			input: { estimatedTime: 120 },
+		});
 	});
 
 	it("exposes the projectId in project mode and undefined in seed mode", () => {

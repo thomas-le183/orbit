@@ -79,10 +79,19 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 	const { tableWidth, collapsed, onDividerPointerDown } = useResizableDivider();
 	const { onWheel } = usePan();
 	const { clear } = useRowSelection();
-	const { items, updateItem, scheduleTask, reassignTask, projectId } =
-		useTimelineData();
+	const {
+		items,
+		updateItem,
+		scheduleTask,
+		reassignTask,
+		setEstimate,
+		projectId,
+	} = useTimelineData();
 	const { draft, beginResize } = useEstimateResize({
-		onCommit: (id, estimatedTime) => updateItem(id, { estimatedTime }),
+		onCommit: (id, estimatedTime) => {
+			updateItem(id, { estimatedTime });
+			setEstimate(id, estimatedTime);
+		},
 	});
 
 	const effectiveItems = useMemo(
