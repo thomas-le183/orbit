@@ -1,5 +1,6 @@
 import { cn } from "@orbit/shared";
 import { Input } from "@orbit/ui/components/input";
+import { Spinner } from "@orbit/ui/components/spinner";
 import { PlusIcon } from "lucide-react";
 import {
 	type ReactNode,
@@ -34,10 +35,16 @@ export function DraftTableCell({ rowIndex }: { rowIndex: number }) {
 			className="absolute inset-x-0 flex items-center gap-2 px-3 text-xs"
 			style={{ top, height: ROW_HEIGHT }}
 		>
-			<PlusIcon className="size-4 shrink-0 text-muted-foreground" />
+			{isPending ? (
+				<Spinner className="size-4 shrink-0 text-muted-foreground" />
+			) : (
+				<PlusIcon className="size-4 shrink-0 text-muted-foreground" />
+			)}
 			<span className="flex min-w-0 flex-1 items-center gap-1.5">
 				{/* Warning slot spacer — keeps the name aligned with warned rows. */}
 				<span className="size-3.5 shrink-0" aria-hidden />
+				{/* Color-dot slot spacer — keeps the input aligned with real task names. */}
+				<span className="size-2 shrink-0" aria-hidden />
 				<Input
 					ref={inputRef}
 					aria-label="New task name"
@@ -69,8 +76,7 @@ export function DraftTableCell({ rowIndex }: { rowIndex: number }) {
 export function DraftLane({ rowIndex }: { rowIndex: number }) {
 	const { today, offsetMs, zoomLevel, viewportWidth } = useTimelineController();
 	const { getPercentageOffset } = useHorizontalPercentageOffset();
-	const { startDate, endDate, setDates, setDragging, focusInput } =
-		useDraftTask();
+	const { startDate, endDate, setDates, focusInput } = useDraftTask();
 
 	const listenersRef = useRef<{
 		move: (e: PointerEvent) => void;
@@ -95,7 +101,6 @@ export function DraftLane({ rowIndex }: { rowIndex: number }) {
 		e.preventDefault();
 		const rect = e.currentTarget.getBoundingClientRect();
 		const startX = e.clientX;
-		setDragging(true);
 		const apply = (clientX: number) => {
 			const r = draftRangeFromDrag(startX, clientX, rect, geom, today);
 			setDates(r.startDate, r.endDate);
@@ -104,7 +109,6 @@ export function DraftLane({ rowIndex }: { rowIndex: number }) {
 		const onMove = (ev: PointerEvent) => apply(ev.clientX);
 		const onUp = (ev: PointerEvent) => {
 			apply(ev.clientX);
-			setDragging(false);
 			focusInput();
 			window.removeEventListener("pointermove", onMove);
 			window.removeEventListener("pointerup", onUp);

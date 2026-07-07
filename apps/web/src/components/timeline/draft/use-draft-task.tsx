@@ -15,12 +15,10 @@ type DraftTaskValue = {
 	name: string;
 	startDate?: string;
 	endDate?: string;
-	dragging: boolean;
 	isPending: boolean;
 	inputRef: RefObject<HTMLInputElement | null>;
 	setName: (v: string) => void;
 	setDates: (startDate: string, endDate: string) => void;
-	setDragging: (v: boolean) => void;
 	focusInput: () => void;
 	commit: () => void;
 	cancel: () => void;
@@ -34,12 +32,10 @@ const DISABLED: DraftTaskValue = {
 	name: "",
 	startDate: undefined,
 	endDate: undefined,
-	dragging: false,
 	isPending: false,
 	inputRef: { current: null },
 	setName: noop,
 	setDates: noop,
-	setDragging: noop,
 	focusInput: noop,
 	commit: noop,
 	cancel: noop,
@@ -66,7 +62,6 @@ export function DraftTaskProvider({
 	const [range, setRange] = useState<{ startDate?: string; endDate?: string }>(
 		{},
 	);
-	const [dragging, setDragging] = useState(false);
 
 	const setDates = useCallback((startDate: string, endDate: string) => {
 		setRange({ startDate, endDate });
@@ -75,7 +70,6 @@ export function DraftTaskProvider({
 	const reset = useCallback(() => {
 		setName("");
 		setRange({});
-		setDragging(false);
 	}, []);
 
 	const cancel = useCallback(() => reset(), [reset]);
@@ -105,12 +99,10 @@ export function DraftTaskProvider({
 			name,
 			startDate: range.startDate,
 			endDate: range.endDate,
-			dragging,
 			isPending: create.isPending,
 			inputRef,
 			setName,
 			setDates,
-			setDragging,
 			focusInput,
 			commit,
 			cancel,
@@ -120,7 +112,6 @@ export function DraftTaskProvider({
 			name,
 			range.startDate,
 			range.endDate,
-			dragging,
 			create.isPending,
 			setDates,
 			focusInput,
