@@ -1,9 +1,64 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render } from "@testing-library/react";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { TimelineDataProvider } from "../data/context";
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
+import type { TimelineItem } from "@/data/timeline-items";
+import { TimelineDataProvider, useTimelineData } from "../data/context";
 import SplitLayout from "./split-layout";
 import TimelineTable, { TimelineTableHeader } from "./timeline-table";
+
+vi.mock("../data/context", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("../data/context")>();
+	return { ...actual, useTimelineData: vi.fn() };
+});
+
+// Small fixture standing in for the removed timeline-items seed.
+const fixtureItems: TimelineItem[] = [
+	{
+		id: "t-a",
+		kind: "task",
+		name: "Task A",
+		parentId: null,
+		startDate: "2026-06-01",
+		endDate: "2026-06-05",
+		color: "#6366f1",
+	},
+	{
+		id: "t-b",
+		kind: "task",
+		name: "Task B",
+		parentId: null,
+		startDate: "2026-06-10",
+		endDate: "2026-06-14",
+		color: "#6366f1",
+	},
+];
+
+beforeEach(() => {
+	vi.mocked(useTimelineData).mockReturnValue({
+		items: fixtureItems,
+		updateItem: vi.fn(),
+		moveDays: vi.fn(),
+		undatedTaskRows: [],
+		scheduleTask: vi.fn(),
+		reassignTask: vi.fn(),
+		setEstimate: vi.fn(),
+		milestoneMarkers: [],
+		isLoading: false,
+		isError: false,
+		projectId: undefined,
+		dependencies: [],
+		createDependency: vi.fn(),
+		deleteDependency: vi.fn(),
+	});
+});
 
 // Right region measures width via useResizeObserver; happy-dom emits no size,
 // so mock ResizeObserver to fire once at 800px.

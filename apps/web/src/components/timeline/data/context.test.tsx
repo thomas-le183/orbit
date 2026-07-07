@@ -49,11 +49,13 @@ describe("TimelineDataProvider", () => {
 		});
 	});
 
-	it("seeds from the static seed when no projectId", () => {
+	it("returns empty items when no projectId", () => {
 		const { result } = renderHook(() => useTimelineData(), {
 			wrapper: wrapper(),
 		});
-		expect(result.current.items.length).toBeGreaterThan(0);
+		expect(result.current.items).toEqual([]);
+		expect(result.current.undatedTaskRows).toEqual([]);
+		expect(result.current.milestoneMarkers).toEqual([]);
 		expect(useProjectTasks).toHaveBeenCalledWith("");
 	});
 

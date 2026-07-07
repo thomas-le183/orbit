@@ -2,17 +2,294 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useEffect } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { TimelineItem } from "@/data/timeline-items";
 import { TimelineProvider, useTimelineController } from "../controller/context";
 import { TimelineDataProvider, useTimelineData } from "../data/context";
 import TimelineTable from "../layout/timeline-table";
 import { RowSelectionProvider } from "../selection/context";
+import { ONE_DAY, startOfUtcDay, toUtcDateString } from "../units/make-units";
 import ItemsLayer from "./items-layer";
 
 vi.mock("../data/context", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("../data/context")>();
-	return { ...actual, useTimelineData: vi.fn(actual.useTimelineData) };
+	return { ...actual, useTimelineData: vi.fn() };
+});
+
+// Fixture mirroring the shape of the former timeline-items mock seed: a mix
+// of parent/child tasks and milestones spanning several months, used so
+// geometry-dependent assertions (row count/height, narrow-bar labels,
+// off-screen fly-outs) keep exercising realistic data.
+const seedItems: TimelineItem[] = [
+	{
+		id: "ms-kickoff",
+		kind: "milestone",
+		name: "Kickoff",
+		parentId: null,
+		startDate: "2026-06-01",
+		endDate: "2026-06-01",
+		color: "#0ea5e9",
+	},
+	{
+		id: "p-platform",
+		kind: "task",
+		name: "Core Platform",
+		parentId: null,
+		startDate: "2026-06-01",
+		endDate: "2026-09-18",
+		color: "#6366f1",
+	},
+	{
+		id: "t-design",
+		kind: "task",
+		name: "Design system foundations",
+		parentId: "p-platform",
+		startDate: "2026-06-15",
+		endDate: "2026-06-30",
+		progress: 65,
+		color: "#ec4899",
+	},
+	{
+		id: "t-api",
+		kind: "task",
+		name: "API schema & data model",
+		parentId: "p-platform",
+		startDate: "2026-06-22",
+		endDate: "2026-07-10",
+		progress: 40,
+		color: "#f59e0b",
+	},
+	{
+		id: "t-axis",
+		kind: "task",
+		name: "Timeline calendar axis",
+		parentId: "p-platform",
+		startDate: "2026-06-26",
+		endDate: "2026-07-17",
+		progress: 25,
+		color: "#10b981",
+	},
+	{
+		id: "t-auth",
+		kind: "task",
+		name: "Authentication & onboarding",
+		parentId: "p-platform",
+		startDate: "2026-07-13",
+		endDate: "2026-07-31",
+		progress: 0,
+		color: "#3b82f6",
+	},
+	{
+		id: "ms-beta",
+		kind: "milestone",
+		name: "Beta launch",
+		parentId: "p-platform",
+		startDate: "2026-09-14",
+		endDate: "2026-09-14",
+		color: "#0ea5e9",
+	},
+	{
+		id: "p-billing",
+		kind: "task",
+		name: "Billing & Payments",
+		parentId: null,
+		startDate: "2026-07-20",
+		endDate: "2026-09-30",
+		color: "#ef4444",
+	},
+	{
+		id: "t-billing",
+		kind: "task",
+		name: "Billing integration",
+		parentId: "p-billing",
+		startDate: "2026-07-20",
+		endDate: "2026-08-14",
+		progress: 0,
+		color: "#ef4444",
+	},
+	{
+		id: "t-invoicing",
+		kind: "task",
+		name: "Invoicing & receipts",
+		parentId: "p-billing",
+		startDate: "2026-08-10",
+		endDate: "2026-09-05",
+		progress: 0,
+		color: "#f97316",
+	},
+	{
+		id: "p-mobile",
+		kind: "task",
+		name: "Mobile App",
+		parentId: null,
+		startDate: "2026-08-01",
+		endDate: "2026-11-15",
+		color: "#14b8a6",
+	},
+	{
+		id: "t-ios-shell",
+		kind: "task",
+		name: "iOS app shell",
+		parentId: "p-mobile",
+		startDate: "2026-08-03",
+		endDate: "2026-08-28",
+		progress: 0,
+		color: "#14b8a6",
+	},
+	{
+		id: "t-android-shell",
+		kind: "task",
+		name: "Android app shell",
+		parentId: "p-mobile",
+		startDate: "2026-08-17",
+		endDate: "2026-09-11",
+		progress: 0,
+		color: "#0d9488",
+	},
+	{
+		id: "t-offline-sync",
+		kind: "task",
+		name: "Offline sync engine",
+		parentId: "p-mobile",
+		startDate: "2026-09-07",
+		endDate: "2026-10-09",
+		progress: 0,
+		color: "#06b6d4",
+	},
+	{
+		id: "t-push",
+		kind: "task",
+		name: "Push notifications",
+		parentId: "p-mobile",
+		startDate: "2026-10-05",
+		endDate: "2026-10-30",
+		progress: 0,
+		color: "#0891b2",
+	},
+	{
+		id: "ms-mobile-launch",
+		kind: "milestone",
+		name: "Mobile launch",
+		parentId: "p-mobile",
+		startDate: "2026-11-13",
+		endDate: "2026-11-13",
+		color: "#0ea5e9",
+	},
+	{
+		id: "p-growth",
+		kind: "task",
+		name: "Growth & Marketing",
+		parentId: null,
+		startDate: "2026-09-01",
+		endDate: "2026-12-01",
+		color: "#f59e0b",
+	},
+	{
+		id: "t-landing",
+		kind: "task",
+		name: "Landing pages",
+		parentId: "p-growth",
+		startDate: "2026-09-01",
+		endDate: "2026-09-25",
+		progress: 0,
+		color: "#f59e0b",
+	},
+	{
+		id: "t-seo",
+		kind: "task",
+		name: "SEO & content",
+		parentId: "p-growth",
+		startDate: "2026-09-21",
+		endDate: "2026-10-23",
+		progress: 0,
+		color: "#eab308",
+	},
+	{
+		id: "t-funnel",
+		kind: "task",
+		name: "Onboarding funnel",
+		parentId: "p-growth",
+		startDate: "2026-10-19",
+		endDate: "2026-11-13",
+		progress: 0,
+		color: "#d97706",
+	},
+	{
+		id: "t-analytics",
+		kind: "task",
+		name: "Analytics instrumentation",
+		parentId: "p-growth",
+		startDate: "2026-11-09",
+		endDate: "2026-12-01",
+		progress: 0,
+		color: "#ca8a04",
+	},
+	{
+		id: "p-infra",
+		kind: "task",
+		name: "Infrastructure & Reliability",
+		parentId: null,
+		startDate: "2026-06-15",
+		endDate: "2026-10-15",
+		color: "#8b5cf6",
+	},
+	{
+		id: "t-cicd",
+		kind: "task",
+		name: "CI/CD pipeline",
+		parentId: "p-infra",
+		startDate: "2026-06-15",
+		endDate: "2026-07-10",
+		progress: 80,
+		color: "#8b5cf6",
+	},
+	{
+		id: "t-observability",
+		kind: "task",
+		name: "Observability & alerting",
+		parentId: "p-infra",
+		startDate: "2026-07-13",
+		endDate: "2026-08-21",
+		progress: 10,
+		color: "#a855f7",
+	},
+	{
+		id: "t-loadtest",
+		kind: "task",
+		name: "Load & soak testing",
+		parentId: "p-infra",
+		startDate: "2026-09-01",
+		endDate: "2026-10-15",
+		progress: 0,
+		color: "#9333ea",
+	},
+];
+
+function defaultTimelineData(
+	overrides: Partial<ReturnType<typeof useTimelineData>> = {},
+): ReturnType<typeof useTimelineData> {
+	return {
+		items: seedItems,
+		updateItem: vi.fn(),
+		moveDays: vi.fn(),
+		undatedTaskRows: [],
+		scheduleTask: vi.fn(),
+		reassignTask: vi.fn(),
+		setEstimate: vi.fn(),
+		milestoneMarkers: [],
+		isLoading: false,
+		isError: false,
+		projectId: undefined,
+		dependencies: [],
+		createDependency: vi.fn(),
+		deleteDependency: vi.fn(),
+		...overrides,
+	};
+}
+
+beforeEach(() => {
+	vi.mocked(useTimelineData).mockReturnValue(defaultTimelineData());
 });
 
 function makeQc() {
@@ -25,6 +302,69 @@ function SizeViewport({ width }: { width: number }) {
 	return null;
 }
 
+/**
+ * Bridges the mocked `useTimelineData` to real React state so drag/resize
+ * gestures (which call `moveDays`/`updateItem`) actually re-render with
+ * updated positions, mirroring TimelineDataProvider's real local-state logic.
+ */
+function shiftDates(item: TimelineItem, days: number): TimelineItem {
+	const move = (iso: string) =>
+		toUtcDateString(startOfUtcDay(Date.parse(iso)) + days * ONE_DAY);
+	return {
+		...item,
+		startDate: move(item.startDate),
+		endDate: move(item.endDate),
+	};
+}
+
+function SeedDataBridge({ children }: { children: ReactNode }) {
+	const [items, setItems] = useState<TimelineItem[]>(seedItems);
+	vi.mocked(useTimelineData).mockReturnValue(
+		defaultTimelineData({
+			items,
+			// Mirrors TimelineDataProvider's real moveDays: dragging a parent with
+			// children re-dates its leaf descendants (not the parent's own,
+			// display-only placeholder dates), matching the container-rect logic
+			// in controller/layout.ts (a parent's rendered range comes from its
+			// children, not its own dates).
+			moveDays: (id, days) => {
+				if (days === 0) return;
+				setItems((prev) => {
+					const hasChildren = prev.some((i) => i.parentId === id);
+					if (!hasChildren) {
+						return prev.map((i) => (i.id === id ? shiftDates(i, days) : i));
+					}
+					const descendants = new Set<string>();
+					let added = true;
+					while (added) {
+						added = false;
+						for (const i of prev) {
+							if (
+								i.parentId &&
+								(i.parentId === id || descendants.has(i.parentId)) &&
+								!descendants.has(i.id)
+							) {
+								descendants.add(i.id);
+								added = true;
+							}
+						}
+					}
+					return prev.map((i) =>
+						descendants.has(i.id) && !prev.some((c) => c.parentId === i.id)
+							? shiftDates(i, days)
+							: i,
+					);
+				});
+			},
+			updateItem: (id, patch) =>
+				setItems((prev) =>
+					prev.map((i) => (i.id === id ? { ...i, ...patch } : i)),
+				),
+		}),
+	);
+	return <>{children}</>;
+}
+
 function renderLayer(
 	width = 100000,
 	zoom: "weeks" | "months" | "quarters" = "weeks",
@@ -33,10 +373,12 @@ function renderLayer(
 	return render(
 		<QueryClientProvider client={makeQc()}>
 			<TimelineDataProvider>
-				<TimelineProvider initialZoom={zoom}>
-					<SizeViewport width={width} />
-					<ItemsLayer />
-				</TimelineProvider>
+				<SeedDataBridge>
+					<TimelineProvider initialZoom={zoom}>
+						<SizeViewport width={width} />
+						<ItemsLayer />
+					</TimelineProvider>
+				</SeedDataBridge>
 			</TimelineDataProvider>
 		</QueryClientProvider>,
 	);
@@ -228,23 +570,9 @@ describe("ItemsLayer state overlays", () => {
 	function renderWithMock(
 		overrides: Partial<ReturnType<typeof useTimelineData>>,
 	) {
-		const base: ReturnType<typeof useTimelineData> = {
-			items: [],
-			updateItem: vi.fn(),
-			moveDays: vi.fn(),
-			undatedTaskRows: [],
-			scheduleTask: vi.fn(),
-			reassignTask: vi.fn(),
-			milestoneMarkers: [],
-			isLoading: false,
-			isError: false,
-			projectId: undefined,
-			dependencies: [],
-			createDependency: vi.fn(),
-			deleteDependency: vi.fn(),
-			...overrides,
-		};
-		vi.mocked(useTimelineData).mockReturnValue(base);
+		vi.mocked(useTimelineData).mockReturnValue(
+			defaultTimelineData({ items: [], ...overrides }),
+		);
 		return render(
 			<QueryClientProvider client={makeQc()}>
 				<TimelineDataProvider>
@@ -351,12 +679,9 @@ describe("ItemsLayer state overlays", () => {
 });
 
 describe("ItemsLayer connection nodes and dependency layer", () => {
-	// The `ItemsLayer state overlays` suite above calls vi.mocked(useTimelineData).mockReturnValue(...)
-	// without restoring afterwards. Reset to the original implementation before each test here so
-	// renderLayer() gets the real seed data (and renders leaf-task nodes).
-	beforeEach(() => {
-		vi.mocked(useTimelineData).mockRestore();
-	});
+	// The file-level `beforeEach` above resets the mock to `defaultTimelineData()`
+	// (seed items) before every test, including these, so renderLayer() renders
+	// leaf-task nodes regardless of what the `state overlays` suite set last.
 
 	it("hides connection nodes until a bar is hovered", async () => {
 		const user = userEvent.setup();

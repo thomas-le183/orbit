@@ -1,8 +1,131 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { TimelineDataProvider } from "../data/context";
+import { type ReactNode, useState } from "react";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import type { TimelineItem } from "@/data/timeline-items";
+import { TimelineDataProvider, useTimelineData } from "../data/context";
 import SchedulerView from "./scheduler-view";
+
+vi.mock("../data/context", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("../data/context")>();
+	return { ...actual, useTimelineData: vi.fn() };
+});
+
+// Fixture standing in for the removed timeline-items seed. Groups sort
+// alphabetically by assignee name (see group-rows.ts), and only bars whose
+// dates overlap the (today-centered) visible viewport are rendered — so every
+// task here is dated close to "today" (2026-07-07 in this environment) at the
+// default "weeks" zoom (~17 visible days). "Ana Alpha" has two tasks so that
+// dragging its first (and, being alphabetically first, DOM-first) bar into
+// the last lane leaves a distinguishable non-zero count behind.
+const seedItems: TimelineItem[] = [
+	{
+		id: "t-ana-1",
+		kind: "task",
+		name: "Ana task one",
+		parentId: null,
+		startDate: "2026-07-01",
+		endDate: "2026-07-03",
+		progress: 0,
+		color: "#ec4899",
+		assignee: {
+			id: "u_ana",
+			name: "Ana Alpha",
+			avatarUrl: "https://i.pravatar.cc/64?u=ana",
+		},
+		estimatedTime: 90,
+	},
+	{
+		id: "t-ana-2",
+		kind: "task",
+		name: "Ana task two",
+		parentId: null,
+		startDate: "2026-07-04",
+		endDate: "2026-07-05",
+		progress: 0,
+		color: "#ec4899",
+		assignee: {
+			id: "u_ana",
+			name: "Ana Alpha",
+			avatarUrl: "https://i.pravatar.cc/64?u=ana",
+		},
+		estimatedTime: 90,
+	},
+	{
+		id: "t-maya",
+		kind: "task",
+		name: "API schema & data model",
+		parentId: null,
+		startDate: "2026-07-06",
+		endDate: "2026-07-08",
+		progress: 40,
+		color: "#f59e0b",
+		assignee: {
+			id: "u_maya",
+			name: "Maya Chen",
+			avatarUrl: "https://i.pravatar.cc/64?u=maya",
+		},
+		estimatedTime: 300,
+	},
+	{
+		id: "t-zack",
+		kind: "task",
+		name: "Zack task",
+		parentId: null,
+		startDate: "2026-07-09",
+		endDate: "2026-07-11",
+		progress: 0,
+		color: "#ef4444",
+		assignee: {
+			id: "u_zack",
+			name: "Zack Omega",
+			avatarUrl: "https://i.pravatar.cc/64?u=zack",
+		},
+		estimatedTime: 900,
+	},
+];
+
+function defaultTimelineData(
+	overrides: Partial<ReturnType<typeof useTimelineData>> = {},
+): ReturnType<typeof useTimelineData> {
+	return {
+		items: seedItems,
+		updateItem: vi.fn(),
+		moveDays: vi.fn(),
+		undatedTaskRows: [],
+		scheduleTask: vi.fn(),
+		reassignTask: vi.fn(),
+		setEstimate: vi.fn(),
+		milestoneMarkers: [],
+		isLoading: false,
+		isError: false,
+		projectId: undefined,
+		dependencies: [],
+		createDependency: vi.fn(),
+		deleteDependency: vi.fn(),
+		...overrides,
+	};
+}
+
+/**
+ * Bridges the mocked `useTimelineData` to real React state so drag/resize
+ * gestures (which call `updateItem`/`scheduleTask`) actually re-render with
+ * updated positions/heights/assignees, mirroring TimelineDataProvider's real
+ * local-state logic (see items-layer.test.tsx for the same pattern).
+ */
+function SeedDataBridge({ children }: { children: ReactNode }) {
+	const [items, setItems] = useState<TimelineItem[]>(seedItems);
+	vi.mocked(useTimelineData).mockReturnValue(
+		defaultTimelineData({
+			items,
+			updateItem: (id, patch) =>
+				setItems((prev) =>
+					prev.map((i) => (i.id === id ? { ...i, ...patch } : i)),
+				),
+		}),
+	);
+	return <>{children}</>;
+}
 
 // The scheduler viewport measures width via useResizeObserver; happy-dom
 // emits no size, so mock ResizeObserver to fire once at 800px (mirrors
@@ -39,7 +162,9 @@ function renderScheduler() {
 	return render(
 		<QueryClientProvider client={qc}>
 			<TimelineDataProvider>
-				<SchedulerView />
+				<SeedDataBridge>
+					<SchedulerView />
+				</SeedDataBridge>
 			</TimelineDataProvider>
 		</QueryClientProvider>,
 	);

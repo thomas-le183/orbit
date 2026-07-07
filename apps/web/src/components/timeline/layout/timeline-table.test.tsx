@@ -10,10 +10,74 @@ import TimelineTable, { TimelineTableHeader } from "./timeline-table";
 
 vi.mock("../data/context", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("../data/context")>();
-	return { ...actual, useTimelineData: vi.fn(actual.useTimelineData) };
+	return { ...actual, useTimelineData: vi.fn() };
 });
 
+// Small fixture standing in for the removed timeline-items seed; enough rows
+// (>= 3) to exercise multi-row selection assertions below.
+const fixtureItems: TimelineItem[] = [
+	{
+		id: "t-a",
+		kind: "task",
+		name: "Task A",
+		parentId: null,
+		startDate: "2026-06-01",
+		endDate: "2026-06-05",
+		color: "#6366f1",
+	},
+	{
+		id: "t-b",
+		kind: "task",
+		name: "Task B",
+		parentId: null,
+		startDate: "2026-06-10",
+		endDate: "2026-06-14",
+		color: "#6366f1",
+	},
+	{
+		id: "t-c",
+		kind: "task",
+		name: "Task C",
+		parentId: null,
+		startDate: "2026-06-20",
+		endDate: "2026-06-24",
+		color: "#6366f1",
+	},
+	{
+		id: "t-d",
+		kind: "task",
+		name: "Task D",
+		parentId: null,
+		startDate: "2026-06-25",
+		endDate: "2026-06-29",
+		color: "#6366f1",
+	},
+];
+
+function defaultTimelineData(
+	overrides: Partial<ReturnType<typeof useTimelineData>> = {},
+): ReturnType<typeof useTimelineData> {
+	return {
+		items: fixtureItems,
+		updateItem: vi.fn(),
+		moveDays: vi.fn(),
+		undatedTaskRows: [],
+		scheduleTask: vi.fn(),
+		reassignTask: vi.fn(),
+		setEstimate: vi.fn(),
+		milestoneMarkers: [],
+		isLoading: false,
+		isError: false,
+		projectId: undefined,
+		dependencies: [],
+		createDependency: vi.fn(),
+		deleteDependency: vi.fn(),
+		...overrides,
+	};
+}
+
 function renderTable() {
+	vi.mocked(useTimelineData).mockReturnValue(defaultTimelineData());
 	const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 	return render(
 		<QueryClientProvider client={qc}>

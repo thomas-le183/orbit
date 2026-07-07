@@ -8,11 +8,7 @@ import {
 	useMemo,
 	useState,
 } from "react";
-import {
-	type TaskAssignee,
-	type TimelineItem,
-	timelineItems,
-} from "@/data/timeline-items";
+import type { TaskAssignee, TimelineItem } from "@/data/timeline-items";
 import { useActiveOrgMembers } from "@/hooks/use-auth";
 import {
 	type Dependency,
@@ -93,7 +89,7 @@ export function TimelineDataProvider({
 	const mapped = useMemo(() => {
 		if (!projectId) {
 			return {
-				items: timelineItems,
+				items: [] as TimelineItem[],
 				undatedTaskRows: [] as UndatedTaskRow[],
 				milestoneMarkers: [] as MilestoneMarker[],
 			};
