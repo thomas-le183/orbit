@@ -58,6 +58,7 @@ export class TasksService {
 				statusId,
 				priority: input.priority ?? "none",
 				progress: input.progress ?? 0,
+				estimatedTime: input.estimatedTime,
 				startDate: input.startDate,
 				endDate: input.endDate,
 				color: input.color,
