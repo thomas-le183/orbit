@@ -104,6 +104,8 @@ function defaultTimelineData(
 		undatedTaskRows: [],
 		scheduleTask: vi.fn(),
 		setEstimate: vi.fn(),
+		createTask: vi.fn(() => Promise.resolve({ id: "new-task" })),
+		renameTask: vi.fn(),
 		milestoneMarkers: [],
 		isLoading: false,
 		isError: false,

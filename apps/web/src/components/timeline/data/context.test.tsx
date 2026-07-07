@@ -5,10 +5,12 @@ import { useProjectMilestones, useProjectTasks } from "@/hooks/use-tasks";
 import { TimelineDataProvider, useTimelineData } from "./context";
 
 const updateTaskMutate = vi.fn();
+const createTaskMutateAsync = vi.fn();
 vi.mock("@/hooks/use-tasks", () => ({
 	useProjectTasks: vi.fn(),
 	useProjectMilestones: vi.fn(),
 	useUpdateTask: vi.fn(() => ({ mutate: updateTaskMutate })),
+	useCreateTask: vi.fn(() => ({ mutateAsync: createTaskMutateAsync })),
 }));
 
 vi.mock("@/hooks/use-dependencies", () => ({
@@ -175,5 +177,87 @@ describe("TimelineDataProvider", () => {
 		expect(project.result.current.projectId).toBe("p");
 		const seed = renderHook(() => useTimelineData(), { wrapper: wrapper() });
 		expect(seed.result.current.projectId).toBeUndefined();
+	});
+});
+
+describe("createTask / renameTask", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		tasksMock.mockReturnValue({
+			data: undefined,
+			isLoading: false,
+			isError: false,
+		});
+		milestonesMock.mockReturnValue({
+			data: undefined,
+			isLoading: false,
+			isError: false,
+		});
+	});
+
+	it("createTask posts through useCreateTask and resolves the new id", async () => {
+		createTaskMutateAsync.mockResolvedValue({ id: "srv-1" });
+		const { result } = renderHook(() => useTimelineData(), {
+			wrapper: wrapper("proj-1"),
+		});
+
+		let created: { id: string } | undefined;
+		await act(async () => {
+			created = await result.current.createTask({
+				name: "New task",
+				startDate: "2026-07-08",
+				endDate: "2026-07-10",
+				assigneeId: "u_ana",
+			});
+		});
+
+		expect(created).toEqual({ id: "srv-1" });
+		expect(createTaskMutateAsync).toHaveBeenCalledWith({
+			name: "New task",
+			startDate: "2026-07-08",
+			endDate: "2026-07-10",
+			assigneeId: "u_ana",
+		});
+	});
+
+	it("renameTask optimistically patches the local item then persists the name", () => {
+		tasksMock.mockReturnValue({
+			data: [
+				{
+					id: "t-1",
+					projectId: "p",
+					parentId: null,
+					name: "Alpha",
+					description: null,
+					statusId: "s",
+					priority: "none",
+					progress: 0,
+					startDate: "2026-06-01",
+					endDate: "2026-06-02",
+					color: null,
+					assigneeId: null,
+					position: 0,
+					createdAt: "",
+					updatedAt: "",
+				},
+			],
+			isLoading: false,
+			isError: false,
+		});
+		const { result } = renderHook(() => useTimelineData(), {
+			wrapper: wrapper("p"),
+		});
+
+		act(() => {
+			result.current.renameTask("t-1", "Renamed");
+		});
+
+		expect(result.current.items.find((i) => i.id === "t-1")?.name).toBe(
+			"Renamed",
+		);
+		expect(updateTaskMutate).toHaveBeenCalledWith({
+			id: "t-1",
+			input: { name: "Renamed" },
+		});
 	});
 });
