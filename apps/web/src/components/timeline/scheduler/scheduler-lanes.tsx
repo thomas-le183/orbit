@@ -1,5 +1,9 @@
 import { cn } from "@orbit/shared";
-import { Fragment, type PointerEvent as ReactPointerEvent } from "react";
+import {
+	Fragment,
+	type PointerEvent as ReactPointerEvent,
+	useRef,
+} from "react";
 import { MIN_BAR_WIDTH_PX } from "../constants";
 import { useTimelineController } from "../controller/context";
 import { type Geometry, rangeVisibility } from "../controller/geometry";
@@ -65,6 +69,10 @@ export default function SchedulerLanes({
 	const { getPercentageOffset } = useHorizontalPercentageOffset();
 	const { isSelected, toggle, hoveredId, setHovered } = useRowSelection();
 	const { isError } = useTimelineData();
+	// Guards the rename input against committing twice: Enter/Escape commit and
+	// clear, which unmounts the focused input and, in a real browser, fires a
+	// native blur — this flag makes onBlur consume that unmount-blur once.
+	const renameCommittedRef = useRef(false);
 
 	if (viewportWidth <= 0) return null;
 	const geom: Geometry = { offsetMs, zoom: zoomLevel, viewportWidth };
@@ -172,15 +180,23 @@ export default function SchedulerLanes({
 											onKeyDown={(e) => {
 												if (e.key === "Enter") {
 													e.preventDefault();
+													renameCommittedRef.current = true;
 													const v = e.currentTarget.value.trim();
 													if (v && v !== item.name) onRename(item.id, v);
 													clearRenaming();
 												} else if (e.key === "Escape") {
 													e.preventDefault();
+													renameCommittedRef.current = true;
 													clearRenaming();
 												}
 											}}
 											onBlur={(e) => {
+												// Consume the unmount-blur fired right after an
+												// Enter/Escape commit so we don't rename twice.
+												if (renameCommittedRef.current) {
+													renameCommittedRef.current = false;
+													return;
+												}
 												const v = e.currentTarget.value.trim();
 												if (v && v !== item.name) onRename(item.id, v);
 												clearRenaming();

@@ -423,5 +423,10 @@ describe("SchedulerView", () => {
 		fireEvent.keyDown(input, { key: "Enter" });
 
 		expect(renameTask).toHaveBeenCalledWith("created-1", "Design review");
+		// Enter must commit exactly once. (happy-dom does not fire the native
+		// unmount-blur that a real browser would, so this asserts the single-
+		// commit intent guarded by renameCommittedRef rather than reproducing
+		// the browser double-fire path.)
+		expect(renameTask).toHaveBeenCalledTimes(1);
 	});
 });
