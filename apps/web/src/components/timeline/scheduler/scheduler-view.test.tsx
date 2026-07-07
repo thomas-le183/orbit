@@ -4,6 +4,7 @@ import { type ReactNode, useState } from "react";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { TimelineItem } from "@/data/timeline-items";
 import { TimelineDataProvider, useTimelineData } from "../data/context";
+import { ONE_DAY, startOfUtcDay, toUtcDateString } from "../units/make-units";
 import SchedulerView from "./scheduler-view";
 
 vi.mock("../data/context", async (importOriginal) => {
@@ -11,21 +12,27 @@ vi.mock("../data/context", async (importOriginal) => {
 	return { ...actual, useTimelineData: vi.fn() };
 });
 
+// Only bars whose dates overlap the (today-centered) visible viewport are
+// rendered by the scheduler at the default "weeks" zoom (~17 visible days),
+// so every task here must be dated close to "today". Dates are computed as
+// day offsets from today (rather than hardcoded) so the fixture doesn't
+// bit-rot as the real calendar date advances.
+const today = startOfUtcDay(Date.now());
+const dateAt = (offsetDays: number) => toUtcDateString(today + offsetDays * ONE_DAY);
+
 // Fixture standing in for the removed timeline-items seed. Groups sort
-// alphabetically by assignee name (see group-rows.ts), and only bars whose
-// dates overlap the (today-centered) visible viewport are rendered — so every
-// task here is dated close to "today" (2026-07-07 in this environment) at the
-// default "weeks" zoom (~17 visible days). "Ana Alpha" has two tasks so that
-// dragging its first (and, being alphabetically first, DOM-first) bar into
-// the last lane leaves a distinguishable non-zero count behind.
+// alphabetically by assignee name (see group-rows.ts). "Ana Alpha" has two
+// tasks so that dragging its first (and, being alphabetically first,
+// DOM-first) bar into the last lane leaves a distinguishable non-zero count
+// behind.
 const seedItems: TimelineItem[] = [
 	{
 		id: "t-ana-1",
 		kind: "task",
 		name: "Ana task one",
 		parentId: null,
-		startDate: "2026-07-01",
-		endDate: "2026-07-03",
+		startDate: dateAt(-6),
+		endDate: dateAt(-4),
 		progress: 0,
 		color: "#ec4899",
 		assignee: {
@@ -40,8 +47,8 @@ const seedItems: TimelineItem[] = [
 		kind: "task",
 		name: "Ana task two",
 		parentId: null,
-		startDate: "2026-07-04",
-		endDate: "2026-07-05",
+		startDate: dateAt(-3),
+		endDate: dateAt(-2),
 		progress: 0,
 		color: "#ec4899",
 		assignee: {
@@ -56,8 +63,8 @@ const seedItems: TimelineItem[] = [
 		kind: "task",
 		name: "API schema & data model",
 		parentId: null,
-		startDate: "2026-07-06",
-		endDate: "2026-07-08",
+		startDate: dateAt(-1),
+		endDate: dateAt(1),
 		progress: 40,
 		color: "#f59e0b",
 		assignee: {
@@ -72,8 +79,8 @@ const seedItems: TimelineItem[] = [
 		kind: "task",
 		name: "Zack task",
 		parentId: null,
-		startDate: "2026-07-09",
-		endDate: "2026-07-11",
+		startDate: dateAt(2),
+		endDate: dateAt(4),
 		progress: 0,
 		color: "#ef4444",
 		assignee: {
