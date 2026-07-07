@@ -1,5 +1,12 @@
 import { cn } from "@orbit/shared";
 import { Checkbox } from "@orbit/ui/components/checkbox";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@orbit/ui/components/tooltip";
+import { TriangleAlert } from "lucide-react";
 import { useMemo } from "react";
 import { useTimelineController } from "../controller/context";
 import { layoutItems } from "../controller/layout";
@@ -101,6 +108,8 @@ export default function TimelineTable() {
 							className="flex min-w-0 flex-1 items-center gap-1.5"
 							style={{ paddingLeft: row.depth * 14 }}
 						>
+							{/* Reserved warning slot — kept empty so names align with warned rows. */}
+							<span className="size-3.5 shrink-0" aria-hidden />
 							<span
 								className="size-2 shrink-0 rounded-full"
 								style={{ backgroundColor: item.color }}
@@ -157,6 +166,20 @@ export default function TimelineTable() {
 							}}
 						/>
 						<span className="flex min-w-0 flex-1 items-center gap-1.5">
+							{/* Warning slot — same width as the reserved slot on dated rows. */}
+							<TooltipProvider>
+								<Tooltip>
+									<TooltipTrigger className="flex size-3.5 shrink-0 items-center justify-center">
+										<TriangleAlert
+											aria-label="Unplanned"
+											className="size-3.5 text-amber-500"
+										/>
+									</TooltipTrigger>
+									<TooltipContent>
+										Unplanned — set a start or due date to schedule.
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
 							<span className="size-2 shrink-0 rounded-full bg-muted-foreground/30" />
 							<span className="min-w-0 truncate text-foreground">
 								{task.name}
@@ -164,7 +187,7 @@ export default function TimelineTable() {
 						</span>
 						<span className="w-24 shrink-0 truncate text-muted-foreground" />
 						<span className="w-28 shrink-0 truncate text-muted-foreground">
-							—
+							No dates
 						</span>
 					</div>
 				);

@@ -1,11 +1,17 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { TimelineItem } from "@/data/timeline-items";
 import { TimelineProvider } from "../controller/context";
-import { TimelineDataProvider } from "../data/context";
+import { TimelineDataProvider, useTimelineData } from "../data/context";
 import { RowSelectionProvider } from "../selection/context";
 import TimelineTable, { TimelineTableHeader } from "./timeline-table";
+
+vi.mock("../data/context", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("../data/context")>();
+	return { ...actual, useTimelineData: vi.fn(actual.useTimelineData) };
+});
 
 function renderTable() {
 	const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -108,5 +114,68 @@ describe("TimelineTable", () => {
 		expect(rows[1].className).toContain("bg-muted/50");
 		await user.unhover(rows[1]);
 		expect(rows[1].className).not.toContain("bg-muted/50");
+	});
+});
+
+describe("TimelineTable unplanned indicator", () => {
+	const datedItem: TimelineItem = {
+		id: "t1",
+		kind: "task",
+		name: "Dated Task",
+		parentId: null,
+		startDate: "2026-06-01",
+		endDate: "2026-06-05",
+		color: "#6366f1",
+	};
+
+	function renderWithMock(
+		overrides: Partial<ReturnType<typeof useTimelineData>>,
+	) {
+		const base: ReturnType<typeof useTimelineData> = {
+			items: [],
+			updateItem: vi.fn(),
+			moveDays: vi.fn(),
+			undatedTaskRows: [],
+			scheduleTask: vi.fn(),
+			reassignTask: vi.fn(),
+			milestoneMarkers: [],
+			isLoading: false,
+			isError: false,
+			projectId: undefined,
+			dependencies: [],
+			createDependency: vi.fn(),
+			deleteDependency: vi.fn(),
+			...overrides,
+		};
+		vi.mocked(useTimelineData).mockReturnValue(base);
+		const qc = new QueryClient({
+			defaultOptions: { queries: { retry: false } },
+		});
+		return render(
+			<QueryClientProvider client={qc}>
+				<TimelineDataProvider>
+					<TimelineProvider initialZoom="weeks">
+						<RowSelectionProvider>
+							<TimelineTable />
+						</RowSelectionProvider>
+					</TimelineProvider>
+				</TimelineDataProvider>
+			</QueryClientProvider>,
+		);
+	}
+
+	afterEach(() => vi.mocked(useTimelineData).mockRestore());
+
+	it("marks each undated row with an Unplanned indicator", () => {
+		renderWithMock({
+			items: [datedItem],
+			undatedTaskRows: [{ id: "u1", name: "Undated Task", parentId: null }],
+		});
+		expect(screen.getAllByLabelText("Unplanned")).toHaveLength(1);
+	});
+
+	it("does not mark dated rows as unplanned", () => {
+		renderWithMock({ items: [datedItem], undatedTaskRows: [] });
+		expect(screen.queryByLabelText("Unplanned")).toBeNull();
 	});
 });
