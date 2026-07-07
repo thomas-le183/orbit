@@ -5,11 +5,14 @@ import { useTimelineController } from "../controller/context";
 import { type Geometry, rangeVisibility } from "../controller/geometry";
 import { useHorizontalPercentageOffset } from "../controller/hooks";
 import { useTimelineData } from "../data/context";
+import { ROW_PADDING } from "../layout/row-metrics";
 import { useRowSelection } from "../selection/context";
+import { ONE_DAY, startOfUtcDay } from "../units/make-units";
 import type { RelativeTimeRangeOffset } from "../units/types";
 import { barHeight, GROUP_PADDING } from "./lane-metrics";
 import type { SchedulerRow } from "./layout";
 import type { DragRole } from "./use-bar-drag";
+import type { LaneCreateDraft } from "./use-lane-create";
 
 /** Horizontal gap trimmed off each side of a bar so it reads as distinct. */
 const BAR_INLINE_INSET_PX = 3;
@@ -21,6 +24,11 @@ export default function SchedulerLanes({
 	beginDrag,
 	dragDraft,
 	wasDragged,
+	beginCreate,
+	createDraft,
+	renamingId,
+	onRename,
+	clearRenaming,
 }: {
 	rows: SchedulerRow[];
 	totalHeight: number;
@@ -44,8 +52,16 @@ export default function SchedulerLanes({
 		pointerContentY?: number;
 	} | null;
 	wasDragged: () => boolean;
+	beginCreate: (
+		e: ReactPointerEvent,
+		row: { key: string; assigneeId?: string },
+	) => void;
+	createDraft: LaneCreateDraft | null;
+	renamingId: string | null;
+	onRename: (id: string, name: string) => void;
+	clearRenaming: () => void;
 }) {
-	const { offsetMs, zoomLevel, viewportWidth } = useTimelineController();
+	const { offsetMs, zoomLevel, viewportWidth, today } = useTimelineController();
 	const { getPercentageOffset } = useHorizontalPercentageOffset();
 	const { isSelected, toggle, hoveredId, setHovered } = useRowSelection();
 	const { isError } = useTimelineData();
@@ -70,6 +86,40 @@ export default function SchedulerLanes({
 			)}
 			{rows.map((row) => (
 				<Fragment key={row.key}>
+					<div
+						data-testid="scheduler-create-surface"
+						onPointerDown={(e) =>
+							beginCreate(e, { key: row.key, assigneeId: row.assignee?.id })
+						}
+						className="pointer-events-auto absolute inset-x-0 cursor-crosshair"
+						style={{ top: row.top, height: row.height }}
+					/>
+					{createDraft?.laneKey === row.key &&
+						(() => {
+							const left = getPercentageOffset(
+								startOfUtcDay(Date.parse(createDraft.startDate)) - today,
+							);
+							const right = getPercentageOffset(
+								startOfUtcDay(Date.parse(createDraft.endDate)) -
+									today +
+									ONE_DAY,
+							);
+							if (!Number.isFinite(left) || !Number.isFinite(right)) {
+								return null;
+							}
+							return (
+								<span
+									data-testid="scheduler-create-preview"
+									className="pointer-events-none absolute rounded-md border-2 border-dashed border-primary/60 bg-primary/15"
+									style={{
+										left: `${left}%`,
+										width: `${Math.max(right - left, 0)}%`,
+										top: row.top + ROW_PADDING,
+										height: row.height - ROW_PADDING * 2,
+									}}
+								/>
+							);
+						})()}
 					{dragDraft?.pointerContentY != null &&
 						dragDraft.targetLaneKey === row.key && (
 							<div
@@ -87,7 +137,8 @@ export default function SchedulerLanes({
 							}
 							const left = getPercentageOffset(range.from);
 							const right = getPercentageOffset(range.to);
-							if (!Number.isFinite(left) || !Number.isFinite(right)) return null;
+							if (!Number.isFinite(left) || !Number.isFinite(right))
+								return null;
 							const width = Math.max(right - left, minWidthPercent);
 							const height = barHeight(item);
 							const dragging = dragDraft?.id === item.id;
@@ -97,6 +148,48 @@ export default function SchedulerLanes({
 									: row.top + GROUP_PADDING + lane.top;
 							const selected = isSelected(item.id);
 							const hovered = hoveredId === item.id;
+							if (renamingId === item.id) {
+								return (
+									<div
+										key={item.id}
+										data-testid="scheduler-bar-renaming"
+										style={{
+											left: `calc(${left}% + ${BAR_INLINE_INSET_PX}px)`,
+											width: `calc(${width}% - ${BAR_INLINE_INSET_PX * 2}px)`,
+											top,
+											height,
+											backgroundColor: item.color,
+										}}
+										className="pointer-events-auto absolute flex items-center overflow-hidden rounded-md px-2 shadow-sm ring-2 ring-primary"
+										onPointerDown={(e) => e.stopPropagation()}
+									>
+										<input
+											data-testid="scheduler-bar-rename-input"
+											aria-label="Rename task"
+											defaultValue={item.name}
+											autoFocus
+											onFocus={(e) => e.currentTarget.select()}
+											onKeyDown={(e) => {
+												if (e.key === "Enter") {
+													e.preventDefault();
+													const v = e.currentTarget.value.trim();
+													if (v && v !== item.name) onRename(item.id, v);
+													clearRenaming();
+												} else if (e.key === "Escape") {
+													e.preventDefault();
+													clearRenaming();
+												}
+											}}
+											onBlur={(e) => {
+												const v = e.currentTarget.value.trim();
+												if (v && v !== item.name) onRename(item.id, v);
+												clearRenaming();
+											}}
+											className="w-full bg-transparent text-xs font-medium text-white outline-none placeholder:text-white/70"
+										/>
+									</div>
+								);
+							}
 							return (
 								<button
 									type="button"
