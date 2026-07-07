@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { type ReactNode, useState } from "react";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { TimelineItem } from "@/data/timeline-items";
@@ -178,6 +178,42 @@ function renderScheduler() {
 	);
 }
 
+/**
+ * Same bridge as SeedDataBridge, but captures a stable `setEstimate` spy
+ * (created once, outside the mock factory) so assertions can be made on it
+ * after re-renders triggered by the resize gesture's optimistic update.
+ */
+function renderSchedulerWithEstimateSpy() {
+	const setEstimate = vi.fn();
+	function Bridge({ children }: { children: ReactNode }) {
+		const [items, setItems] = useState<TimelineItem[]>(seedItems);
+		vi.mocked(useTimelineData).mockReturnValue(
+			defaultTimelineData({
+				items,
+				updateItem: (id, patch) =>
+					setItems((prev) =>
+						prev.map((i) => (i.id === id ? { ...i, ...patch } : i)),
+					),
+				setEstimate,
+			}),
+		);
+		return <>{children}</>;
+	}
+	const qc = new QueryClient({
+		defaultOptions: { queries: { retry: false } },
+	});
+	render(
+		<QueryClientProvider client={qc}>
+			<TimelineDataProvider>
+				<Bridge>
+					<SchedulerView />
+				</Bridge>
+			</TimelineDataProvider>
+		</QueryClientProvider>,
+	);
+	return { setEstimate };
+}
+
 describe("SchedulerView", () => {
 	it("renders per-assignee group headers from seed data", async () => {
 		renderScheduler();
@@ -203,6 +239,23 @@ describe("SchedulerView", () => {
 		fireEvent.pointerUp(window, { clientY: 400 });
 
 		expect(bar.style.height).toBe("96px");
+	});
+
+	it("committing a bar resize persists the estimate via setEstimate", async () => {
+		const { setEstimate } = renderSchedulerWithEstimateSpy();
+		await screen.findAllByTestId("scheduler-group-header");
+
+		// Target a specific, known bar so we can assert on its id.
+		const bar = screen.getByTitle("Ana task one");
+		const handle = within(bar).getByTestId("scheduler-bar-resize");
+
+		fireEvent.pointerDown(handle, { clientY: 100, pointerId: 1 });
+		fireEvent.pointerMove(window, { clientY: 400 });
+		fireEvent.pointerUp(window, { clientY: 400 });
+
+		// The resize wiring in scheduler-layout.tsx must call setEstimate (API
+		// persistence), not just updateItem (optimistic local state), on commit.
+		expect(setEstimate).toHaveBeenCalledWith("t-ana-1", expect.any(Number));
 	});
 
 	it("dragging a bar body horizontally reschedules it (left shifts)", async () => {
