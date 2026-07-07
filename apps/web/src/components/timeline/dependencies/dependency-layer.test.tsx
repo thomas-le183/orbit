@@ -1,7 +1,28 @@
 import { render } from "@testing-library/react";
 import { useEffect } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { timelineItems } from "@/data/timeline-items";
+import type { TimelineItem } from "@/data/timeline-items";
+
+const fixtureItems: TimelineItem[] = [
+	{
+		id: "t-a",
+		kind: "task",
+		name: "Task A",
+		parentId: null,
+		startDate: "2026-06-01",
+		endDate: "2026-06-05",
+		color: "#6366f1",
+	},
+	{
+		id: "t-b",
+		kind: "task",
+		name: "Task B",
+		parentId: null,
+		startDate: "2026-06-10",
+		endDate: "2026-06-14",
+		color: "#6366f1",
+	},
+];
 import { TimelineProvider, useTimelineController } from "../controller/context";
 import { useTimelineData } from "../data/context";
 import { DependencyLayer } from "./dependency-layer";
@@ -20,9 +41,9 @@ function SizeViewport({ width }: { width: number }) {
 }
 
 function renderLayer() {
-	const [a, b] = timelineItems;
+	const [a, b] = fixtureItems;
 	(useTimelineData as ReturnType<typeof vi.fn>).mockReturnValue({
-		items: timelineItems,
+		items: fixtureItems,
 		undatedTaskRows: [],
 		milestoneMarkers: [],
 		isLoading: false,
