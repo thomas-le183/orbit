@@ -50,8 +50,9 @@ export function layoutScheduler(
 	items: TimelineItem[],
 	mode: GroupingMode,
 	today: number,
+	allAssignees: TaskAssignee[] = [],
 ): { rows: SchedulerRow[]; totalHeight: number } {
-	const groups = buildGroupRows(items, mode);
+	const groups = buildGroupRows(items, mode, allAssignees);
 	const rows: SchedulerRow[] = [];
 	let top = 0;
 	for (const g of groups) {

@@ -44,11 +44,11 @@ const fixtureItems: TimelineItem[] = [
 beforeEach(() => {
 	vi.mocked(useTimelineData).mockReturnValue({
 		items: fixtureItems,
+		assignees: [],
 		updateItem: vi.fn(),
 		moveDays: vi.fn(),
 		undatedTaskRows: [],
 		scheduleTask: vi.fn(),
-		reassignTask: vi.fn(),
 		setEstimate: vi.fn(),
 		milestoneMarkers: [],
 		isLoading: false,

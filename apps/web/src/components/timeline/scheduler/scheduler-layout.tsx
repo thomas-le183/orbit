@@ -46,21 +46,24 @@ function GroupHeader({ row }: { row: SchedulerRow }) {
 	return (
 		<div
 			data-testid="scheduler-group-header"
-			className="flex items-center gap-2 border-b border-border px-3"
+			className="border-b border-border"
 			style={{ height: row.height }}
 		>
-			<UserAvatar
-				size="sm"
-				colorSeed={row.assignee?.id ?? row.key}
-				placeholder={row.label}
-				avatarUrl={row.assignee?.avatarUrl}
-			/>
-			<span className="min-w-0 flex-1 truncate text-sm font-medium">
-				{row.label}
-			</span>
-			<span className="shrink-0 text-xs text-muted-foreground">
-				{row.lanes.reduce((n, lane) => n + lane.bars.length, 0)}
-			</span>
+			{/* Stick the assignee to the top so it stays visible on tall rows. */}
+			<div className="sticky top-0 flex items-center gap-2 bg-background-primary px-3 py-2">
+				<UserAvatar
+					size="sm"
+					colorSeed={row.assignee?.id ?? row.key}
+					placeholder={row.label}
+					avatarUrl={row.assignee?.avatarUrl}
+				/>
+				<span className="min-w-0 flex-1 truncate text-sm font-medium">
+					{row.label}
+				</span>
+				<span className="shrink-0 text-xs text-muted-foreground">
+					{row.lanes.reduce((n, lane) => n + lane.bars.length, 0)}
+				</span>
+			</div>
 		</div>
 	);
 }
@@ -79,14 +82,8 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 	const { tableWidth, collapsed, onDividerPointerDown } = useResizableDivider();
 	const { onWheel } = usePan();
 	const { clear } = useRowSelection();
-	const {
-		items,
-		updateItem,
-		scheduleTask,
-		reassignTask,
-		setEstimate,
-		projectId,
-	} = useTimelineData();
+	const { items, assignees, updateItem, scheduleTask, setEstimate } =
+		useTimelineData();
 	const { draft, beginResize } = useEstimateResize({
 		onCommit: (id, estimatedTime) => {
 			updateItem(id, { estimatedTime });
@@ -107,8 +104,8 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 	);
 
 	const { rows, totalHeight } = useMemo(
-		() => layoutScheduler(effectiveItems, "assignee", today),
-		[effectiveItems, today],
+		() => layoutScheduler(effectiveItems, "assignee", today, assignees),
+		[effectiveItems, today, assignees],
 	);
 
 	const resolveLaneAt = useCallback(
@@ -137,14 +134,14 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 		wasDragged,
 	} = useBarDrag({
 		onCommit: (id, dates, targetLaneKey) => {
-			updateItem(id, dates);
-			scheduleTask(id, dates.startDate, dates.endDate);
-			if (targetLaneKey != null) {
-				const target = rows.find((r) => r.key === targetLaneKey);
-				const assignee = target?.assignee;
-				updateItem(id, { assignee });
-				if (projectId && assignee) reassignTask(id, assignee.id);
-			}
+			// A lane change carries the target's assignee; fold it into the same
+			// PATCH so dates + assignee update in one request.
+			const assignee =
+				targetLaneKey != null
+					? rows.find((r) => r.key === targetLaneKey)?.assignee
+					: undefined;
+			updateItem(id, assignee ? { ...dates, assignee } : dates);
+			scheduleTask(id, dates.startDate, dates.endDate, assignee?.id);
 		},
 		resolveLaneAt,
 	});
@@ -256,7 +253,7 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 							{!collapsed && (
 								<div
 									data-testid="scheduler-group-column"
-									className="relative z-30 min-h-full shrink-0 overflow-hidden border-r border-border bg-background-primary"
+									className="relative z-30 min-h-full shrink-0 border-r border-border bg-background-primary"
 									style={{ width: tableWidth }}
 								>
 									{rows.map((row) => (

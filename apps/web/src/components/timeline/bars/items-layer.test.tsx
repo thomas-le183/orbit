@@ -271,11 +271,11 @@ function defaultTimelineData(
 ): ReturnType<typeof useTimelineData> {
 	return {
 		items: seedItems,
+		assignees: [],
 		updateItem: vi.fn(),
 		moveDays: vi.fn(),
 		undatedTaskRows: [],
 		scheduleTask: vi.fn(),
-		reassignTask: vi.fn(),
 		setEstimate: vi.fn(),
 		milestoneMarkers: [],
 		isLoading: false,

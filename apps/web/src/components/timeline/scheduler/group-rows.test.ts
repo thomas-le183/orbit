@@ -41,6 +41,20 @@ describe("buildGroupRows", () => {
 		expect(rows.map((r) => r.key)).toEqual(["u_maya"]);
 	});
 
+	it("seeds an empty row for every assignee, even without tasks", () => {
+		const rows = buildGroupRows(
+			[item({ id: "a", assignee: maya })],
+			"assignee",
+			[maya, leo],
+		);
+		expect(rows.map((r) => r.key)).toEqual(["u_leo", "u_maya"]);
+		const leoRow = rows.find((r) => r.key === "u_leo");
+		expect(leoRow?.tasks).toEqual([]);
+		expect(
+			rows.find((r) => r.key === "u_maya")?.tasks.map((t) => t.id),
+		).toEqual(["a"]);
+	});
+
 	it("excludes parent tasks (those with children) and milestones", () => {
 		const rows = buildGroupRows(
 			[

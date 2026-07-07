@@ -41,12 +41,21 @@ function shiftDates(item: TimelineItem, days: number): TimelineItem {
 
 type TimelineDataValue = {
 	items: TimelineItem[];
+	/** Every org member as a possible assignee — drives scheduler rows. */
+	assignees: TaskAssignee[];
 	updateItem: (id: string, patch: Partial<TimelineItem>) => void;
 	moveDays: (id: string, days: number) => void;
 	undatedTaskRows: UndatedTaskRow[];
-	/** Assign dates to an undated task, scheduling it onto the timeline. */
-	scheduleTask: (id: string, startDate: string, endDate: string) => void;
-	reassignTask: (id: string, assigneeId: string) => void;
+	/**
+	 * Schedule a task onto the timeline. Pass `assigneeId` to also move it to a
+	 * new assignee in the same request (one PATCH covers dates + assignee).
+	 */
+	scheduleTask: (
+		id: string,
+		startDate: string,
+		endDate: string,
+		assigneeId?: string,
+	) => void;
 	setEstimate: (id: string, estimatedTime: number) => void;
 	milestoneMarkers: MilestoneMarker[];
 	isLoading: boolean;
@@ -86,6 +95,8 @@ export function TimelineDataProvider({
 		return map;
 	}, [membersQuery.data]);
 
+	const assignees = useMemo(() => [...assigneeById.values()], [assigneeById]);
+
 	const mapped = useMemo(() => {
 		if (!projectId) {
 			return {
@@ -116,15 +127,11 @@ export function TimelineDataProvider({
 	}, []);
 
 	const scheduleTask = useCallback(
-		(id: string, startDate: string, endDate: string) => {
-			updateTask.mutate({ id, input: { startDate, endDate } });
-		},
-		[updateTask],
-	);
-
-	const reassignTask = useCallback(
-		(id: string, assigneeId: string) => {
-			updateTask.mutate({ id, input: { assigneeId } });
+		(id: string, startDate: string, endDate: string, assigneeId?: string) => {
+			updateTask.mutate({
+				id,
+				input: { startDate, endDate, ...(assigneeId ? { assigneeId } : {}) },
+			});
 		},
 		[updateTask],
 	);
@@ -179,11 +186,11 @@ export function TimelineDataProvider({
 	const value = useMemo<TimelineDataValue>(
 		() => ({
 			items,
+			assignees,
 			updateItem,
 			moveDays,
 			undatedTaskRows: mapped.undatedTaskRows,
 			scheduleTask,
-			reassignTask,
 			setEstimate,
 			milestoneMarkers: mapped.milestoneMarkers,
 			isLoading: projectId
@@ -199,11 +206,11 @@ export function TimelineDataProvider({
 		}),
 		[
 			items,
+			assignees,
 			updateItem,
 			moveDays,
 			mapped.undatedTaskRows,
 			scheduleTask,
-			reassignTask,
 			setEstimate,
 			mapped.milestoneMarkers,
 			projectId,

@@ -59,11 +59,11 @@ function defaultTimelineData(
 ): ReturnType<typeof useTimelineData> {
 	return {
 		items: fixtureItems,
+		assignees: [],
 		updateItem: vi.fn(),
 		moveDays: vi.fn(),
 		undatedTaskRows: [],
 		scheduleTask: vi.fn(),
-		reassignTask: vi.fn(),
 		setEstimate: vi.fn(),
 		milestoneMarkers: [],
 		isLoading: false,
@@ -197,11 +197,11 @@ describe("TimelineTable unplanned indicator", () => {
 	) {
 		const base: ReturnType<typeof useTimelineData> = {
 			items: [],
+			assignees: [],
 			updateItem: vi.fn(),
 			moveDays: vi.fn(),
 			undatedTaskRows: [],
 			scheduleTask: vi.fn(),
-			reassignTask: vi.fn(),
 			setEstimate: vi.fn(),
 			milestoneMarkers: [],
 			isLoading: false,

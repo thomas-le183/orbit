@@ -11,6 +11,9 @@ import { barHeight, GROUP_PADDING } from "./lane-metrics";
 import type { SchedulerRow } from "./layout";
 import type { DragRole } from "./use-bar-drag";
 
+/** Horizontal gap trimmed off each side of a bar so it reads as distinct. */
+const BAR_INLINE_INSET_PX = 3;
+
 export default function SchedulerLanes({
 	rows,
 	totalHeight,
@@ -116,8 +119,8 @@ export default function SchedulerLanes({
 										})
 									}
 									style={{
-										left: `${left}%`,
-										width: `${width}%`,
+										left: `calc(${left}% + ${BAR_INLINE_INSET_PX}px)`,
+										width: `calc(${width}% - ${BAR_INLINE_INSET_PX * 2}px)`,
 										top,
 										height,
 										backgroundColor: item.color,
