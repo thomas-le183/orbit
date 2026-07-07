@@ -11,6 +11,8 @@ import { useMemo } from "react";
 import { useTimelineController } from "../controller/context";
 import { layoutItems } from "../controller/layout";
 import { useTimelineData } from "../data/context";
+import { DraftTableCell } from "../draft/draft-row";
+import { useDraftTask } from "../draft/use-draft-task";
 import { useRowSelection } from "../selection/context";
 import { contentHeight, ROW_HEIGHT } from "./row-metrics";
 import { useVirtualRows } from "./virtual-rows";
@@ -63,8 +65,10 @@ export default function TimelineTable() {
 	const { isSelected, hoveredId, selectTo, toggle, setHovered } =
 		useRowSelection();
 	const { isVisible } = useVirtualRows();
+	const { enabled: draftEnabled } = useDraftTask();
 
-	const totalRows = rows.length + undatedTaskRows.length;
+	const draftIndex = rows.length + undatedTaskRows.length;
+	const totalRows = draftIndex + (draftEnabled ? 1 : 0);
 
 	return (
 		<div
@@ -192,6 +196,10 @@ export default function TimelineTable() {
 					</div>
 				);
 			})}
+
+			{draftEnabled && isVisible(draftIndex) && (
+				<DraftTableCell rowIndex={draftIndex} />
+			)}
 		</div>
 	);
 }

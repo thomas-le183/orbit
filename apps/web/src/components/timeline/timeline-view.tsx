@@ -45,6 +45,7 @@ export default function TimelineView() {
 						tableHeader={<TimelineTableHeader />}
 						table={<TimelineTable />}
 						onNewTask={projectId ? () => setNewTaskOpen(true) : undefined}
+						projectId={projectId}
 						viewSwitch={viewSwitch}
 					/>
 					{projectId && (

@@ -19,6 +19,8 @@ import {
 import { useTimelineData } from "../data/context";
 import { DependencyLayer } from "../dependencies/dependency-layer";
 import type { Anchor } from "../dependencies/geometry";
+import { DraftLane } from "../draft/draft-row";
+import { useDraftTask } from "../draft/use-draft-task";
 import {
 	contentHeight,
 	ROW_HEIGHT,
@@ -63,6 +65,8 @@ export default function ItemsLayer() {
 
 	const { isSelected, hoveredId, setHovered } = useRowSelection();
 	const { isVisible, isSpanVisible } = useVirtualRows();
+	const { enabled: draftEnabled } = useDraftTask();
+	const draftIndex = rows.length + undatedTaskRows.length;
 
 	// Ghost bar shown while hovering an undated lane: the span a click would create.
 	const [schedulePreview, setSchedulePreview] = useState<{
@@ -176,7 +180,11 @@ export default function ItemsLayer() {
 		<div
 			data-testid="timeline-items-content"
 			className="pointer-events-none relative w-full"
-			style={{ height: contentHeight(rows.length + undatedTaskRows.length) }}
+			style={{
+				height: contentHeight(
+					rows.length + undatedTaskRows.length + (draftEnabled ? 1 : 0),
+				),
+			}}
 		>
 			{isError && (
 				<div
@@ -524,6 +532,10 @@ export default function ItemsLayer() {
 					</Fragment>
 				);
 			})}
+
+			{draftEnabled && isVisible(draftIndex) && (
+				<DraftLane rowIndex={draftIndex} />
+			)}
 
 			<DependencyLayer draft={draft} linkDraft={linkDraft} />
 			{dragTooltip}
