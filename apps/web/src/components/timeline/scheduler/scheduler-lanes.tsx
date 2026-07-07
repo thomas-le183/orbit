@@ -176,7 +176,13 @@ export default function SchedulerLanes({
 											aria-label="Rename task"
 											defaultValue={item.name}
 											autoFocus
-											onFocus={(e) => e.currentTarget.select()}
+											onFocus={(e) => {
+												// Reset the commit guard on each fresh focus so a
+												// missed unmount-blur can't leave it stuck true and
+												// swallow the next rename's blur-commit.
+												renameCommittedRef.current = false;
+												e.currentTarget.select();
+											}}
 											onKeyDown={(e) => {
 												if (e.key === "Enter") {
 													e.preventDefault();
