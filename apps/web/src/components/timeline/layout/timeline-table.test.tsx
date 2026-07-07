@@ -202,6 +202,7 @@ describe("TimelineTable unplanned indicator", () => {
 			undatedTaskRows: [],
 			scheduleTask: vi.fn(),
 			reassignTask: vi.fn(),
+			setEstimate: vi.fn(),
 			milestoneMarkers: [],
 			isLoading: false,
 			isError: false,
