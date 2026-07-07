@@ -23,6 +23,7 @@ const fixtureItems: TimelineItem[] = [
 		color: "#6366f1",
 	},
 ];
+
 import { TimelineProvider, useTimelineController } from "../controller/context";
 import { useTimelineData } from "../data/context";
 import { DependencyLayer } from "./dependency-layer";

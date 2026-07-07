@@ -18,7 +18,8 @@ vi.mock("../data/context", async (importOriginal) => {
 // day offsets from today (rather than hardcoded) so the fixture doesn't
 // bit-rot as the real calendar date advances.
 const today = startOfUtcDay(Date.now());
-const dateAt = (offsetDays: number) => toUtcDateString(today + offsetDays * ONE_DAY);
+const dateAt = (offsetDays: number) =>
+	toUtcDateString(today + offsetDays * ONE_DAY);
 
 // Fixture standing in for the removed timeline-items seed. Groups sort
 // alphabetically by assignee name (see group-rows.ts). "Ana Alpha" has two
