@@ -129,6 +129,7 @@ export const task = pgTable("task", {
 		.references(() => taskStatus.id, { onDelete: "restrict" }),
 	priority: text("priority").notNull().default("none"),
 	progress: integer("progress").notNull().default(0),
+	estimatedTime: integer("estimated_time"),
 	startDate: date("start_date", { mode: "string" }),
 	endDate: date("end_date", { mode: "string" }),
 	color: text("color"),

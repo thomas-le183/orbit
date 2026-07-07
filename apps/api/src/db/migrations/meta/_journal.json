@@ -36,6 +36,13 @@
       "when": 1782964943709,
       "tag": "0004_elite_hellion",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783408096314,
+      "tag": "0005_low_molly_hayes",
+      "breakpoints": true
     }
   ]
 }
