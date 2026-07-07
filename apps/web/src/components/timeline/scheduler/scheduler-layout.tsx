@@ -27,6 +27,7 @@ import { layoutScheduler, type SchedulerRow } from "./layout";
 import SchedulerLanes from "./scheduler-lanes";
 import { useBarDrag } from "./use-bar-drag";
 import { useEstimateResize } from "./use-estimate-resize";
+import { useLaneCreate } from "./use-lane-create";
 
 const PAN_STEP = 0.25;
 
@@ -78,12 +79,20 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 		viewportRef,
 		scrollContainerRef,
 		today,
+		offsetMs,
 	} = useTimelineController();
 	const { tableWidth, collapsed, onDividerPointerDown } = useResizableDivider();
 	const { onWheel } = usePan();
 	const { clear } = useRowSelection();
-	const { items, assignees, updateItem, scheduleTask, setEstimate } =
-		useTimelineData();
+	const {
+		items,
+		assignees,
+		updateItem,
+		scheduleTask,
+		setEstimate,
+		createTask,
+		renameTask,
+	} = useTimelineData();
 	const { draft, beginResize } = useEstimateResize({
 		onCommit: (id, estimatedTime) => {
 			updateItem(id, { estimatedTime });
@@ -107,6 +116,17 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 		() => layoutScheduler(effectiveItems, "assignee", today, assignees),
 		[effectiveItems, today, assignees],
 	);
+
+	const {
+		draft: createDraft,
+		beginCreate,
+		renamingId,
+		clearRenaming,
+	} = useLaneCreate({
+		geom: { offsetMs, zoom: zoomLevel, viewportWidth },
+		today,
+		onCreate: createTask,
+	});
 
 	const resolveLaneAt = useCallback(
 		(clientY: number) => {
@@ -273,6 +293,11 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 									beginDrag={beginDrag}
 									dragDraft={dragDraft}
 									wasDragged={wasDragged}
+									beginCreate={beginCreate}
+									createDraft={createDraft}
+									renamingId={renamingId}
+									onRename={renameTask}
+									clearRenaming={clearRenaming}
 								/>
 							</div>
 						</div>

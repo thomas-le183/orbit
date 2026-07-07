@@ -1,3 +1,4 @@
+import type { CreateTaskInput } from "@orbit/shared";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { type ReactNode, useState } from "react";
@@ -104,6 +105,10 @@ function defaultTimelineData(
 		undatedTaskRows: [],
 		scheduleTask: vi.fn(),
 		setEstimate: vi.fn(),
+		createTask: vi.fn((_input: CreateTaskInput) =>
+			Promise.resolve({ id: "new-task" }),
+		),
+		renameTask: vi.fn(),
 		milestoneMarkers: [],
 		isLoading: false,
 		isError: false,
@@ -295,5 +300,133 @@ describe("SchedulerView", () => {
 		// The first assignee's lane lost a task (it moved to the last lane).
 		const headersAfter = screen.getAllByTestId("scheduler-group-header");
 		expect(headersAfter[0].textContent).not.toBe(firstCountBefore);
+	});
+
+	it("shows a dashed create preview while dragging on an empty lane", async () => {
+		renderScheduler();
+		await screen.findAllByTestId("scheduler-group-header");
+
+		const surface = screen.getAllByTestId("scheduler-create-surface")[0];
+		fireEvent.pointerDown(surface, { clientX: 100, pointerId: 1 });
+		fireEvent.pointerMove(window, { clientX: 300 });
+
+		expect(screen.getByTestId("scheduler-create-preview")).toBeInTheDocument();
+
+		fireEvent.pointerUp(window, { clientX: 300 });
+	});
+
+	it("dragging on an assignee lane creates a 'New task' for that assignee", async () => {
+		const createTask = vi.fn((_input: CreateTaskInput) =>
+			Promise.resolve({ id: "new-task" }),
+		);
+		function Bridge({ children }: { children: ReactNode }) {
+			const [items, setItems] = useState<TimelineItem[]>(seedItems);
+			vi.mocked(useTimelineData).mockReturnValue(
+				defaultTimelineData({
+					items,
+					updateItem: (id, patch) =>
+						setItems((prev) =>
+							prev.map((i) => (i.id === id ? { ...i, ...patch } : i)),
+						),
+					createTask,
+				}),
+			);
+			return <>{children}</>;
+		}
+		const qc = new QueryClient({
+			defaultOptions: { queries: { retry: false } },
+		});
+		render(
+			<QueryClientProvider client={qc}>
+				<TimelineDataProvider>
+					<Bridge>
+						<SchedulerView />
+					</Bridge>
+				</TimelineDataProvider>
+			</QueryClientProvider>,
+		);
+		await screen.findAllByTestId("scheduler-group-header");
+
+		// First lane belongs to the alphabetically-first assignee (Ana Alpha).
+		const surface = screen.getAllByTestId("scheduler-create-surface")[0];
+		fireEvent.pointerDown(surface, { clientX: 200, pointerId: 1 });
+		fireEvent.pointerMove(window, { clientX: 380 });
+		fireEvent.pointerUp(window, { clientX: 380 });
+
+		expect(createTask).toHaveBeenCalledTimes(1);
+		expect(createTask.mock.calls[0][0]).toMatchObject({
+			name: "New task",
+			assigneeId: "u_ana",
+		});
+	});
+
+	it("renames a task inline: Enter commits via renameTask", async () => {
+		const renameTask = vi.fn();
+		// createTask appends a dated bar for Ana and resolves its id so it
+		// renders and enters rename mode.
+		function Bridge({ children }: { children: ReactNode }) {
+			const [items, setItems] = useState<TimelineItem[]>(seedItems);
+			const createTask = vi.fn((_input: { assigneeId?: string }) => {
+				const created: TimelineItem = {
+					id: "created-1",
+					kind: "task",
+					name: "New task",
+					parentId: null,
+					startDate: dateAt(0),
+					endDate: dateAt(1),
+					progress: 0,
+					color: "#3b82f6",
+					assignee: {
+						id: "u_ana",
+						name: "Ana Alpha",
+						avatarUrl: "https://i.pravatar.cc/64?u=ana",
+					},
+					estimatedTime: 90,
+				};
+				setItems((prev) => [...prev, created]);
+				return Promise.resolve({ id: created.id });
+			});
+			vi.mocked(useTimelineData).mockReturnValue(
+				defaultTimelineData({
+					items,
+					updateItem: (id, patch) =>
+						setItems((prev) =>
+							prev.map((i) => (i.id === id ? { ...i, ...patch } : i)),
+						),
+					createTask,
+					renameTask,
+				}),
+			);
+			return <>{children}</>;
+		}
+		const qc = new QueryClient({
+			defaultOptions: { queries: { retry: false } },
+		});
+		render(
+			<QueryClientProvider client={qc}>
+				<TimelineDataProvider>
+					<Bridge>
+						<SchedulerView />
+					</Bridge>
+				</TimelineDataProvider>
+			</QueryClientProvider>,
+		);
+		await screen.findAllByTestId("scheduler-group-header");
+
+		const surface = screen.getAllByTestId("scheduler-create-surface")[0];
+		fireEvent.pointerDown(surface, { clientX: 200, pointerId: 1 });
+		fireEvent.pointerMove(window, { clientX: 380 });
+		fireEvent.pointerUp(window, { clientX: 380 });
+
+		const input = await screen.findByTestId("scheduler-bar-rename-input");
+		fireEvent.change(input, { target: { value: "Design review" } });
+		fireEvent.keyDown(input, { key: "Enter" });
+
+		expect(renameTask).toHaveBeenCalledWith("created-1", "Design review");
+		// Enter must commit exactly once. (happy-dom does not fire the native
+		// unmount-blur that a real browser would, so this asserts the single-
+		// commit intent guarded by renameCommittedRef rather than reproducing
+		// the browser double-fire path.)
+		expect(renameTask).toHaveBeenCalledTimes(1);
 	});
 });

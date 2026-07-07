@@ -1,4 +1,4 @@
-import type { CreateDependencyInput } from "@orbit/shared";
+import type { CreateDependencyInput, CreateTaskInput } from "@orbit/shared";
 import {
 	createContext,
 	type ReactNode,
@@ -17,6 +17,7 @@ import {
 	useProjectDependencies,
 } from "@/hooks/use-dependencies";
 import {
+	useCreateTask,
 	useProjectMilestones,
 	useProjectTasks,
 	useUpdateTask,
@@ -57,6 +58,8 @@ type TimelineDataValue = {
 		assigneeId?: string,
 	) => void;
 	setEstimate: (id: string, estimatedTime: number) => void;
+	createTask: (input: CreateTaskInput) => Promise<{ id: string }>;
+	renameTask: (id: string, name: string) => void;
 	milestoneMarkers: MilestoneMarker[];
 	isLoading: boolean;
 	isError: boolean;
@@ -78,6 +81,7 @@ export function TimelineDataProvider({
 	const tasksQuery = useProjectTasks(projectId ?? "");
 	const milestonesQuery = useProjectMilestones(projectId ?? "");
 	const updateTask = useUpdateTask(projectId ?? "");
+	const createTaskMut = useCreateTask(projectId ?? "");
 	const dependenciesQuery = useProjectDependencies(projectId ?? "");
 	const createDependencyMut = useCreateDependency(projectId ?? "");
 	const deleteDependencyMut = useDeleteDependency(projectId ?? "");
@@ -143,6 +147,19 @@ export function TimelineDataProvider({
 		[updateTask],
 	);
 
+	const createTask = useCallback(
+		(input: CreateTaskInput) => createTaskMut.mutateAsync(input),
+		[createTaskMut],
+	);
+
+	const renameTask = useCallback(
+		(id: string, name: string) => {
+			updateItem(id, { name });
+			updateTask.mutate({ id, input: { name } });
+		},
+		[updateItem, updateTask],
+	);
+
 	const createDependency = useCallback(
 		(input: CreateDependencyInput) => createDependencyMut.mutate(input),
 		[createDependencyMut.mutate],
@@ -192,6 +209,8 @@ export function TimelineDataProvider({
 			undatedTaskRows: mapped.undatedTaskRows,
 			scheduleTask,
 			setEstimate,
+			createTask,
+			renameTask,
 			milestoneMarkers: mapped.milestoneMarkers,
 			isLoading: projectId
 				? tasksQuery.isLoading || milestonesQuery.isLoading
@@ -212,6 +231,8 @@ export function TimelineDataProvider({
 			mapped.undatedTaskRows,
 			scheduleTask,
 			setEstimate,
+			createTask,
+			renameTask,
 			mapped.milestoneMarkers,
 			projectId,
 			tasksQuery.isLoading,

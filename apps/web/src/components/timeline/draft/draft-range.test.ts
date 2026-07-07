@@ -29,4 +29,14 @@ describe("draftRangeFromDrag", () => {
 			endDate: "2026-07-09",
 		});
 	});
+
+	it("forceDrag takes the drag branch even below the click threshold", () => {
+		// Same sub-threshold delta (start=100, current=102) but forceDrag=true:
+		// both endpoints resolve to the day under the cursor → a 1-day span,
+		// NOT the 7-day default.
+		expect(draftRangeFromDrag(100, 102, rect, geom, today, true)).toEqual({
+			startDate: "2026-07-03",
+			endDate: "2026-07-03",
+		});
+	});
 });
