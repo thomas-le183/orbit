@@ -16,14 +16,14 @@ describe("rowCenterY", () => {
 
 describe("elbowPoints", () => {
 	it("routes a clean 3-bend when the target sits clear of the source", () => {
-		// finish source (dir +1) → start target (dir -1) ahead of it: the midpoint
-		// (50) is outward of both anchors, so no detour is needed.
+		// finish source (dir +1) → start target (dir -1) ahead of it: the turn sits
+		// a `gap` (14) off the source edge and still clears the target, so no detour.
 		expect(
 			elbowPoints({ x: 0, y: 20, dir: 1 }, { x: 100, y: 60, dir: -1 }, 14),
 		).toEqual([
 			{ x: 0, y: 20 },
-			{ x: 50, y: 20 },
-			{ x: 50, y: 60 },
+			{ x: 14, y: 20 },
+			{ x: 14, y: 60 },
 			{ x: 100, y: 60 },
 		]);
 	});
@@ -33,9 +33,31 @@ describe("elbowPoints", () => {
 			elbowPoints({ x: 100, y: 20, dir: -1 }, { x: 0, y: 100, dir: 1 }, 14),
 		).toEqual([
 			{ x: 100, y: 20 },
-			{ x: 50, y: 20 },
-			{ x: 50, y: 100 },
+			{ x: 86, y: 20 },
+			{ x: 86, y: 100 },
 			{ x: 0, y: 100 },
+		]);
+	});
+
+	it("brackets same-side anchors around the outer edge without a first-corner turn", () => {
+		// Both finish (dir +1): the vertical run sits a gap (16) beyond the outer
+		// edge (max 100 → 116) and both edges exit right, a symmetric bracket.
+		expect(
+			elbowPoints({ x: 0, y: 20, dir: 1 }, { x: 100, y: 60, dir: 1 }, 16),
+		).toEqual([
+			{ x: 0, y: 20 },
+			{ x: 116, y: 20 },
+			{ x: 116, y: 60 },
+			{ x: 100, y: 60 },
+		]);
+		// Both start (dir -1): run sits a gap beyond the outer left edge (min 0 → -16).
+		expect(
+			elbowPoints({ x: 40, y: 20, dir: -1 }, { x: 0, y: 60, dir: -1 }, 16),
+		).toEqual([
+			{ x: 40, y: 20 },
+			{ x: -16, y: 20 },
+			{ x: -16, y: 60 },
+			{ x: 0, y: 60 },
 		]);
 	});
 
@@ -75,7 +97,7 @@ describe("elbowMidpoint", () => {
 	it("sits on the vertical run of a clean 3-bend", () => {
 		expect(
 			elbowMidpoint({ x: 0, y: 20, dir: 1 }, { x: 100, y: 60, dir: -1 }, 14),
-		).toEqual({ x: 50, y: 40 });
+		).toEqual({ x: 14, y: 40 });
 	});
 
 	it("sits on the horizontal jog of the overlap detour", () => {
@@ -121,6 +143,6 @@ describe("elbowPath", () => {
 	it("renders the routed waypoints with rounded corners", () => {
 		expect(
 			elbowPath({ x: 0, y: 20, dir: 1 }, { x: 100, y: 60, dir: -1 }, 14),
-		).toBe("M 0 20 L 44 20 Q 50 20 50 26 L 50 54 Q 50 60 56 60 L 100 60");
+		).toBe("M 0 20 L 10 20 Q 14 20 14 24 L 14 56 Q 14 60 18 60 L 100 60");
 	});
 });

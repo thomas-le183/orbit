@@ -25,7 +25,10 @@ function SizeViewport({ width }: { width: number }) {
 	return null;
 }
 
-function renderLayer(width = 100000, zoom: "weeks" | "months" = "weeks") {
+function renderLayer(
+	width = 100000,
+	zoom: "weeks" | "months" | "quarters" = "weeks",
+) {
 	// huge width so the whole seed span is on-screen (no fly-outs)
 	return render(
 		<QueryClientProvider client={makeQc()}>
@@ -106,9 +109,9 @@ describe("ItemsLayer", () => {
 	});
 
 	it("renders an outside label when a bar is too narrow for its name", () => {
-		// months zoom (8px/day) in a 640px viewport makes the seed bars narrow
-		// relative to their long names, so the label spills outside.
-		const { container } = renderLayer(640, "months");
+		// quarters zoom (3.6px/day) makes the seed bars narrow relative to their
+		// long names, so the label spills outside.
+		const { container } = renderLayer(640, "quarters");
 		const outside = container.querySelectorAll(
 			"[data-testid='timeline-task-label-outside']",
 		);

@@ -18,7 +18,7 @@ vi.mock("../bars/use-edge-autoscroll", () => ({
 import { useBarDrag } from "./use-bar-drag";
 
 const ONE_DAY = 86_400_000;
-// weeks = 32 px/day.
+// weeks = 48 px/day.
 function pointerDownEvent(clientX: number) {
 	const target = {
 		setPointerCapture: vi.fn(),
@@ -51,9 +51,9 @@ describe("useBarDrag", () => {
 		});
 		expect(result.current.active).toEqual({ id: "t1", role: "move" });
 
-		// +96px = +3 days at 32 px/day.
+		// +144px = +3 days at 48 px/day.
 		act(() => {
-			fireEvent.pointerMove(window, { clientX: 196, clientY: 0 });
+			fireEvent.pointerMove(window, { clientX: 244, clientY: 0 });
 		});
 		expect(result.current.draft).toEqual({
 			id: "t1",
@@ -61,7 +61,7 @@ describe("useBarDrag", () => {
 		});
 
 		act(() => {
-			fireEvent.pointerUp(window, { clientX: 196, clientY: 0 });
+			fireEvent.pointerUp(window, { clientX: 244, clientY: 0 });
 		});
 		// range {3d, 6d} → start today+3, end today+6-1day.
 		expect(onCommit).toHaveBeenCalledWith(
@@ -87,9 +87,9 @@ describe("useBarDrag", () => {
 				range,
 			});
 		});
-		// +64px = +2 days.
+		// +96px = +2 days at 48 px/day.
 		act(() => {
-			fireEvent.pointerUp(window, { clientX: 64, clientY: 0 });
+			fireEvent.pointerUp(window, { clientX: 96, clientY: 0 });
 		});
 		// range {0, 5d} → start today, end today+5-1day.
 		expect(onCommit).toHaveBeenCalledWith(
@@ -112,9 +112,9 @@ describe("useBarDrag", () => {
 				range,
 			});
 		});
-		// +32px = +1 day.
+		// +48px = +1 day.
 		act(() => {
-			fireEvent.pointerUp(window, { clientX: 32, clientY: 0 });
+			fireEvent.pointerUp(window, { clientX: 48, clientY: 0 });
 		});
 		// range {1d, 3d} → start today+1, end today+3-1day.
 		expect(onCommit).toHaveBeenCalledWith(

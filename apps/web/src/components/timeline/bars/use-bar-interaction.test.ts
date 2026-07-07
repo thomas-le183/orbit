@@ -14,14 +14,14 @@ const today = startOfUtcDay(Date.parse("2026-06-01"));
 
 describe("pxToDays", () => {
 	it("converts pixels to whole days at the zoom's px/day, rounding", () => {
-		// weeks = 32 px/day
-		expect(pxToDays(64, "weeks")).toBe(2);
-		expect(pxToDays(40, "weeks")).toBe(1); // 1.25 → 1
-		expect(pxToDays(-48, "weeks")).toBe(-2); // -1.5 → -2 (round half away)
+		// weeks = 48 px/day
+		expect(pxToDays(96, "weeks")).toBe(2);
+		expect(pxToDays(60, "weeks")).toBe(1); // 1.25 → 1
+		expect(pxToDays(-72, "weeks")).toBe(-2); // -1.5 → -2 (round half away)
 	});
 
-	it("uses the zoom's scale (months = 8 px/day)", () => {
-		expect(pxToDays(24, "months")).toBe(3);
+	it("uses the zoom's scale (months = 12 px/day)", () => {
+		expect(pxToDays(36, "months")).toBe(3);
 	});
 });
 

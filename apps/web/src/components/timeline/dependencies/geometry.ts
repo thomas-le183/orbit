@@ -2,55 +2,56 @@ import { ROW_HEIGHT } from "../layout/row-metrics";
 
 export type Anchor = "start" | "finish";
 
-/** Vertical center (px) of the bar in row `rowIndex`. */
 export function rowCenterY(rowIndex: number): number {
 	return rowIndex * ROW_HEIGHT + ROW_HEIGHT / 2;
 }
 
-/** Horizontal approach gap (px) between the vertical run and the target edge. */
+/** Horizontal gap (px) between a connector's vertical run and the edge it approaches. */
 export const CONNECTOR_GAP = 16;
 
-/** Corner radius (px) applied to each bend of a connector. */
 export const CORNER_RADIUS = 4;
 
 type Point = { x: number; y: number };
 
 /**
- * Orthogonal waypoints from the source anchor `from` to the target anchor `to`.
- * `dir` is the outward horizontal direction of each anchor (+1 = finish/right
- * edge, -1 = start/left edge); a bar always extends INWARD from its anchor.
- *
- * Common case — the target sits clear of the source: a 3-bend route with the
- * vertical run at the horizontal midpoint. That midpoint is outward of both
- * anchors, so no segment enters either bar.
- *
- * Overlap case — the bars share horizontal space (e.g. the source's finish lands
- * PAST the target's start): the midpoint would cut through a bar, so we detour.
- * A short `gap` stub leaves each edge outward and a horizontal jog runs through
- * the row gap between the two bars — so the route never steps on the source or
- * the target bar, whatever the overlap.
+ * Orthogonal waypoints from anchor `from` to anchor `to`. `dir` is each anchor's
+ * outward direction (+1 = finish/right, -1 = start/left); the bar extends inward.
  */
 export function elbowPoints(
 	from: { x: number; y: number; dir: -1 | 1 },
 	to: { x: number; y: number; dir: -1 | 1 },
 	gap = CONNECTOR_GAP,
 ): Point[] {
-	const midX = (from.x + to.x) / 2;
-	// The midpoint clears a bar only when it lands on that anchor's OUTWARD side.
-	const sourceClear = Math.sign(midX - from.x) === from.dir;
-	const targetClear = Math.sign(midX - to.x) === to.dir;
-	if (sourceClear && targetClear) {
+	// Same-side (FF/SS): bracket both edges around a vertical run beyond the outer.
+	if (from.dir === to.dir) {
+		const runX =
+			from.dir === 1
+				? Math.max(from.x, to.x) + gap
+				: Math.min(from.x, to.x) - gap;
 		return [
 			{ x: from.x, y: from.y },
-			{ x: midX, y: from.y },
-			{ x: midX, y: to.y },
+			{ x: runX, y: from.y },
+			{ x: runX, y: to.y },
 			{ x: to.x, y: to.y },
 		];
 	}
+	const midX = (from.x + to.x) / 2;
+	const sourceClear = Math.sign(midX - from.x) === from.dir;
+	const targetClear = Math.sign(midX - to.x) === to.dir;
+	// Target clear of the source: turn near the source, else at the safe midpoint.
+	if (sourceClear && targetClear) {
+		const nearFromX = from.x + from.dir * gap;
+		const turnX = Math.sign(nearFromX - to.x) === to.dir ? nearFromX : midX;
+		return [
+			{ x: from.x, y: from.y },
+			{ x: turnX, y: from.y },
+			{ x: turnX, y: to.y },
+			{ x: to.x, y: to.y },
+		];
+	}
+	// Overlap: stub out of each edge and jog through the row gap, clearing both bars.
 	const exitX = from.x + from.dir * gap;
 	const entryX = to.x + to.dir * gap;
-	// Jog along the boundary of the row gap adjacent to the source (toward the
-	// target) — always empty of both the source and target bars.
 	const jogY = from.y + (to.y >= from.y ? 1 : -1) * (ROW_HEIGHT / 2);
 	return [
 		{ x: from.x, y: from.y },
@@ -62,11 +63,7 @@ export function elbowPoints(
 	];
 }
 
-/**
- * Midpoint of the connector's central segment — the natural spot to anchor the
- * delete affordance so it always sits ON the routed path (the vertical run for a
- * 3-bend, the horizontal jog for the overlap detour).
- */
+/** Midpoint of the connector's central segment, so an affordance sits ON the path. */
 export function elbowMidpoint(
 	from: { x: number; y: number; dir: -1 | 1 },
 	to: { x: number; y: number; dir: -1 | 1 },
@@ -80,10 +77,9 @@ export function elbowMidpoint(
 }
 
 /**
- * Render an orthogonal polyline as an SVG path with `radius`-rounded corners:
- * each interior vertex becomes a quadratic bend that begins/ends `radius` before
- * and after the corner, clamped to half of each adjacent segment so neighbouring
- * bends never overlap.
+ * Render an orthogonal polyline as an SVG path, replacing each interior vertex
+ * with a quadratic bend. The radius is clamped to half of each adjacent segment
+ * so neighbouring bends never overlap.
  */
 export function roundedPath(points: Point[], radius = CORNER_RADIUS): string {
 	if (points.length < 2) return "";

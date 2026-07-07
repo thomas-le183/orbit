@@ -4,10 +4,10 @@ const ONE_DAY = 86_400_000;
 
 /** Horizontal scale: how many CSS pixels one calendar day occupies, per zoom level. */
 export const PX_PER_DAY: Record<ZoomLevel, number> = {
-	weeks: 32,
-	months: 8,
-	quarters: 2.4,
-	years: 0.8,
+	weeks: 48,
+	months: 12,
+	quarters: 3.6,
+	years: 1.2,
 };
 
 export type Geometry = {
