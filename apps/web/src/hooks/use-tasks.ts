@@ -12,6 +12,7 @@ export type Task = {
 	statusId: string;
 	priority: string;
 	progress: number;
+	estimatedTime: number | null;
 	startDate: string | null;
 	endDate: string | null;
 	color: string | null;

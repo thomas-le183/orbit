@@ -46,6 +46,7 @@ export function mapProjectData(
 				startDate: start,
 				endDate: end,
 				progress: t.progress,
+				estimatedTime: t.estimatedTime ?? undefined,
 				color: t.color ?? DEFAULT_TASK_COLOR,
 				assignee: t.assigneeId ? assigneeById?.get(t.assigneeId) : undefined,
 			});

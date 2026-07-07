@@ -13,6 +13,7 @@ function task(partial: Partial<Task>): Task {
 		statusId: "s",
 		priority: "none",
 		progress: 0,
+		estimatedTime: null,
 		startDate: null,
 		endDate: null,
 		color: null,
@@ -156,5 +157,20 @@ describe("mapProjectData", () => {
 		);
 		expect(items[0].assignee).toBeUndefined();
 		expect(items[1].assignee).toBeUndefined();
+	});
+
+	it("maps estimatedTime onto the timeline bar", () => {
+		const { items } = mapProjectData(
+			[
+				task({
+					id: "t1",
+					startDate: "2026-06-01",
+					endDate: "2026-06-03",
+					estimatedTime: 90,
+				}),
+			],
+			[],
+		);
+		expect(items[0].estimatedTime).toBe(90);
 	});
 });
