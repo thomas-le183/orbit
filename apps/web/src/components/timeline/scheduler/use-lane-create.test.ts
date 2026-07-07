@@ -127,4 +127,31 @@ describe("useLaneCreate", () => {
 		});
 		expect(result.current.renamingId).toBeNull();
 	});
+
+	it("creates the true dragged span on a backtrack (never the default span)", async () => {
+		const onCreate = vi.fn(() => Promise.resolve({ id: "srv-4" }));
+		const { result } = renderHook(() =>
+			useLaneCreate({ geom, today, onCreate }),
+		);
+
+		act(() => {
+			result.current.beginCreate(pointerDownEvent(100), { key: "u_ana" });
+		});
+		// Drag out past the threshold, then back to within 4px of the start.
+		act(() => {
+			fireEvent.pointerMove(window, { clientX: 300 });
+		});
+		act(() => {
+			fireEvent.pointerMove(window, { clientX: 101 });
+		});
+		await act(async () => {
+			fireEvent.pointerUp(window, { clientX: 101 });
+		});
+
+		// moved is latched, so onCreate fires — with a 1-day dragged span, proving
+		// it did NOT fall into draftRangeFromDrag's 7-day default-span branch.
+		expect(onCreate).toHaveBeenCalledTimes(1);
+		const arg = onCreate.mock.calls[0][0];
+		expect(arg.startDate).toBe(arg.endDate);
+	});
 });

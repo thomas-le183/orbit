@@ -80,6 +80,7 @@ export function useLaneCreate(opts: {
 					rect,
 					optsRef.current.geom,
 					optsRef.current.today,
+					moved,
 				);
 
 			const onMove = (ev: PointerEvent) => {
