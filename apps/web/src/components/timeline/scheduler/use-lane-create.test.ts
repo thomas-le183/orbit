@@ -21,7 +21,14 @@ function pointerDownEvent(clientX: number) {
 
 describe("useLaneCreate", () => {
 	it("creates a task with the dragged dates and the row's assignee on release", async () => {
-		const onCreate = vi.fn(() => Promise.resolve({ id: "srv-1" }));
+		const onCreate = vi.fn(
+			(_input: {
+				name: string;
+				startDate: string;
+				endDate: string;
+				assigneeId?: string;
+			}) => Promise.resolve({ id: "srv-1" }),
+		);
 		const { result } = renderHook(() =>
 			useLaneCreate({ geom, today, onCreate }),
 		);
@@ -54,7 +61,14 @@ describe("useLaneCreate", () => {
 	});
 
 	it("does not create on a click (no drag past threshold)", async () => {
-		const onCreate = vi.fn(() => Promise.resolve({ id: "srv-1" }));
+		const onCreate = vi.fn(
+			(_input: {
+				name: string;
+				startDate: string;
+				endDate: string;
+				assigneeId?: string;
+			}) => Promise.resolve({ id: "srv-1" }),
+		);
 		const { result } = renderHook(() =>
 			useLaneCreate({ geom, today, onCreate }),
 		);
@@ -71,7 +85,14 @@ describe("useLaneCreate", () => {
 	});
 
 	it("omits assigneeId when the row has none (Unassigned)", async () => {
-		const onCreate = vi.fn(() => Promise.resolve({ id: "srv-2" }));
+		const onCreate = vi.fn(
+			(_input: {
+				name: string;
+				startDate: string;
+				endDate: string;
+				assigneeId?: string;
+			}) => Promise.resolve({ id: "srv-2" }),
+		);
 		const { result } = renderHook(() =>
 			useLaneCreate({ geom, today, onCreate }),
 		);
@@ -91,7 +112,14 @@ describe("useLaneCreate", () => {
 	});
 
 	it("ignores a second beginCreate while a gesture is active", () => {
-		const onCreate = vi.fn(() => Promise.resolve({ id: "x" }));
+		const onCreate = vi.fn(
+			(_input: {
+				name: string;
+				startDate: string;
+				endDate: string;
+				assigneeId?: string;
+			}) => Promise.resolve({ id: "x" }),
+		);
 		const { result } = renderHook(() =>
 			useLaneCreate({ geom, today, onCreate }),
 		);
@@ -108,7 +136,14 @@ describe("useLaneCreate", () => {
 	});
 
 	it("clearRenaming resets the rename target", async () => {
-		const onCreate = vi.fn(() => Promise.resolve({ id: "srv-3" }));
+		const onCreate = vi.fn(
+			(_input: {
+				name: string;
+				startDate: string;
+				endDate: string;
+				assigneeId?: string;
+			}) => Promise.resolve({ id: "srv-3" }),
+		);
 		const { result } = renderHook(() =>
 			useLaneCreate({ geom, today, onCreate }),
 		);
@@ -129,7 +164,14 @@ describe("useLaneCreate", () => {
 	});
 
 	it("creates the true dragged span on a backtrack (never the default span)", async () => {
-		const onCreate = vi.fn(() => Promise.resolve({ id: "srv-4" }));
+		const onCreate = vi.fn(
+			(_input: {
+				name: string;
+				startDate: string;
+				endDate: string;
+				assigneeId?: string;
+			}) => Promise.resolve({ id: "srv-4" }),
+		);
 		const { result } = renderHook(() =>
 			useLaneCreate({ geom, today, onCreate }),
 		);

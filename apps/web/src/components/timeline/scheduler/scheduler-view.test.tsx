@@ -1,3 +1,4 @@
+import type { CreateTaskInput } from "@orbit/shared";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { type ReactNode, useState } from "react";
@@ -104,7 +105,9 @@ function defaultTimelineData(
 		undatedTaskRows: [],
 		scheduleTask: vi.fn(),
 		setEstimate: vi.fn(),
-		createTask: vi.fn(() => Promise.resolve({ id: "new-task" })),
+		createTask: vi.fn((_input: CreateTaskInput) =>
+			Promise.resolve({ id: "new-task" }),
+		),
 		renameTask: vi.fn(),
 		milestoneMarkers: [],
 		isLoading: false,
@@ -313,7 +316,9 @@ describe("SchedulerView", () => {
 	});
 
 	it("dragging on an assignee lane creates a 'New task' for that assignee", async () => {
-		const createTask = vi.fn(() => Promise.resolve({ id: "new-task" }));
+		const createTask = vi.fn((_input: CreateTaskInput) =>
+			Promise.resolve({ id: "new-task" }),
+		);
 		function Bridge({ children }: { children: ReactNode }) {
 			const [items, setItems] = useState<TimelineItem[]>(seedItems);
 			vi.mocked(useTimelineData).mockReturnValue(
