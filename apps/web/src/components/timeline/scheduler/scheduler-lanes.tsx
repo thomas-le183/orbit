@@ -99,7 +99,7 @@ export default function SchedulerLanes({
 						onPointerDown={(e) =>
 							beginCreate(e, { key: row.key, assigneeId: row.assignee?.id })
 						}
-						className="pointer-events-auto absolute inset-x-0 cursor-crosshair"
+						className="pointer-events-auto absolute inset-x-0 cursor-crosshair border-b border-border"
 						style={{ top: row.top, height: row.height }}
 					/>
 					{createDraft?.laneKey === row.key &&
