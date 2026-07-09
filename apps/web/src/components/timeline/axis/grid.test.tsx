@@ -35,6 +35,33 @@ describe("TimelineGrid", () => {
 		expect(highlighted.length).toBe(1);
 	});
 
+	it("stripes weekend columns at weeks zoom", () => {
+		const { container } = render(
+			<TimelineProvider initialZoom="weeks">
+				<SizeViewport width={640} />
+				<TimelineGrid />
+			</TimelineProvider>,
+		);
+		const stripes = container.querySelectorAll(
+			"[data-testid='timeline-nonworking-stripe']",
+		);
+		// The rendered window spans multiple weeks, so several weekend days show.
+		expect(stripes.length).toBeGreaterThan(0);
+	});
+
+	it("does not stripe weekends at months zoom", () => {
+		const { container } = render(
+			<TimelineProvider initialZoom="months">
+				<SizeViewport width={640} />
+				<TimelineGrid />
+			</TimelineProvider>,
+		);
+		const stripes = container.querySelectorAll(
+			"[data-testid='timeline-nonworking-stripe']",
+		);
+		expect(stripes.length).toBe(0);
+	});
+
 	it("renders months zoom with borders on month boundaries", () => {
 		const { container } = render(
 			<TimelineProvider initialZoom="months">

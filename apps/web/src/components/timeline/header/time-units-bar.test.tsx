@@ -2,7 +2,7 @@ import { render } from "@testing-library/react";
 import { useEffect } from "react";
 import { describe, expect, it } from "vitest";
 import { TimelineProvider, useTimelineController } from "../controller/context";
-import { DragRangeProvider } from "../drag/context";
+import { DragRangeProvider, DragRangePublisher } from "../drag/context";
 import { ONE_DAY } from "../units/make-units";
 import TimeUnitsBar from "./time-units-bar";
 
@@ -54,12 +54,47 @@ describe("TimeUnitsBar", () => {
 		const { container } = render(
 			<TimelineProvider initialZoom="weeks">
 				<SizeViewport width={800} />
-				<DragRangeProvider range={{ from: 0, to: 2 * ONE_DAY }}>
+				<DragRangeProvider>
+					<DragRangePublisher
+						range={{ from: 0, to: 2 * ONE_DAY }}
+						pointerX={400}
+					/>
 					<TimeUnitsBar />
 				</DragRangeProvider>
 			</TimelineProvider>,
 		);
-		const highlighted = container.querySelectorAll("[data-highlighted='true']");
+		const highlighted = container.querySelectorAll(
+			"[data-testid='timeline-header-cell'][data-highlighted='true']",
+		);
 		expect(highlighted.length).toBe(2);
+		// Day-resolution zoom tints cells, so no pinned axis label.
+		expect(
+			container.querySelector("[data-testid='timeline-drag-axis-label']"),
+		).toBeNull();
+	});
+
+	it("pins a date-range axis label instead of tinting cells at coarse zooms", () => {
+		const { container } = render(
+			<TimelineProvider initialZoom="quarters">
+				<SizeViewport width={800} />
+				<DragRangeProvider>
+					<DragRangePublisher
+						range={{ from: 0, to: 2 * ONE_DAY }}
+						pointerX={400}
+					/>
+					<TimeUnitsBar />
+				</DragRangeProvider>
+			</TimelineProvider>,
+		);
+		// Coarse cells (quarters) are not tinted...
+		expect(
+			container.querySelectorAll(
+				"[data-testid='timeline-header-cell'][data-highlighted='true']",
+			).length,
+		).toBe(0);
+		// ...a date-range label is pinned to the axis instead.
+		expect(
+			container.querySelector("[data-testid='timeline-drag-axis-label']"),
+		).not.toBeNull();
 	});
 });

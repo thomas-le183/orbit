@@ -15,7 +15,7 @@ import { TimelineProvider, useTimelineController } from "../controller/context";
 import { msPerViewport } from "../controller/geometry";
 import CustomizeMenu from "../customize-menu";
 import { useTimelineData } from "../data/context";
-import { DragRangeProvider } from "../drag/context";
+import { DragRangeProvider, DragRangePublisher } from "../drag/context";
 import TimeUnitsBar from "../header/time-units-bar";
 import { useResizableDivider } from "../layout/use-resizable-divider";
 import MilestoneMarkers from "../milestone-markers";
@@ -217,7 +217,11 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 	}, [clear]);
 
 	return (
-		<DragRangeProvider range={headerDragRange}>
+		<DragRangeProvider>
+			<DragRangePublisher
+				range={headerDragRange}
+				pointerX={dragPointer?.x ?? null}
+			/>
 			<div
 				className="relative flex h-full flex-col"
 				data-testid="scheduler-view"

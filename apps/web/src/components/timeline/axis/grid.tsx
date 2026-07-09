@@ -5,8 +5,13 @@ import {
 	useWeekStart,
 	useZoomLevel,
 } from "../controller/hooks";
-import { getTodayColumnIndex, getUnits } from "../units/make-units";
-import { GridUnit } from "./unit";
+import {
+	getDayUnits,
+	getTodayColumnIndex,
+	getUnits,
+} from "../units/make-units";
+import { isNonWorkingDay } from "../units/working-days";
+import { GridUnit, NonWorkingStripe } from "./unit";
 
 /** Should this unit draw a right border for the given zoom level? */
 function hasRightBorder(
@@ -44,10 +49,29 @@ export default function TimelineGrid() {
 	);
 	const todayIndex = getTodayColumnIndex(units);
 
+	// Weekend shading only reads clearly at the day-resolution "weeks" zoom.
+	const weekendDays =
+		zoomLevel === "weeks"
+			? getDayUnits({ from, to }, today, weekStart).filter((day) =>
+					isNonWorkingDay(today + day.from),
+				)
+			: [];
+
 	if (units.length === 0) return null;
 
 	return (
 		<div className="absolute inset-0 h-full w-full">
+			{weekendDays.map((day) => {
+				const left = getPercentageOffset(day.from);
+				const width = getPercentageOffset(day.to) - left;
+				return (
+					<NonWorkingStripe
+						key={`weekend-${today + day.from}`}
+						leftPercent={left}
+						widthPercent={width}
+					/>
+				);
+			})}
 			{units.map((unit, index) => {
 				const left = getPercentageOffset(unit.from);
 				const width = getPercentageOffset(unit.to) - left;
