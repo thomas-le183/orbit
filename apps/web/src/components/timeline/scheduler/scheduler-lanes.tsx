@@ -150,7 +150,7 @@ export default function SchedulerLanes({
 						dragDraft.targetLaneKey === row.key && (
 							<div
 								data-testid="scheduler-lane-drop-target"
-								className="pointer-events-none absolute inset-x-0 rounded-sm bg-primary/10 ring-1 ring-primary/40"
+								className="pointer-events-none absolute inset-x-0 rounded-sm ring-2 ring-inset ring-primary/60"
 								style={{ top: row.top, height: row.height }}
 							/>
 						)}
