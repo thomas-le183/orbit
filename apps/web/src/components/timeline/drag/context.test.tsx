@@ -4,7 +4,11 @@ import { DragRangeProvider, useDragRange } from "./context";
 
 function Probe() {
 	const range = useDragRange();
-	return <span data-testid="probe">{range ? `${range.from}-${range.to}` : "none"}</span>;
+	return (
+		<span data-testid="probe">
+			{range ? `${range.from}-${range.to}` : "none"}
+		</span>
+	);
 }
 
 describe("useDragRange", () => {
