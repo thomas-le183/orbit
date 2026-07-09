@@ -7,6 +7,8 @@ import {
 	useWeekStart,
 	useZoomLevel,
 } from "../controller/hooks";
+import { useDragRange } from "../drag/context";
+import { overlapsRange } from "../drag/overlap";
 import { getDayUnits, getUnits, ONE_DAY } from "../units/make-units";
 import type { Unit, ZoomLevel } from "../units/types";
 import { BottomCell, TopLabel } from "./label";
@@ -42,6 +44,7 @@ export default function TimeUnitsBar() {
 	const { viewportWidth } = useTimelineController();
 	const { getPercentageOffset } = useHorizontalPercentageOffset();
 	const weekStart = useWeekStart();
+	const dragRange = useDragRange();
 
 	// ── Top row (coarse units) with sticky-first-label ──────────────────────
 	const topUnits = getUnits(
@@ -111,6 +114,7 @@ export default function TimeUnitsBar() {
 				leftPercent={left}
 				widthPercent={width}
 				withLeftBorder={withLeftBorder}
+				highlighted={overlapsRange(unit, dragRange)}
 			>
 				{label}
 			</BottomCell>
