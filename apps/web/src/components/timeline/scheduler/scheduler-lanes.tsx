@@ -1,14 +1,17 @@
 import { cn } from "@orbit/shared";
 import {
 	Fragment,
+	type ReactNode,
 	type PointerEvent as ReactPointerEvent,
 	useRef,
 } from "react";
+import { gestureTooltip } from "../bars/use-bar-interaction";
 import { MIN_BAR_WIDTH_PX } from "../constants";
 import { useTimelineController } from "../controller/context";
 import { type Geometry, rangeVisibility } from "../controller/geometry";
 import { useHorizontalPercentageOffset } from "../controller/hooks";
 import { useTimelineData } from "../data/context";
+import DragTooltip from "../drag/drag-tooltip";
 import { ROW_PADDING } from "../layout/row-metrics";
 import { useRowSelection } from "../selection/context";
 import { ONE_DAY, startOfUtcDay } from "../units/make-units";
@@ -27,6 +30,8 @@ export default function SchedulerLanes({
 	beginResize,
 	beginDrag,
 	dragDraft,
+	dragActive,
+	dragPointer,
 	wasDragged,
 	beginCreate,
 	createDraft,
@@ -55,6 +60,8 @@ export default function SchedulerLanes({
 		targetLaneKey?: string | null;
 		pointerContentY?: number;
 	} | null;
+	dragActive: { id: string; role: DragRole } | null;
+	dragPointer: { x: number; y: number } | null;
 	wasDragged: () => boolean;
 	beginCreate: (
 		e: ReactPointerEvent,
@@ -78,6 +85,17 @@ export default function SchedulerLanes({
 	const geom: Geometry = { offsetMs, zoom: zoomLevel, viewportWidth };
 	const minWidthPercent = (MIN_BAR_WIDTH_PX / viewportWidth) * 100;
 
+	// Date tooltip that follows the cursor during a drag/resize gesture. Gated on
+	// `dragPointer`, which is only set once the pointer actually moves — so a
+	// plain click-to-select never flashes it.
+	let dragTooltip: ReactNode = null;
+	if (dragActive && dragPointer && dragDraft) {
+		const tip = gestureTooltip(dragActive.role, dragDraft.range, today);
+		dragTooltip = (
+			<DragTooltip x={dragPointer.x} y={dragPointer.y} label={tip.label} />
+		);
+	}
+
 	return (
 		<div
 			data-testid="scheduler-lanes"
@@ -99,7 +117,7 @@ export default function SchedulerLanes({
 						onPointerDown={(e) =>
 							beginCreate(e, { key: row.key, assigneeId: row.assignee?.id })
 						}
-						className="pointer-events-auto absolute inset-x-0 cursor-crosshair"
+						className="pointer-events-auto absolute inset-x-0 cursor-crosshair border-b border-border"
 						style={{ top: row.top, height: row.height }}
 					/>
 					{createDraft?.laneKey === row.key &&
@@ -132,7 +150,7 @@ export default function SchedulerLanes({
 						dragDraft.targetLaneKey === row.key && (
 							<div
 								data-testid="scheduler-lane-drop-target"
-								className="pointer-events-none absolute inset-x-0 rounded-sm bg-primary/10 ring-1 ring-primary/40"
+								className="pointer-events-none absolute inset-x-0 rounded-sm ring-2 ring-inset ring-primary/60"
 								style={{ top: row.top, height: row.height }}
 							/>
 						)}
@@ -296,6 +314,7 @@ export default function SchedulerLanes({
 					)}
 				</Fragment>
 			))}
+			{dragTooltip}
 		</div>
 	);
 }

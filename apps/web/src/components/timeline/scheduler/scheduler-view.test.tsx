@@ -429,4 +429,56 @@ describe("SchedulerView", () => {
 		// the browser double-fire path.)
 		expect(renameTask).toHaveBeenCalledTimes(1);
 	});
+
+	it("shows a drag tooltip with the committed dates while dragging a bar", async () => {
+		renderScheduler();
+		await screen.findAllByTestId("scheduler-group-header");
+		const bar = screen.getAllByTestId("scheduler-bar")[0] as HTMLElement;
+
+		fireEvent.pointerDown(bar, { clientX: 200, clientY: 50, pointerId: 1 });
+		// No movement yet: `active` is set but `pointer` is not, so no tooltip.
+		expect(screen.queryByTestId("timeline-drag-tooltip")).toBeNull();
+
+		fireEvent.pointerMove(window, { clientX: 360, clientY: 55 });
+		const tip = screen.getByTestId("timeline-drag-tooltip");
+		expect(tip.textContent).toMatch(/\w{3} \d+ – \w{3} \d+/);
+
+		fireEvent.pointerUp(window, { clientX: 360, clientY: 55 });
+		expect(screen.queryByTestId("timeline-drag-tooltip")).toBeNull();
+	});
+
+	it("shows no drag tooltip for a click without movement", async () => {
+		renderScheduler();
+		await screen.findAllByTestId("scheduler-group-header");
+		const bar = screen.getAllByTestId("scheduler-bar")[0] as HTMLElement;
+
+		fireEvent.pointerDown(bar, { clientX: 200, clientY: 50, pointerId: 1 });
+		fireEvent.pointerUp(window, { clientX: 200, clientY: 50 });
+		expect(screen.queryByTestId("timeline-drag-tooltip")).toBeNull();
+	});
+
+	it("tints the timeline header while dragging a bar, and clears on release", async () => {
+		renderScheduler();
+		await screen.findAllByTestId("scheduler-group-header");
+		const bar = screen.getAllByTestId("scheduler-bar")[0] as HTMLElement;
+
+		fireEvent.pointerDown(bar, { clientX: 200, clientY: 50, pointerId: 1 });
+		// No movement yet: `active` is set but `pointer` is not, so the header
+		// must not tint on pointerdown alone.
+		expect(document.querySelectorAll("[data-highlighted='true']").length).toBe(
+			0,
+		);
+
+		fireEvent.pointerMove(window, { clientX: 360, clientY: 50 });
+		// The provider must enclose both the header (TimeUnitsBar) and the body
+		// so the drag range reaches the header cells and tints at least one.
+		expect(
+			document.querySelectorAll("[data-highlighted='true']").length,
+		).toBeGreaterThan(0);
+
+		fireEvent.pointerUp(window, { clientX: 360, clientY: 50 });
+		expect(document.querySelectorAll("[data-highlighted='true']").length).toBe(
+			0,
+		);
+	});
 });

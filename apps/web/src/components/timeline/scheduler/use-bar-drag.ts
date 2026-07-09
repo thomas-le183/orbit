@@ -4,8 +4,8 @@ import {
 	applyMove,
 	applyResize,
 	pxToDays,
-	rangeToDates,
 	type ResizeEdge,
+	rangeToDates,
 } from "../bars/use-bar-interaction";
 import { useEdgeAutoScroll } from "../bars/use-edge-autoscroll";
 import { useTimelineController } from "../controller/context";
@@ -46,6 +46,8 @@ export function useBarDrag(opts: {
 		pointerContentY?: number;
 	} | null;
 	active: { id: string; role: DragRole } | null;
+	/** Latest pointer position (viewport coords) during a gesture, else null. */
+	pointer: { x: number; y: number } | null;
 	beginDrag: (e: ReactPointerEvent, target: DragTarget) => void;
 	wasDragged: () => boolean;
 } {
@@ -74,6 +76,7 @@ export function useBarDrag(opts: {
 	const [active, setActive] = useState<{ id: string; role: DragRole } | null>(
 		null,
 	);
+	const [pointer, setPointer] = useState<{ x: number; y: number } | null>(null);
 
 	useEffect(() => {
 		return () => {
@@ -157,6 +160,7 @@ export function useBarDrag(opts: {
 				}
 				edgeScroll.setPointer(ev.clientX, ev.clientY);
 				setDraft(buildDraft(ev.clientY));
+				setPointer({ x: ev.clientX, y: ev.clientY });
 			};
 			const onUp = (ev: PointerEvent) => {
 				edgeScroll.stop();
@@ -178,6 +182,7 @@ export function useBarDrag(opts: {
 				}
 				setDraft(null);
 				setActive(null);
+				setPointer(null);
 				try {
 					target0.releasePointerCapture(ev.pointerId);
 				} catch {}
@@ -198,5 +203,5 @@ export function useBarDrag(opts: {
 		return v;
 	}, []);
 
-	return { draft, active, beginDrag, wasDragged };
+	return { draft, active, pointer, beginDrag, wasDragged };
 }

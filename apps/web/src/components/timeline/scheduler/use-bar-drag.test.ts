@@ -198,6 +198,44 @@ describe("useBarDrag", () => {
 		});
 		expect(result.current.active).toEqual({ id: "t1", role: "move" });
 	});
+
+	it("exposes no pointer until the pointer actually moves", () => {
+		const onCommit = vi.fn();
+		const { result } = renderHook(() => useBarDrag({ onCommit }));
+
+		act(() => {
+			result.current.beginDrag(pointerDownEvent(100), {
+				id: "t1",
+				role: "move",
+				range,
+			});
+		});
+		// `active` is set on pointerdown, but `pointer` waits for real movement.
+		expect(result.current.active).toEqual({ id: "t1", role: "move" });
+		expect(result.current.pointer).toBeNull();
+	});
+
+	it("exposes the pointer position during a drag and clears it on release", () => {
+		const onCommit = vi.fn();
+		const { result } = renderHook(() => useBarDrag({ onCommit }));
+
+		act(() => {
+			result.current.beginDrag(pointerDownEvent(100), {
+				id: "t1",
+				role: "move",
+				range,
+			});
+		});
+		act(() => {
+			fireEvent.pointerMove(window, { clientX: 148, clientY: 60 });
+		});
+		expect(result.current.pointer).toEqual({ x: 148, y: 60 });
+
+		act(() => {
+			fireEvent.pointerUp(window, { clientX: 148, clientY: 60 });
+		});
+		expect(result.current.pointer).toBeNull();
+	});
 });
 
 describe("useBarDrag vertical lane tracking", () => {

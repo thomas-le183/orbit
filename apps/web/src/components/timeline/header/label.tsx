@@ -23,22 +23,29 @@ export function BottomCell({
 	widthPercent,
 	children,
 	withLeftBorder = false,
+	highlighted = false,
 }: {
 	leftPercent: number;
 	widthPercent: number;
 	children: ReactNode;
 	withLeftBorder?: boolean;
+	highlighted?: boolean;
 }) {
 	return (
 		<div
 			data-testid="timeline-header-cell"
-			className="absolute top-0 h-full overflow-hidden"
+			data-highlighted={highlighted || undefined}
+			className={cn(
+				"absolute top-0 h-full overflow-hidden",
+				highlighted && "bg-primary/10",
+			)}
 			style={{ left: `${leftPercent}%`, width: `${widthPercent}%` }}
 		>
 			<div
 				className={cn(
 					"box-border h-full whitespace-nowrap text-center text-xs leading-6 text-muted-foreground",
 					withLeftBorder && "border-l border-border",
+					highlighted && "font-medium text-foreground",
 				)}
 			>
 				{children}

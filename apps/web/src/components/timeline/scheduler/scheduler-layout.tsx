@@ -15,6 +15,7 @@ import { TimelineProvider, useTimelineController } from "../controller/context";
 import { msPerViewport } from "../controller/geometry";
 import CustomizeMenu from "../customize-menu";
 import { useTimelineData } from "../data/context";
+import { DragRangeProvider } from "../drag/context";
 import TimeUnitsBar from "../header/time-units-bar";
 import { useResizableDivider } from "../layout/use-resizable-divider";
 import MilestoneMarkers from "../milestone-markers";
@@ -150,6 +151,8 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 
 	const {
 		draft: dragDraft,
+		active: dragActive,
+		pointer: dragPointer,
 		beginDrag,
 		wasDragged,
 	} = useBarDrag({
@@ -165,6 +168,11 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 		},
 		resolveLaneAt,
 	});
+
+	// The provider — not the header — owns the gate, so `TimeUnitsBar` only ever
+	// sees a range it should highlight and needs no pointer-state knowledge.
+	const headerDragRange =
+		dragActive && dragPointer && dragDraft ? dragDraft.range : null;
 
 	const scrollRef = scrollContainerRef;
 	const { width = 0 } = useResizeObserver({
@@ -209,121 +217,128 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 	}, [clear]);
 
 	return (
-		<div className="relative flex h-full flex-col" data-testid="scheduler-view">
-			{/* toolbar */}
-			<div className="flex items-center justify-between border-b border-border p-2">
-				<div className="flex items-center gap-1.5" />
-				<div className="flex items-center gap-1.5">
-					<button
-						type="button"
-						aria-label="Scroll to earlier dates"
-						onClick={() => panViewports(-PAN_STEP)}
-						className="rounded-md border border-border p-1 hover:bg-accent"
-					>
-						<ChevronLeft className="size-4" />
-					</button>
-					<button
-						type="button"
-						onClick={scrollToToday}
-						className="rounded-md border border-border px-2.5 py-1 text-xs font-medium hover:bg-accent"
-					>
-						Today
-					</button>
-					<button
-						type="button"
-						aria-label="Scroll to later dates"
-						onClick={() => panViewports(PAN_STEP)}
-						className="rounded-md border border-border p-1 hover:bg-accent"
-					>
-						<ChevronRight className="size-4" />
-					</button>
-					<ZoomControl />
-					<CustomizeMenu viewSwitch={viewSwitch} />
-				</div>
-			</div>
-
-			{/* split region */}
-			<div className="relative flex min-h-0 flex-1 flex-col">
-				{/* header band */}
-				<div className="relative z-20 flex h-12 shrink-0 border-b border-border">
-					<div
-						className="relative z-30 shrink-0 overflow-hidden border-r border-border bg-muted/40"
-						style={{ width: collapsed ? 0 : tableWidth }}
-					/>
-					<div className="relative flex-1">
-						<TimeUnitsBar />
+		<DragRangeProvider range={headerDragRange}>
+			<div
+				className="relative flex h-full flex-col"
+				data-testid="scheduler-view"
+			>
+				{/* toolbar */}
+				<div className="flex items-center justify-between border-b border-border p-2">
+					<div className="flex items-center gap-1.5" />
+					<div className="flex items-center gap-1.5">
+						<button
+							type="button"
+							aria-label="Scroll to earlier dates"
+							onClick={() => panViewports(-PAN_STEP)}
+							className="rounded-md border border-border p-1 hover:bg-accent"
+						>
+							<ChevronLeft className="size-4" />
+						</button>
+						<button
+							type="button"
+							onClick={scrollToToday}
+							className="rounded-md border border-border px-2.5 py-1 text-xs font-medium hover:bg-accent"
+						>
+							Today
+						</button>
+						<button
+							type="button"
+							aria-label="Scroll to later dates"
+							onClick={() => panViewports(PAN_STEP)}
+							className="rounded-md border border-border p-1 hover:bg-accent"
+						>
+							<ChevronRight className="size-4" />
+						</button>
+						<ZoomControl />
+						<CustomizeMenu viewSwitch={viewSwitch} />
 					</div>
 				</div>
 
-				{/* body */}
-				<div className="relative flex-1 overflow-hidden">
-					<div
-						className="absolute inset-y-0"
-						style={{ left: collapsed ? 0 : tableWidth, right: 0 }}
-					>
-						<TimelineGrid />
-						<NowLine />
-						<MilestoneMarkers />
-					</div>
-					<div
-						ref={scrollRef}
-						className="absolute inset-0 overflow-y-auto overflow-x-hidden"
-					>
-						<div className="flex min-h-full">
-							{!collapsed && (
-								<div
-									data-testid="scheduler-group-column"
-									className="relative z-30 min-h-full shrink-0 border-r border-border bg-background-primary"
-									style={{ width: tableWidth }}
-								>
-									{rows.map((row) => (
-										<GroupHeader key={row.key} row={row} />
-									))}
-								</div>
-							)}
-							<div
-								ref={viewportRef}
-								className="relative flex-1 touch-none select-none"
-								onWheel={onWheel}
-							>
-								<SchedulerLanes
-									rows={rows}
-									totalHeight={totalHeight}
-									beginResize={beginResize}
-									beginDrag={beginDrag}
-									dragDraft={dragDraft}
-									wasDragged={wasDragged}
-									beginCreate={beginCreate}
-									createDraft={createDraft}
-									renamingId={renamingId}
-									onRename={renameTask}
-									clearRenaming={clearRenaming}
-								/>
-							</div>
+				{/* split region */}
+				<div className="relative flex min-h-0 flex-1 flex-col">
+					{/* header band */}
+					<div className="relative z-20 flex h-12 shrink-0 border-b border-border">
+						<div
+							className="relative z-30 shrink-0 overflow-hidden border-r border-border bg-muted/40"
+							style={{ width: collapsed ? 0 : tableWidth }}
+						/>
+						<div className="relative flex-1">
+							<TimeUnitsBar />
 						</div>
 					</div>
 
-					{!collapsed && (
+					{/* body */}
+					<div className="relative flex-1 overflow-hidden">
 						<div
-							data-testid="scheduler-split-divider"
-							onPointerDown={onDividerPointerDown}
-							className="absolute inset-y-0 z-40 w-3 -translate-x-1/2 cursor-col-resize hover:bg-border"
-							style={{ left: tableWidth }}
-						/>
-					)}
-				</div>
+							className="absolute inset-y-0"
+							style={{ left: collapsed ? 0 : tableWidth, right: 0 }}
+						>
+							<TimelineGrid />
+							<NowLine />
+							<MilestoneMarkers />
+						</div>
+						<div
+							ref={scrollRef}
+							className="absolute inset-0 overflow-y-auto overflow-x-hidden"
+						>
+							<div className="flex min-h-full">
+								{!collapsed && (
+									<div
+										data-testid="scheduler-group-column"
+										className="relative z-30 min-h-full shrink-0 border-r border-border bg-background-primary"
+										style={{ width: tableWidth }}
+									>
+										{rows.map((row) => (
+											<GroupHeader key={row.key} row={row} />
+										))}
+									</div>
+								)}
+								<div
+									ref={viewportRef}
+									className="relative flex-1 touch-none select-none"
+									onWheel={onWheel}
+								>
+									<SchedulerLanes
+										rows={rows}
+										totalHeight={totalHeight}
+										beginResize={beginResize}
+										beginDrag={beginDrag}
+										dragDraft={dragDraft}
+										dragActive={dragActive}
+										dragPointer={dragPointer}
+										wasDragged={wasDragged}
+										beginCreate={beginCreate}
+										createDraft={createDraft}
+										renamingId={renamingId}
+										onRename={renameTask}
+										clearRenaming={clearRenaming}
+									/>
+								</div>
+							</div>
+						</div>
 
-				{/* footer scrollbar */}
-				<div className="flex shrink-0">
-					{!collapsed && (
-						<div className="shrink-0" style={{ width: tableWidth }} />
-					)}
-					<div className="relative flex-1">
-						<TimelineScrollbar />
+						{!collapsed && (
+							<div
+								data-testid="scheduler-split-divider"
+								onPointerDown={onDividerPointerDown}
+								className="absolute inset-y-0 z-40 w-3 -translate-x-1/2 cursor-col-resize hover:bg-border"
+								style={{ left: tableWidth }}
+							/>
+						)}
+					</div>
+
+					{/* footer scrollbar */}
+					<div className="flex shrink-0">
+						{!collapsed && (
+							<div className="shrink-0" style={{ width: tableWidth }} />
+						)}
+						<div className="relative flex-1">
+							<TimelineScrollbar />
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
+		</DragRangeProvider>
 	);
 }
 
