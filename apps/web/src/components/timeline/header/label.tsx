@@ -35,17 +35,15 @@ export function BottomCell({
 		<div
 			data-testid="timeline-header-cell"
 			data-highlighted={highlighted || undefined}
-			className={cn(
-				"absolute top-0 h-full overflow-hidden",
-				highlighted && "bg-primary/10",
-			)}
+			className="absolute top-0 h-full overflow-hidden"
 			style={{ left: `${leftPercent}%`, width: `${widthPercent}%` }}
 		>
 			<div
 				className={cn(
 					"box-border h-full whitespace-nowrap text-center text-xs leading-6 text-muted-foreground",
 					withLeftBorder && "border-l border-border",
-					highlighted && "font-medium text-foreground",
+					highlighted &&
+						"border-b-2 border-b-primary font-medium text-foreground",
 				)}
 			>
 				{children}
