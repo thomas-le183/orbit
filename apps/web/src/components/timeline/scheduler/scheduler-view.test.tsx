@@ -429,4 +429,31 @@ describe("SchedulerView", () => {
 		// the browser double-fire path.)
 		expect(renameTask).toHaveBeenCalledTimes(1);
 	});
+
+	it("shows a drag tooltip with the committed dates while dragging a bar", async () => {
+		renderScheduler();
+		await screen.findAllByTestId("scheduler-group-header");
+		const bar = screen.getAllByTestId("scheduler-bar")[0] as HTMLElement;
+
+		fireEvent.pointerDown(bar, { clientX: 200, clientY: 50, pointerId: 1 });
+		// No movement yet: `active` is set but `pointer` is not, so no tooltip.
+		expect(screen.queryByTestId("timeline-drag-tooltip")).toBeNull();
+
+		fireEvent.pointerMove(window, { clientX: 360, clientY: 55 });
+		const tip = screen.getByTestId("timeline-drag-tooltip");
+		expect(tip.textContent).toMatch(/\w{3} \d+ – \w{3} \d+/);
+
+		fireEvent.pointerUp(window, { clientX: 360, clientY: 55 });
+		expect(screen.queryByTestId("timeline-drag-tooltip")).toBeNull();
+	});
+
+	it("shows no drag tooltip for a click without movement", async () => {
+		renderScheduler();
+		await screen.findAllByTestId("scheduler-group-header");
+		const bar = screen.getAllByTestId("scheduler-bar")[0] as HTMLElement;
+
+		fireEvent.pointerDown(bar, { clientX: 200, clientY: 50, pointerId: 1 });
+		fireEvent.pointerUp(window, { clientX: 200, clientY: 50 });
+		expect(screen.queryByTestId("timeline-drag-tooltip")).toBeNull();
+	});
 });
