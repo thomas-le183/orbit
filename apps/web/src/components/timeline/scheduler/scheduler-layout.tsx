@@ -308,8 +308,6 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 										beginResize={beginResize}
 										beginDrag={beginDrag}
 										dragDraft={dragDraft}
-										dragActive={dragActive}
-										dragPointer={dragPointer}
 										wasDragged={wasDragged}
 										beginCreate={beginCreate}
 										createDraft={createDraft}

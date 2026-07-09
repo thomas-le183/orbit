@@ -1,17 +1,14 @@
 import { cn } from "@orbit/shared";
 import {
 	Fragment,
-	type ReactNode,
 	type PointerEvent as ReactPointerEvent,
 	useRef,
 } from "react";
-import { gestureTooltip } from "../bars/use-bar-interaction";
 import { MIN_BAR_WIDTH_PX } from "../constants";
 import { useTimelineController } from "../controller/context";
 import { type Geometry, rangeVisibility } from "../controller/geometry";
 import { useHorizontalPercentageOffset } from "../controller/hooks";
 import { useTimelineData } from "../data/context";
-import DragTooltip from "../drag/drag-tooltip";
 import { ROW_PADDING } from "../layout/row-metrics";
 import { useRowSelection } from "../selection/context";
 import { ONE_DAY, startOfUtcDay } from "../units/make-units";
@@ -30,8 +27,6 @@ export default function SchedulerLanes({
 	beginResize,
 	beginDrag,
 	dragDraft,
-	dragActive,
-	dragPointer,
 	wasDragged,
 	beginCreate,
 	createDraft,
@@ -60,8 +55,6 @@ export default function SchedulerLanes({
 		targetLaneKey?: string | null;
 		pointerContentY?: number;
 	} | null;
-	dragActive: { id: string; role: DragRole } | null;
-	dragPointer: { x: number; y: number } | null;
 	wasDragged: () => boolean;
 	beginCreate: (
 		e: ReactPointerEvent,
@@ -84,17 +77,6 @@ export default function SchedulerLanes({
 	if (viewportWidth <= 0) return null;
 	const geom: Geometry = { offsetMs, zoom: zoomLevel, viewportWidth };
 	const minWidthPercent = (MIN_BAR_WIDTH_PX / viewportWidth) * 100;
-
-	// Date tooltip that follows the cursor during a drag/resize gesture. Gated on
-	// `dragPointer`, which is only set once the pointer actually moves — so a
-	// plain click-to-select never flashes it.
-	let dragTooltip: ReactNode = null;
-	if (dragActive && dragPointer && dragDraft) {
-		const tip = gestureTooltip(dragActive.role, dragDraft.range, today);
-		dragTooltip = (
-			<DragTooltip x={dragPointer.x} y={dragPointer.y} label={tip.label} />
-		);
-	}
 
 	return (
 		<div
@@ -314,7 +296,6 @@ export default function SchedulerLanes({
 					)}
 				</Fragment>
 			))}
-			{dragTooltip}
 		</div>
 	);
 }

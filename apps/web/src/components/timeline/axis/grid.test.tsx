@@ -24,17 +24,6 @@ describe("TimelineGrid", () => {
 		expect(cells.length).toBeGreaterThan(0);
 	});
 
-	it("highlights exactly one today column", () => {
-		const { container } = render(
-			<TimelineProvider initialZoom="weeks">
-				<SizeViewport width={640} />
-				<TimelineGrid />
-			</TimelineProvider>,
-		);
-		const highlighted = container.querySelectorAll("[data-today='true']");
-		expect(highlighted.length).toBe(1);
-	});
-
 	it("stripes weekend columns at weeks zoom", () => {
 		const { container } = render(
 			<TimelineProvider initialZoom="weeks">

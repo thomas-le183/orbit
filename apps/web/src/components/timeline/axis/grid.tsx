@@ -5,11 +5,7 @@ import {
 	useWeekStart,
 	useZoomLevel,
 } from "../controller/hooks";
-import {
-	getDayUnits,
-	getTodayColumnIndex,
-	getUnits,
-} from "../units/make-units";
+import { getDayUnits, getUnits } from "../units/make-units";
 import { isNonWorkingDay } from "../units/working-days";
 import { GridUnit, NonWorkingStripe } from "./unit";
 
@@ -47,8 +43,6 @@ export default function TimelineGrid() {
 		FISCAL_MONTH,
 		weekStart,
 	);
-	const todayIndex = getTodayColumnIndex(units);
-
 	// Weekend shading only reads clearly at the day-resolution "weeks" zoom.
 	const weekendDays =
 		zoomLevel === "weeks"
@@ -72,7 +66,7 @@ export default function TimelineGrid() {
 					/>
 				);
 			})}
-			{units.map((unit, index) => {
+			{units.map((unit) => {
 				const left = getPercentageOffset(unit.from);
 				const width = getPercentageOffset(unit.to) - left;
 				return (
@@ -81,7 +75,6 @@ export default function TimelineGrid() {
 						leftPercent={left}
 						widthPercent={width}
 						withRightBorder={hasRightBorder(zoomLevel, unit.to, today)}
-						isToday={index === todayIndex}
 					/>
 				);
 			})}
