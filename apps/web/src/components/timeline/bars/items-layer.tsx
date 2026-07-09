@@ -21,6 +21,7 @@ import { DependencyLayer } from "../dependencies/dependency-layer";
 import type { Anchor } from "../dependencies/geometry";
 import { DraftLane } from "../draft/draft-row";
 import { useDraftTask } from "../draft/use-draft-task";
+import DragTooltip from "../drag/drag-tooltip";
 import {
 	contentHeight,
 	ROW_HEIGHT,
@@ -165,13 +166,7 @@ export default function ItemsLayer() {
 			const range = draft[active.id] ?? row.range;
 			const tip = gestureTooltip(active.role, range, today);
 			dragTooltip = (
-				<div
-					data-testid="timeline-drag-tooltip"
-					className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md bg-foreground px-1.5 py-0.5 text-xs font-medium text-background shadow-md"
-					style={{ left: pointer.x, top: pointer.y - 12 }}
-				>
-					{tip.label}
-				</div>
+				<DragTooltip x={pointer.x} y={pointer.y} label={tip.label} />
 			);
 		}
 	}
