@@ -100,7 +100,8 @@ export function useUpdateTask(projectId: string) {
 		},
 		onMutate: async ({ id, input }) => {
 			// Optimistically apply the patch so the timeline reflects it instantly,
-			// before the PATCH + refetch round-trip completes.
+			// before the PATCH resolves. onSuccess reconciles the server row in
+			// place, so the list is never invalidated and no refetch follows.
 			await qc.cancelQueries({ queryKey: taskKeys.list(projectId) });
 			const previous = qc.getQueryData<Task[]>(taskKeys.list(projectId));
 			qc.setQueryData<Task[]>(taskKeys.list(projectId), (tasks) =>
