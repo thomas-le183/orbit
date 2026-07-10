@@ -1,7 +1,19 @@
 import { act, fireEvent, renderHook } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Geometry } from "../controller/geometry";
-import { startOfUtcDay } from "../units/make-units";
+import { ONE_DAY, startOfUtcDay, toUtcDateString } from "../units/make-units";
+
+/** Captures the gesture's per-frame pan callback so tests can drive autoscroll. */
+const autoScroll = {
+	start: vi.fn(),
+	stop: vi.fn(),
+	setPointer: vi.fn(),
+	onPan: null as ((panMs: number) => void) | null,
+};
+vi.mock("../bars/use-edge-autoscroll", () => ({
+	useEdgeAutoScroll: () => autoScroll,
+}));
+
 import { useLaneCreate } from "./use-lane-create";
 
 const geom: Geometry = { offsetMs: 0, zoom: "weeks", viewportWidth: 800 };
@@ -20,6 +32,18 @@ function pointerDownEvent(clientX: number) {
 }
 
 describe("useLaneCreate", () => {
+	beforeEach(() => {
+		autoScroll.onPan = null;
+		autoScroll.start.mockReset();
+		autoScroll.stop.mockReset();
+		autoScroll.setPointer.mockReset();
+		autoScroll.start.mockImplementation(
+			(_x: number, _y: number, onPan?: (panMs: number) => void) => {
+				autoScroll.onPan = onPan ?? null;
+			},
+		);
+	});
+
 	it("creates a task with the dragged dates and the row's assignee on release", async () => {
 		const onCreate = vi.fn(
 			(_input: {
@@ -58,6 +82,161 @@ describe("useLaneCreate", () => {
 		// After create resolves, that task enters rename mode.
 		expect(result.current.renamingId).toBe("srv-1");
 		expect(result.current.draft).toBeNull();
+	});
+
+	it("tracks the cursor while dragging and clears it on release", async () => {
+		const onCreate = vi.fn(() => Promise.resolve({ id: "srv-1" }));
+		const { result } = renderHook(() =>
+			useLaneCreate({ geom, today, onCreate }),
+		);
+
+		act(() => {
+			result.current.beginCreate(pointerDownEvent(100), { key: "u_ana" });
+		});
+		// A press with no movement yet publishes nothing, so a plain click on a
+		// lane never flashes header feedback.
+		expect(result.current.pointer).toBeNull();
+
+		act(() => {
+			fireEvent.pointerMove(window, { clientX: 300 });
+		});
+		expect(result.current.pointer).toEqual({ x: 300 });
+
+		await act(async () => {
+			fireEvent.pointerUp(window, { clientX: 300 });
+		});
+		expect(result.current.pointer).toBeNull();
+	});
+
+	it("starts edge autoscroll only once the press becomes a drag", () => {
+		const onCreate = vi.fn(() => Promise.resolve({ id: "srv-1" }));
+		const { result } = renderHook(() =>
+			useLaneCreate({ geom, today, onCreate }),
+		);
+
+		act(() => {
+			result.current.beginCreate(pointerDownEvent(100), { key: "u_ana" });
+		});
+		// A press near an edge must not pan the timeline out from under the user.
+		expect(autoScroll.start).not.toHaveBeenCalled();
+
+		act(() => {
+			fireEvent.pointerMove(window, { clientX: 102 }); // under threshold
+		});
+		expect(autoScroll.start).not.toHaveBeenCalled();
+
+		act(() => {
+			fireEvent.pointerMove(window, { clientX: 300 });
+		});
+		expect(autoScroll.start).toHaveBeenCalled();
+
+		act(() => {
+			fireEvent.pointerUp(window, { clientX: 300 });
+		});
+		expect(autoScroll.stop).toHaveBeenCalled();
+	});
+
+	it("keeps the anchor day pinned to content while autoscroll pans the view", async () => {
+		const onCreate = vi.fn(
+			(_input: {
+				name: string;
+				startDate: string;
+				endDate: string;
+				assigneeId?: string;
+			}) => Promise.resolve({ id: "srv-1" }),
+		);
+		const { result } = renderHook(() =>
+			useLaneCreate({ geom, today, onCreate }),
+		);
+
+		// Press on day 1 (x=100 → 100/800 * 7 days at weeks zoom), drag right.
+		act(() => {
+			result.current.beginCreate(pointerDownEvent(100), { key: "u_ana" });
+		});
+		act(() => {
+			fireEvent.pointerMove(window, { clientX: 300 });
+		});
+		const beforePan = result.current.draft;
+
+		// Two frames of autoscroll to the right, cursor parked at the edge.
+		act(() => {
+			autoScroll.onPan?.(ONE_DAY);
+			autoScroll.onPan?.(ONE_DAY);
+		});
+		const afterPan = result.current.draft;
+
+		// The start day is unchanged — only the moving end absorbs the pan.
+		expect(afterPan?.startDate).toBe(beforePan?.startDate);
+		expect(afterPan?.endDate).not.toBe(beforePan?.endDate);
+		expect(afterPan?.endDate).toBe(
+			toUtcDateString(
+				Date.parse(`${beforePan?.endDate}T00:00:00Z`) + 2 * ONE_DAY,
+			),
+		);
+
+		await act(async () => {
+			fireEvent.pointerUp(window, { clientX: 300 });
+		});
+		// The committed span is the panned one, not the on-screen pixel span.
+		expect(onCreate.mock.calls[0][0]).toMatchObject({
+			startDate: afterPan?.startDate,
+			endDate: afterPan?.endDate,
+		});
+	});
+
+	it("abandons the gesture on Escape and creates nothing", async () => {
+		const onCreate = vi.fn(
+			(_input: {
+				name: string;
+				startDate: string;
+				endDate: string;
+				assigneeId?: string;
+			}) => Promise.resolve({ id: "srv-1" }),
+		);
+		const { result } = renderHook(() =>
+			useLaneCreate({ geom, today, onCreate }),
+		);
+
+		act(() => {
+			result.current.beginCreate(pointerDownEvent(100), { key: "u_ana" });
+		});
+		act(() => {
+			fireEvent.pointerMove(window, { clientX: 300 });
+		});
+		expect(result.current.draft).not.toBeNull();
+
+		act(() => {
+			fireEvent.keyDown(window, { key: "Escape" });
+		});
+		// Ghost and header feedback both drop, and autoscroll stops.
+		expect(result.current.draft).toBeNull();
+		expect(result.current.pointer).toBeNull();
+		expect(autoScroll.stop).toHaveBeenCalled();
+
+		// The release that follows the cancel must not resurrect the create.
+		await act(async () => {
+			fireEvent.pointerUp(window, { clientX: 300 });
+		});
+		expect(onCreate).not.toHaveBeenCalled();
+		expect(result.current.renamingId).toBeNull();
+	});
+
+	it("ignores non-Escape keys during a create-drag", () => {
+		const onCreate = vi.fn(() => Promise.resolve({ id: "srv-1" }));
+		const { result } = renderHook(() =>
+			useLaneCreate({ geom, today, onCreate }),
+		);
+
+		act(() => {
+			result.current.beginCreate(pointerDownEvent(100), { key: "u_ana" });
+		});
+		act(() => {
+			fireEvent.pointerMove(window, { clientX: 300 });
+		});
+		act(() => {
+			fireEvent.keyDown(window, { key: "a" });
+		});
+		expect(result.current.draft).not.toBeNull();
 	});
 
 	it("does not create on a click (no drag past threshold)", async () => {

@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { TaskAssignee, TimelineItem } from "@/data/timeline-items";
 import { startOfUtcDay } from "../units/make-units";
-import { GROUP_PADDING, LANE_GAP, MIN_BAR_HEIGHT } from "./lane-metrics";
+import {
+	CREATE_LANE_HEIGHT,
+	GROUP_PADDING,
+	LANE_GAP,
+	MIN_BAR_HEIGHT,
+} from "./lane-metrics";
 import { layoutScheduler, stackLanes } from "./layout";
 import type { PackedBar } from "./pack-lanes";
 
@@ -36,7 +41,12 @@ describe("layoutScheduler", () => {
 		expect(rows[0].top).toBe(0);
 		// 2 overlapping tasks → 2 lanes.
 		expect(rows[0].lanes).toHaveLength(2);
-		const expectedHeight = 2 * MIN_BAR_HEIGHT + LANE_GAP + GROUP_PADDING * 2;
+		const expectedHeight =
+			2 * MIN_BAR_HEIGHT +
+			LANE_GAP +
+			LANE_GAP +
+			CREATE_LANE_HEIGHT +
+			GROUP_PADDING * 2;
 		expect(rows[0].height).toBe(expectedHeight);
 		expect(totalHeight).toBe(expectedHeight);
 	});
@@ -65,12 +75,24 @@ describe("stackLanes", () => {
 		expect(lanes[0].height).toBe(60);
 		expect(lanes[1].top).toBe(60 + LANE_GAP);
 		expect(lanes[1].height).toBe(96);
-		expect(height).toBe(60 + 96 + LANE_GAP + GROUP_PADDING * 2);
+		expect(height).toBe(
+			60 + 96 + LANE_GAP + LANE_GAP + CREATE_LANE_HEIGHT + GROUP_PADDING * 2,
+		);
 	});
 
-	it("falls back to MIN_BAR_HEIGHT for an empty lane list", () => {
+	it("reserves a bar-free create lane below the last packed lane", () => {
+		const packed = stackLanes([[bar(1000)]]);
+		const lastLaneBottom = packed.lanes[0].top + packed.lanes[0].height;
+		// The strip between the last lane and the row's bottom padding is exactly
+		// one create lane tall, so a press there can never land on a bar.
+		expect(packed.height - GROUP_PADDING * 2 - lastLaneBottom).toBe(
+			LANE_GAP + CREATE_LANE_HEIGHT,
+		);
+	});
+
+	it("is one create lane tall for an empty lane list", () => {
 		const { lanes, height } = stackLanes([]);
 		expect(lanes).toHaveLength(0);
-		expect(height).toBe(MIN_BAR_HEIGHT + GROUP_PADDING * 2);
+		expect(height).toBe(CREATE_LANE_HEIGHT + GROUP_PADDING * 2);
 	});
 });

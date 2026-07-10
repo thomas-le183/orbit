@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Geometry } from "../controller/geometry";
-import { draftRangeFromDrag } from "./draft-range";
+import { ONE_DAY } from "../units/make-units";
+import { draftRangeFromDrag, draftRangeToOffset } from "./draft-range";
 
 // viewportWidth 640 @ weeks (64px/day) → each 64px lane pixel === 1 calendar day.
 const geom: Geometry = { offsetMs: 0, zoom: "weeks", viewportWidth: 640 };
@@ -38,5 +39,42 @@ describe("draftRangeFromDrag", () => {
 			startDate: "2026-07-03",
 			endDate: "2026-07-03",
 		});
+	});
+});
+
+describe("draftRangeToOffset", () => {
+	it("maps an inclusive day range to an exclusive-`to` offset range", () => {
+		// 2026-07-01 → offset 0; end day 2026-07-05 spans through 07-06 exclusive.
+		expect(draftRangeToOffset("2026-07-01", "2026-07-05", today)).toEqual({
+			from: 0,
+			to: 5 * ONE_DAY,
+		});
+	});
+
+	it("gives a single day a one-day-wide span", () => {
+		expect(draftRangeToOffset("2026-07-03", "2026-07-03", today)).toEqual({
+			from: 2 * ONE_DAY,
+			to: 3 * ONE_DAY,
+		});
+	});
+
+	it("round-trips a dragged range back through draftRangeFromDrag", () => {
+		const { startDate, endDate } = draftRangeFromDrag(
+			0,
+			64 * 4,
+			rect,
+			geom,
+			today,
+		);
+		expect(draftRangeToOffset(startDate, endDate, today)).toEqual({
+			from: 0,
+			to: 5 * ONE_DAY,
+		});
+	});
+
+	it("returns null when either date is missing or unparseable", () => {
+		expect(draftRangeToOffset(undefined, "2026-07-05", today)).toBeNull();
+		expect(draftRangeToOffset("2026-07-01", undefined, today)).toBeNull();
+		expect(draftRangeToOffset("not-a-date", "2026-07-05", today)).toBeNull();
 	});
 });

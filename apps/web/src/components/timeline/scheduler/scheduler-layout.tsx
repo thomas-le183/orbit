@@ -1,5 +1,6 @@
+import { cn } from "@orbit/shared";
 import { UserAvatar } from "@orbit/ui/custom/user-avatar";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, PanelRight } from "lucide-react";
 import {
 	type ReactNode,
 	type RefObject,
@@ -7,6 +8,7 @@ import {
 	useEffect,
 	useMemo,
 	useRef,
+	useState,
 } from "react";
 import { useResizeObserver } from "usehooks-ts";
 import { usePreferences } from "@/hooks/use-preferences";
@@ -15,6 +17,7 @@ import { TimelineProvider, useTimelineController } from "../controller/context";
 import { msPerViewport } from "../controller/geometry";
 import CustomizeMenu from "../customize-menu";
 import { useTimelineData } from "../data/context";
+import { draftRangeToOffset } from "../draft/draft-range";
 import { DragRangeProvider, DragRangePublisher } from "../drag/context";
 import TimeUnitsBar from "../header/time-units-bar";
 import { useResizableDivider } from "../layout/use-resizable-divider";
@@ -26,9 +29,11 @@ import { usePan } from "../use-pan";
 import ZoomControl from "../zoom-control";
 import { layoutScheduler, type SchedulerRow } from "./layout";
 import SchedulerLanes from "./scheduler-lanes";
+import UnplannedPanel from "./unplanned-panel";
 import { useBarDrag } from "./use-bar-drag";
 import { useEstimateResize } from "./use-estimate-resize";
 import { useLaneCreate } from "./use-lane-create";
+import { useUnplannedDrag } from "./use-unplanned-drag";
 
 const PAN_STEP = 0.25;
 
@@ -85,6 +90,8 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 	const { tableWidth, collapsed, onDividerPointerDown } = useResizableDivider();
 	const { onWheel } = usePan();
 	const { clear } = useRowSelection();
+	const [showUnplanned, setShowUnplanned] = useState(true);
+	const unplannedPanelRef = useRef<HTMLDivElement | null>(null);
 	const {
 		items,
 		assignees,
@@ -120,6 +127,7 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 
 	const {
 		draft: createDraft,
+		pointer: createPointer,
 		beginCreate,
 		renamingId,
 		clearRenaming,
@@ -150,6 +158,26 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 	);
 
 	const {
+		draft: dropDraft,
+		source: dragSource,
+		pointer: dropPointer,
+		beginDrag: beginUnplannedDrag,
+	} = useUnplannedDrag({
+		geom: { offsetMs, zoom: zoomLevel, viewportWidth },
+		today,
+		viewportRef,
+		excludeRef: unplannedPanelRef,
+		resolveLaneAt,
+		// The task carries no dates yet, so there is nothing to optimistically
+		// patch in `items`; the create/update cache invalidation re-derives it
+		// out of undatedTaskRows and into a bar.
+		onDrop: (taskId, dates, laneKey) => {
+			const assignee = rows.find((r) => r.key === laneKey)?.assignee;
+			scheduleTask(taskId, dates.startDate, dates.endDate, assignee?.id);
+		},
+	});
+
+	const {
 		draft: dragDraft,
 		active: dragActive,
 		pointer: dragPointer,
@@ -171,8 +199,25 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 
 	// The provider — not the header — owns the gate, so `TimeUnitsBar` only ever
 	// sees a range it should highlight and needs no pointer-state knowledge.
-	const headerDragRange =
-		dragActive && dragPointer && dragDraft ? dragDraft.range : null;
+	// A bar move/resize and a lane create-drag are mutually exclusive gestures;
+	// both feed the same axis feedback.
+	const createRange = useMemo(
+		() =>
+			createPointer
+				? draftRangeToOffset(
+						createDraft?.startDate,
+						createDraft?.endDate,
+						today,
+					)
+				: null,
+		[createPointer, createDraft?.startDate, createDraft?.endDate, today],
+	);
+	const headerDrag =
+		dragActive && dragPointer && dragDraft
+			? { range: dragDraft.range, pointerX: dragPointer.x }
+			: createRange && createPointer
+				? { range: createRange, pointerX: createPointer.x }
+				: null;
 
 	const scrollRef = scrollContainerRef;
 	const { width = 0 } = useResizeObserver({
@@ -219,8 +264,8 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 	return (
 		<DragRangeProvider>
 			<DragRangePublisher
-				range={headerDragRange}
-				pointerX={dragPointer?.x ?? null}
+				range={headerDrag?.range ?? null}
+				pointerX={headerDrag?.pointerX ?? null}
 			/>
 			<div
 				className="relative flex h-full flex-col"
@@ -254,11 +299,24 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 							<ChevronRight className="size-4" />
 						</button>
 						<ZoomControl />
+						<button
+							type="button"
+							aria-label="Toggle unplanned tasks"
+							aria-pressed={showUnplanned}
+							title="Unplanned tasks"
+							onClick={() => setShowUnplanned((v) => !v)}
+							className={cn(
+								"rounded-md border border-border p-1 hover:bg-accent",
+								showUnplanned && "bg-accent",
+							)}
+						>
+							<PanelRight className="size-4" />
+						</button>
 						<CustomizeMenu viewSwitch={viewSwitch} />
 					</div>
 				</div>
 
-				{/* split region */}
+				{/* split region; the unplanned panel overlays its right edge */}
 				<div className="relative flex min-h-0 flex-1 flex-col">
 					{/* header band */}
 					<div className="relative z-20 flex h-12 shrink-0 border-b border-border">
@@ -299,6 +357,7 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 								)}
 								<div
 									ref={viewportRef}
+									data-testid="scheduler-viewport"
 									className="relative flex-1 touch-none select-none"
 									onWheel={onWheel}
 								>
@@ -311,6 +370,7 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 										wasDragged={wasDragged}
 										beginCreate={beginCreate}
 										createDraft={createDraft}
+										dropDraft={dropDraft}
 										renamingId={renamingId}
 										onRename={renameTask}
 										clearRenaming={clearRenaming}
@@ -338,7 +398,26 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 							<TimelineScrollbar />
 						</div>
 					</div>
+
+					{showUnplanned && (
+						<UnplannedPanel
+							containerRef={unplannedPanelRef}
+							beginDrag={beginUnplannedDrag}
+							draggingId={dragSource?.id ?? null}
+						/>
+					)}
 				</div>
+
+				{/* Cursor-following label for the task being dragged out of the panel. */}
+				{dragSource && dropPointer && (
+					<div
+						data-testid="unplanned-drag-ghost"
+						className="pointer-events-none fixed z-60 max-w-60 truncate rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground shadow-lg"
+						style={{ left: dropPointer.x + 12, top: dropPointer.y + 12 }}
+					>
+						{dragSource.name}
+					</div>
+				)}
 			</div>
 		</DragRangeProvider>
 	);

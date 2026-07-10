@@ -1,5 +1,6 @@
 import { type Geometry, percentToMs } from "../controller/geometry";
 import { ONE_DAY, startOfUtcDay, toUtcDateString } from "../units/make-units";
+import type { RelativeTimeRangeOffset } from "../units/types";
 
 /** Default span (inclusive days) when a draft is created by a click, not a drag. */
 export const DEFAULT_DRAFT_SPAN_DAYS = 7;
@@ -49,4 +50,22 @@ export function draftRangeFromDrag(
 		startDate: toUtcDateString(Math.min(a, b)),
 		endDate: toUtcDateString(Math.max(a, b)),
 	};
+}
+
+/**
+ * Inverse of `rangeToDates`: turn an inclusive draft day range into the
+ * exclusive-`to` offset range the header consumes, so a create-drag can publish
+ * the same axis feedback a move/resize drag does. Returns null for unparseable
+ * dates (a draft with no dates yet).
+ */
+export function draftRangeToOffset(
+	startDate: string | undefined,
+	endDate: string | undefined,
+	today: number,
+): RelativeTimeRangeOffset | null {
+	if (!startDate || !endDate) return null;
+	const from = startOfUtcDay(Date.parse(startDate)) - today;
+	const to = startOfUtcDay(Date.parse(endDate)) - today + ONE_DAY;
+	if (!Number.isFinite(from) || !Number.isFinite(to)) return null;
+	return { from, to };
 }

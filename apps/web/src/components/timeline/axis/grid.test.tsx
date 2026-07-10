@@ -24,9 +24,12 @@ describe("TimelineGrid", () => {
 		expect(cells.length).toBeGreaterThan(0);
 	});
 
-	it("stripes weekend columns at weeks zoom", () => {
+	it.each([
+		"weeks",
+		"months",
+	] as const)("stripes weekend columns at %s zoom", (zoom) => {
 		const { container } = render(
-			<TimelineProvider initialZoom="weeks">
+			<TimelineProvider initialZoom={zoom}>
 				<SizeViewport width={640} />
 				<TimelineGrid />
 			</TimelineProvider>,
@@ -38,9 +41,12 @@ describe("TimelineGrid", () => {
 		expect(stripes.length).toBeGreaterThan(0);
 	});
 
-	it("does not stripe weekends at months zoom", () => {
+	it.each([
+		"quarters",
+		"years",
+	] as const)("does not stripe weekends at %s zoom", (zoom) => {
 		const { container } = render(
-			<TimelineProvider initialZoom="months">
+			<TimelineProvider initialZoom={zoom}>
 				<SizeViewport width={640} />
 				<TimelineGrid />
 			</TimelineProvider>,

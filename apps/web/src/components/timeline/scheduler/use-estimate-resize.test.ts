@@ -1,5 +1,4 @@
-import { act, renderHook } from "@testing-library/react";
-import { fireEvent } from "@testing-library/react";
+import { act, fireEvent, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { useEstimateResize } from "./use-estimate-resize";
 

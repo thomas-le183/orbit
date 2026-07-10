@@ -17,6 +17,7 @@ import { barHeight, GROUP_PADDING } from "./lane-metrics";
 import type { SchedulerRow } from "./layout";
 import type { DragRole } from "./use-bar-drag";
 import type { LaneCreateDraft } from "./use-lane-create";
+import type { UnplannedDropDraft } from "./use-unplanned-drag";
 
 /** Horizontal gap trimmed off each side of a bar so it reads as distinct. */
 const BAR_INLINE_INSET_PX = 3;
@@ -30,6 +31,7 @@ export default function SchedulerLanes({
 	wasDragged,
 	beginCreate,
 	createDraft,
+	dropDraft,
 	renamingId,
 	onRename,
 	clearRenaming,
@@ -61,6 +63,7 @@ export default function SchedulerLanes({
 		row: { key: string; assigneeId?: string },
 	) => void;
 	createDraft: LaneCreateDraft | null;
+	dropDraft: UnplannedDropDraft | null;
 	renamingId: string | null;
 	onRename: (id: string, name: string) => void;
 	clearRenaming: () => void;
@@ -77,6 +80,21 @@ export default function SchedulerLanes({
 	if (viewportWidth <= 0) return null;
 	const geom: Geometry = { offsetMs, zoom: zoomLevel, viewportWidth };
 	const minWidthPercent = (MIN_BAR_WIDTH_PX / viewportWidth) * 100;
+
+	/** Horizontal bounds (viewport %) of an inclusive UTC day range, if on-screen. */
+	const rangeBounds = (
+		startDate: string,
+		endDate: string,
+	): { left: number; width: number } | null => {
+		const left = getPercentageOffset(
+			startOfUtcDay(Date.parse(startDate)) - today,
+		);
+		const right = getPercentageOffset(
+			startOfUtcDay(Date.parse(endDate)) - today + ONE_DAY,
+		);
+		if (!Number.isFinite(left) || !Number.isFinite(right)) return null;
+		return { left, width: Math.max(right - left, 0) };
+	};
 
 	return (
 		<div
@@ -104,24 +122,45 @@ export default function SchedulerLanes({
 					/>
 					{createDraft?.laneKey === row.key &&
 						(() => {
-							const left = getPercentageOffset(
-								startOfUtcDay(Date.parse(createDraft.startDate)) - today,
+							const bounds = rangeBounds(
+								createDraft.startDate,
+								createDraft.endDate,
 							);
-							const right = getPercentageOffset(
-								startOfUtcDay(Date.parse(createDraft.endDate)) -
-									today +
-									ONE_DAY,
-							);
-							if (!Number.isFinite(left) || !Number.isFinite(right)) {
-								return null;
-							}
+							if (!bounds) return null;
 							return (
 								<span
 									data-testid="scheduler-create-preview"
 									className="pointer-events-none absolute rounded-md border-2 border-dashed border-primary/60 bg-primary/15"
 									style={{
-										left: `${left}%`,
-										width: `${Math.max(right - left, 0)}%`,
+										left: `${bounds.left}%`,
+										width: `${bounds.width}%`,
+										top: row.top + ROW_PADDING,
+										height: row.height - ROW_PADDING * 2,
+									}}
+								/>
+							);
+						})()}
+					{dropDraft?.laneKey === row.key && (
+						<div
+							data-testid="scheduler-drop-lane"
+							className="pointer-events-none absolute inset-x-0 rounded-sm ring-2 ring-inset ring-primary/60"
+							style={{ top: row.top, height: row.height }}
+						/>
+					)}
+					{dropDraft?.laneKey === row.key &&
+						(() => {
+							const bounds = rangeBounds(
+								dropDraft.startDate,
+								dropDraft.endDate,
+							);
+							if (!bounds) return null;
+							return (
+								<span
+									data-testid="scheduler-drop-preview"
+									className="pointer-events-none absolute rounded-md border-2 border-dashed border-primary bg-primary/25"
+									style={{
+										left: `${bounds.left}%`,
+										width: `${bounds.width}%`,
 										top: row.top + ROW_PADDING,
 										height: row.height - ROW_PADDING * 2,
 									}}

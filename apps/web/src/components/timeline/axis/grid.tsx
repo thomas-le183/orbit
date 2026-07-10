@@ -6,8 +6,18 @@ import {
 	useZoomLevel,
 } from "../controller/hooks";
 import { getDayUnits, getUnits } from "../units/make-units";
+import type { ZoomLevel } from "../units/types";
 import { isNonWorkingDay } from "../units/working-days";
 import { GridUnit, NonWorkingStripe } from "./unit";
+
+/**
+ * Zooms where a single day is wide enough for weekend shading to read.
+ * Quarters (3.6px/day) and years (1.2px/day) collapse the hatch into noise.
+ */
+const WEEKEND_STRIPE_ZOOMS: ReadonlySet<ZoomLevel> = new Set([
+	"weeks",
+	"months",
+]);
 
 /** Should this unit draw a right border for the given zoom level? */
 function hasRightBorder(
@@ -43,13 +53,11 @@ export default function TimelineGrid() {
 		FISCAL_MONTH,
 		weekStart,
 	);
-	// Weekend shading only reads clearly at the day-resolution "weeks" zoom.
-	const weekendDays =
-		zoomLevel === "weeks"
-			? getDayUnits({ from, to }, today, weekStart).filter((day) =>
-					isNonWorkingDay(today + day.from),
-				)
-			: [];
+	const weekendDays = WEEKEND_STRIPE_ZOOMS.has(zoomLevel)
+		? getDayUnits({ from, to }, today, weekStart).filter((day) =>
+				isNonWorkingDay(today + day.from),
+			)
+		: [];
 
 	if (units.length === 0) return null;
 
