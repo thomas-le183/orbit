@@ -1,6 +1,11 @@
 import type { TaskAssignee, TimelineItem } from "@/data/timeline-items";
 import { buildGroupRows, type GroupingMode } from "./group-rows";
-import { barHeight, GROUP_PADDING, LANE_GAP, MIN_BAR_HEIGHT } from "./lane-metrics";
+import {
+	barHeight,
+	CREATE_LANE_HEIGHT,
+	GROUP_PADDING,
+	LANE_GAP,
+} from "./lane-metrics";
 import { type PackedBar, packLanes } from "./pack-lanes";
 
 export type PositionedLane = {
@@ -22,8 +27,10 @@ export type SchedulerRow = {
 
 /**
  * Stack packed lanes vertically. Each lane is sized to its tallest bar; lanes
- * are separated by LANE_GAP. Returns positioned lanes plus the group's total
- * pixel height (including GROUP_PADDING top and bottom).
+ * are separated by LANE_GAP. A bar-free CREATE_LANE_HEIGHT strip is reserved
+ * below the last lane so drag-to-create stays reachable on a packed row.
+ * Returns positioned lanes plus the group's total pixel height (including
+ * GROUP_PADDING top and bottom).
  */
 export function stackLanes(lanes: PackedBar[][]): {
 	lanes: PositionedLane[];
@@ -37,8 +44,11 @@ export function stackLanes(lanes: PackedBar[][]): {
 		if (i < lanes.length - 1) top += LANE_GAP;
 		return lane;
 	});
-	const stackHeight = positioned.length === 0 ? MIN_BAR_HEIGHT : top;
-	return { lanes: positioned, height: stackHeight + GROUP_PADDING * 2 };
+	const stackHeight = positioned.length === 0 ? 0 : top + LANE_GAP;
+	return {
+		lanes: positioned,
+		height: stackHeight + CREATE_LANE_HEIGHT + GROUP_PADDING * 2,
+	};
 }
 
 /**

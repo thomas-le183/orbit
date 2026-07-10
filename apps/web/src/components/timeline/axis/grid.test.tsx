@@ -24,15 +24,37 @@ describe("TimelineGrid", () => {
 		expect(cells.length).toBeGreaterThan(0);
 	});
 
-	it("highlights exactly one today column", () => {
+	it.each([
+		"weeks",
+		"months",
+	] as const)("stripes weekend columns at %s zoom", (zoom) => {
 		const { container } = render(
-			<TimelineProvider initialZoom="weeks">
+			<TimelineProvider initialZoom={zoom}>
 				<SizeViewport width={640} />
 				<TimelineGrid />
 			</TimelineProvider>,
 		);
-		const highlighted = container.querySelectorAll("[data-today='true']");
-		expect(highlighted.length).toBe(1);
+		const stripes = container.querySelectorAll(
+			"[data-testid='timeline-nonworking-stripe']",
+		);
+		// The rendered window spans multiple weeks, so several weekend days show.
+		expect(stripes.length).toBeGreaterThan(0);
+	});
+
+	it.each([
+		"quarters",
+		"years",
+	] as const)("does not stripe weekends at %s zoom", (zoom) => {
+		const { container } = render(
+			<TimelineProvider initialZoom={zoom}>
+				<SizeViewport width={640} />
+				<TimelineGrid />
+			</TimelineProvider>,
+		);
+		const stripes = container.querySelectorAll(
+			"[data-testid='timeline-nonworking-stripe']",
+		);
+		expect(stripes.length).toBe(0);
 	});
 
 	it("renders months zoom with borders on month boundaries", () => {

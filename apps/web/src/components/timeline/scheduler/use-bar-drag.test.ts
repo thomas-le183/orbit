@@ -51,9 +51,9 @@ describe("useBarDrag", () => {
 		});
 		expect(result.current.active).toEqual({ id: "t1", role: "move" });
 
-		// +144px = +3 days at 48 px/day.
+		// +192px = +3 days at 64 px/day.
 		act(() => {
-			fireEvent.pointerMove(window, { clientX: 244, clientY: 0 });
+			fireEvent.pointerMove(window, { clientX: 292, clientY: 0 });
 		});
 		expect(result.current.draft).toEqual({
 			id: "t1",
@@ -61,7 +61,7 @@ describe("useBarDrag", () => {
 		});
 
 		act(() => {
-			fireEvent.pointerUp(window, { clientX: 244, clientY: 0 });
+			fireEvent.pointerUp(window, { clientX: 292, clientY: 0 });
 		});
 		// range {3d, 6d} → start today+3, end today+6-1day.
 		expect(onCommit).toHaveBeenCalledWith(

@@ -1,12 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { DragRangeProvider, useDragRange } from "./context";
+import { DragRangeProvider, DragRangePublisher, useDragRange } from "./context";
 
 function Probe() {
-	const range = useDragRange();
+	const drag = useDragRange();
 	return (
 		<span data-testid="probe">
-			{range ? `${range.from}-${range.to}` : "none"}
+			{drag ? `${drag.range.from}-${drag.range.to}` : "none"}
 		</span>
 	);
 }
@@ -17,18 +17,30 @@ describe("useDragRange", () => {
 		expect(screen.getByTestId("probe").textContent).toBe("none");
 	});
 
-	it("exposes the provided range", () => {
+	it("exposes a published range", () => {
 		render(
-			<DragRangeProvider range={{ from: 10, to: 20 }}>
+			<DragRangeProvider>
+				<DragRangePublisher range={{ from: 10, to: 20 }} pointerX={100} />
 				<Probe />
 			</DragRangeProvider>,
 		);
 		expect(screen.getByTestId("probe").textContent).toBe("10-20");
 	});
 
-	it("exposes null when the provider passes null", () => {
+	it("exposes null when the range is published as null", () => {
 		render(
-			<DragRangeProvider range={null}>
+			<DragRangeProvider>
+				<DragRangePublisher range={null} pointerX={null} />
+				<Probe />
+			</DragRangeProvider>,
+		);
+		expect(screen.getByTestId("probe").textContent).toBe("none");
+	});
+
+	it("exposes null when only a pointer (no range) is published", () => {
+		render(
+			<DragRangeProvider>
+				<DragRangePublisher range={null} pointerX={100} />
 				<Probe />
 			</DragRangeProvider>,
 		);

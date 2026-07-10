@@ -1,7 +1,7 @@
 // apps/web/src/components/timeline/bars/items-layer.tsx
 import { cn } from "@orbit/shared";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Fragment, type ReactNode, useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { MIN_BAR_WIDTH_PX, RESIZE_HANDLE_MIN_BAR_PX } from "../constants";
 import { useTimelineController } from "../controller/context";
@@ -21,7 +21,7 @@ import { DependencyLayer } from "../dependencies/dependency-layer";
 import type { Anchor } from "../dependencies/geometry";
 import { DraftLane } from "../draft/draft-row";
 import { useDraftTask } from "../draft/use-draft-task";
-import DragTooltip from "../drag/drag-tooltip";
+import { usePublishDragRange } from "../drag/context";
 import {
 	contentHeight,
 	ROW_HEIGHT,
@@ -35,7 +35,6 @@ import type { RelativeTimeRangeOffset } from "../units/types";
 import { labelFitsInside, measureTextWidth } from "./bar-label";
 import {
 	type GestureTarget,
-	gestureTooltip,
 	rangeToDates,
 	useBarInteraction,
 } from "./use-bar-interaction";
@@ -103,6 +102,19 @@ export default function ItemsLayer() {
 		},
 	});
 
+	// Publish the live drag to the header so it can tint the days / pin a date
+	// label above the cursor. Gated on `pointer` so a click without movement
+	// (pointerdown only) never flashes feedback.
+	const activeRow = active
+		? rows.find((r) => r.item.id === active.id)
+		: undefined;
+	usePublishDragRange(
+		active && pointer && activeRow
+			? (draft[active.id] ?? activeRow.range)
+			: null,
+		pointer?.x ?? null,
+	);
+
 	if (viewportWidth <= 0) return null;
 	const geom: Geometry = { offsetMs, zoom: zoomLevel, viewportWidth };
 
@@ -157,19 +169,6 @@ export default function ItemsLayer() {
 		rows
 			.filter((r) => r.item.parentId === parentId && !r.isParent)
 			.map((r) => r.item.id);
-
-	// Date tooltip that follows the cursor during a drag/resize gesture.
-	let dragTooltip: ReactNode = null;
-	if (active && pointer) {
-		const row = rows.find((r) => r.item.id === active.id);
-		if (row) {
-			const range = draft[active.id] ?? row.range;
-			const tip = gestureTooltip(active.role, range, today);
-			dragTooltip = (
-				<DragTooltip x={pointer.x} y={pointer.y} label={tip.label} />
-			);
-		}
-	}
 
 	return (
 		<div
@@ -533,7 +532,6 @@ export default function ItemsLayer() {
 			)}
 
 			<DependencyLayer draft={draft} linkDraft={linkDraft} />
-			{dragTooltip}
 		</div>
 	);
 }

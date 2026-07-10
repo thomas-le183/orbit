@@ -10,6 +10,12 @@ export const PX_PER_MINUTE = 0.2;
 export const LANE_GAP = 8;
 /** Padding above/below the stack of lanes inside a group row. */
 export const GROUP_PADDING = 8;
+/**
+ * Empty lane kept below the packed lanes of every group row. Without it a fully
+ * packed row leaves no bar-free strip to press on, so drag-to-create becomes
+ * unreachable there.
+ */
+export const CREATE_LANE_HEIGHT = MIN_BAR_HEIGHT;
 
 /** Pixel height of a bar, from its estimatedTime (minutes), clamped-linear. */
 export function barHeight(item: TimelineItem): number {
@@ -27,7 +33,10 @@ export const ESTIMATE_SNAP_MIN = 30;
  * min, then snaps to the nearest ESTIMATE_SNAP_MIN.
  */
 export function estimateFromDrag(startHeight: number, dy: number): number {
-	const h = Math.min(MAX_BAR_HEIGHT, Math.max(MIN_BAR_HEIGHT, startHeight + dy));
+	const h = Math.min(
+		MAX_BAR_HEIGHT,
+		Math.max(MIN_BAR_HEIGHT, startHeight + dy),
+	);
 	const raw = h / PX_PER_MINUTE;
 	return Math.round(raw / ESTIMATE_SNAP_MIN) * ESTIMATE_SNAP_MIN;
 }

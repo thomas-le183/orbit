@@ -1,3 +1,5 @@
+import { useRef } from "react";
+import { gestureTooltip } from "../bars/use-bar-interaction";
 import { FISCAL_MONTH, TOP_LABEL_WIDTH_PX } from "../constants";
 import { useTimelineController } from "../controller/context";
 import { stickyLeftPx } from "../controller/geometry";
@@ -11,20 +13,50 @@ import { useDragRange } from "../drag/context";
 import { overlapsRange } from "../drag/overlap";
 import { getDayUnits, getUnits, ONE_DAY } from "../units/make-units";
 import type { Unit, ZoomLevel } from "../units/types";
-import { BottomCell, TopLabel } from "./label";
+import { BottomCell, DragAxisLabel, TopLabel } from "./label";
 
 const monthShort = (ms: number) =>
 	new Date(ms).toLocaleString("en-US", { month: "short", timeZone: "UTC" });
 
+const monthLong = (ms: number) =>
+	new Date(ms).toLocaleString("en-US", { month: "long", timeZone: "UTC" });
+
+/** Two-letter weekday abbreviation, e.g. "Mo", "Tu". */
+const weekdayShort = (ms: number) =>
+	new Date(ms)
+		.toLocaleString("en-US", { weekday: "short", timeZone: "UTC" })
+		.slice(0, 2);
+
+/** Midnight (UTC) of the Thursday in the ISO week containing `ms`. */
+const isoThursdayMs = (ms: number): number => {
+	const d = new Date(ms);
+	const dow = (d.getUTCDay() + 6) % 7; // Mon = 0 … Sun = 6
+	d.setUTCDate(d.getUTCDate() - dow + 3);
+	return d.getTime();
+};
+
+/** ISO-8601 week number (1–53) of the week containing `ms`. */
+const isoWeek = (ms: number): number => {
+	const thu = isoThursdayMs(ms);
+	const firstThu = isoThursdayMs(
+		Date.UTC(new Date(thu).getUTCFullYear(), 0, 4),
+	);
+	return 1 + Math.round((thu - firstThu) / (7 * ONE_DAY));
+};
+
 const fmtTopLabel = (unitStartMs: number, zoom: ZoomLevel): string => {
-	const d = new Date(unitStartMs);
-	const isCurrentYear = new Date().getUTCFullYear() === d.getUTCFullYear();
-	if (zoom === "weeks" || zoom === "months") {
-		const m = monthShort(unitStartMs);
-		return isCurrentYear ? m : `${m} '${String(d.getUTCFullYear()).slice(-2)}`;
+	if (zoom === "weeks") {
+		// ISO week number + full month & year of the week (its Thursday, per ISO).
+		const thu = isoThursdayMs(unitStartMs);
+		return `${isoWeek(unitStartMs)} - ${monthLong(thu)} ${new Date(thu).getUTCFullYear()}`;
+	}
+	if (zoom === "months") {
+		// Full month name + year — no week number.
+		const d = new Date(unitStartMs);
+		return `${monthLong(unitStartMs)} ${d.getUTCFullYear()}`;
 	}
 	// quarters + years: year label
-	return String(d.getUTCFullYear());
+	return String(new Date(unitStartMs).getUTCFullYear());
 };
 
 const quarterNumber = (monthZeroBased: number): number =>
@@ -32,7 +64,7 @@ const quarterNumber = (monthZeroBased: number): number =>
 
 /** Per-zoom layout: which generator feeds the top row and which the bottom row. */
 const topZoomFor: Record<ZoomLevel, ZoomLevel> = {
-	weeks: "months",
+	weeks: "weeks",
 	months: "months",
 	quarters: "years",
 	years: "years",
@@ -44,7 +76,11 @@ export default function TimeUnitsBar() {
 	const { viewportWidth } = useTimelineController();
 	const { getPercentageOffset } = useHorizontalPercentageOffset();
 	const weekStart = useWeekStart();
-	const dragRange = useDragRange();
+	const drag = useDragRange();
+	const dragRange = drag?.range ?? null;
+	const axisRef = useRef<HTMLDivElement>(null);
+	// Weeks/months resolve to day-wide cells, so a drag can tint the exact days.
+	const isDayResolution = zoomLevel === "weeks" || zoomLevel === "months";
 
 	// ── Top row (coarse units) with sticky-first-label ──────────────────────
 	const topUnits = getUnits(
@@ -52,6 +88,7 @@ export default function TimeUnitsBar() {
 		topZoomFor[zoomLevel],
 		today,
 		FISCAL_MONTH,
+		weekStart,
 	);
 	const topRow = topUnits.map((unit) => {
 		const naturalLeft = getPercentageOffset(unit.from);
@@ -71,16 +108,8 @@ export default function TimeUnitsBar() {
 
 	// ── Bottom row (fine units) ─────────────────────────────────────────────
 	let bottomUnits: Unit[];
-	if (zoomLevel === "weeks") {
+	if (zoomLevel === "weeks" || zoomLevel === "months") {
 		bottomUnits = getDayUnits({ from, to }, today, weekStart);
-	} else if (zoomLevel === "months") {
-		bottomUnits = getUnits(
-			{ from, to },
-			"weeks",
-			today,
-			FISCAL_MONTH,
-			weekStart,
-		);
 	} else {
 		bottomUnits = getUnits({ from, to }, "quarters", today, FISCAL_MONTH);
 	}
@@ -94,10 +123,11 @@ export default function TimeUnitsBar() {
 		let label: string;
 		let withLeftBorder = false;
 		if (zoomLevel === "weeks") {
-			label = String(d.getUTCDate());
+			label = `${weekdayShort(startMs)} ${d.getUTCDate()}`;
 			withLeftBorder = d.getUTCDay() === weekStart; // first day of the week
 		} else if (zoomLevel === "months") {
 			label = String(d.getUTCDate());
+			withLeftBorder = d.getUTCDate() === 1; // first day of the month
 		} else if (zoomLevel === "quarters") {
 			const q = quarterNumber(d.getUTCMonth());
 			label = `Q${q} ${monthShort(startMs)} - ${monthShort(today + unit.to - ONE_DAY)}`;
@@ -114,15 +144,34 @@ export default function TimeUnitsBar() {
 				leftPercent={left}
 				widthPercent={width}
 				withLeftBorder={withLeftBorder}
-				highlighted={overlapsRange(unit, dragRange)}
+				highlighted={isDayResolution && overlapsRange(unit, dragRange)}
 			>
 				{label}
 			</BottomCell>
 		);
 	});
 
+	// Coarse zooms (quarters/years) can't tint a precise day, so pin a date-range
+	// label to the axis above the cursor instead of tinting a whole (coarse) cell.
+	let axisDrag: { centerPercent: number; label: string } | null = null;
+	if (dragRange && !isDayResolution) {
+		const left = getPercentageOffset(dragRange.from);
+		const width = getPercentageOffset(dragRange.to) - left;
+		// Anchor the label at the cursor; fall back to the span midpoint when the
+		// axis hasn't been measured yet (e.g. first paint, jsdom).
+		let centerPercent = left + width / 2;
+		const rect = axisRef.current?.getBoundingClientRect();
+		if (drag?.pointerX != null && rect && rect.width > 0) {
+			centerPercent = ((drag.pointerX - rect.left) / rect.width) * 100;
+		}
+		axisDrag = {
+			centerPercent,
+			label: gestureTooltip("move", dragRange, today).label,
+		};
+	}
+
 	return (
-		<div className="absolute inset-0 h-full w-full">
+		<div ref={axisRef} className="absolute inset-0 h-full w-full">
 			<div
 				data-testid="timeline-header-top"
 				className="relative h-6 border-b border-border overflow-hidden"
@@ -135,6 +184,12 @@ export default function TimeUnitsBar() {
 			>
 				{bottomRow}
 			</div>
+			{axisDrag && (
+				<DragAxisLabel
+					centerPercent={axisDrag.centerPercent}
+					label={axisDrag.label}
+				/>
+			)}
 		</div>
 	);
 }

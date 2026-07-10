@@ -6,14 +6,22 @@ import {
 	type ReactNode,
 	type PointerEvent as ReactPointerEvent,
 	useEffect,
+	useMemo,
 	useRef,
+	useState,
 } from "react";
+import { useEdgeAutoScroll } from "../bars/use-edge-autoscroll";
 import { useTimelineController } from "../controller/context";
-import type { Geometry } from "../controller/geometry";
+import { type Geometry, pxPerMs } from "../controller/geometry";
 import { useHorizontalPercentageOffset } from "../controller/hooks";
+import { usePublishDragRange } from "../drag/context";
 import { ROW_HEIGHT, ROW_PADDING } from "../layout/row-metrics";
 import { ONE_DAY, startOfUtcDay } from "../units/make-units";
-import { draftRangeFromDrag } from "./draft-range";
+import {
+	CLICK_THRESHOLD_PX,
+	draftRangeFromDrag,
+	draftRangeToOffset,
+} from "./draft-range";
 import { useDraftTask } from "./use-draft-task";
 
 /** Inline name input + date readout, aligned to a TimelineTable row. */
@@ -76,11 +84,27 @@ export function DraftTableCell({ rowIndex }: { rowIndex: number }) {
 export function DraftLane({ rowIndex }: { rowIndex: number }) {
 	const { today, offsetMs, zoomLevel, viewportWidth } = useTimelineController();
 	const { getPercentageOffset } = useHorizontalPercentageOffset();
-	const { startDate, endDate, setDates, focusInput } = useDraftTask();
+	const { startDate, endDate, setDates, focusInput, cancel } = useDraftTask();
+	// Cursor x while the create-drag is live; null once released, which also
+	// stops the header feedback (the dashed ghost stays until commit/cancel).
+	const [pointerX, setPointerX] = useState<number | null>(null);
+	// Horizontal only: the draft lane is a fixed row, so scrolling rows mid-drag
+	// would only disorient.
+	const edgeScroll = useEdgeAutoScroll({ vertical: false });
+
+	// Tint the spanned day cells / pin the date label, exactly as a bar drag does.
+	// Memoized: the publisher keys its effect on range identity.
+	const dragRange = useMemo(
+		() =>
+			pointerX == null ? null : draftRangeToOffset(startDate, endDate, today),
+		[pointerX, startDate, endDate, today],
+	);
+	usePublishDragRange(dragRange, pointerX);
 
 	const listenersRef = useRef<{
 		move: (e: PointerEvent) => void;
 		up: (e: PointerEvent) => void;
+		key: (e: KeyboardEvent) => void;
 	} | null>(null);
 
 	useEffect(() => {
@@ -88,6 +112,7 @@ export function DraftLane({ rowIndex }: { rowIndex: number }) {
 			if (listenersRef.current) {
 				window.removeEventListener("pointermove", listenersRef.current.move);
 				window.removeEventListener("pointerup", listenersRef.current.up);
+				window.removeEventListener("keydown", listenersRef.current.key, true);
 				listenersRef.current = null;
 			}
 		};
@@ -101,22 +126,71 @@ export function DraftLane({ rowIndex }: { rowIndex: number }) {
 		e.preventDefault();
 		const rect = e.currentTarget.getBoundingClientRect();
 		const startX = e.clientX;
+		const startY = e.clientY;
+		// Time panned under the cursor since the press. Geometry is frozen at
+		// press-time so the anchor day stays pinned to the content while the
+		// viewport scrolls; only the moving end absorbs the pan.
+		let panAccumMs = 0;
+		const geom0 = geom;
+		let lastX = startX;
+
 		const apply = (clientX: number) => {
-			const r = draftRangeFromDrag(startX, clientX, rect, geom, today);
+			const r = draftRangeFromDrag(
+				startX,
+				clientX + panAccumMs * pxPerMs(geom0.zoom),
+				rect,
+				geom0,
+				today,
+			);
 			setDates(r.startDate, r.endDate);
+			setPointerX(clientX);
 		};
 		apply(startX);
-		const onMove = (ev: PointerEvent) => apply(ev.clientX);
-		const onUp = (ev: PointerEvent) => {
+		const onMove = (ev: PointerEvent) => {
+			lastX = ev.clientX;
+			// Only once the press reads as a drag; a click near the edge must not
+			// pan the timeline out from under the user.
+			if (Math.abs(ev.clientX - startX) >= CLICK_THRESHOLD_PX) {
+				edgeScroll.start(ev.clientX, startY, (panMs) => {
+					panAccumMs += panMs;
+					apply(lastX);
+				});
+				edgeScroll.setPointer(ev.clientX, startY);
+			}
 			apply(ev.clientX);
-			focusInput();
+		};
+		/** Ends the gesture. Leaves the sketched dates alone — callers decide. */
+		const teardown = () => {
+			edgeScroll.stop();
+			setPointerX(null);
 			window.removeEventListener("pointermove", onMove);
 			window.removeEventListener("pointerup", onUp);
+			window.removeEventListener("keydown", onKey, true);
 			listenersRef.current = null;
 		};
+
+		const onUp = (ev: PointerEvent) => {
+			apply(ev.clientX);
+			teardown();
+			focusInput();
+		};
+
+		// Escape abandons the whole draft — gesture, ghost, and any typed name.
+		// Tearing down first means the later pointerup lands on no listener, so
+		// the abandoned range can never be re-applied.
+		const onKey = (ev: KeyboardEvent) => {
+			if (ev.key !== "Escape") return;
+			ev.preventDefault();
+			ev.stopPropagation();
+			teardown();
+			cancel();
+		};
+
 		window.addEventListener("pointermove", onMove);
 		window.addEventListener("pointerup", onUp);
-		listenersRef.current = { move: onMove, up: onUp };
+		// Capture phase: beat the view-level Escape handler that clears selection.
+		window.addEventListener("keydown", onKey, true);
+		listenersRef.current = { move: onMove, up: onUp, key: onKey };
 	};
 
 	let ghost: ReactNode = null;

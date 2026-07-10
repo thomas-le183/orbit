@@ -62,8 +62,24 @@ const tooltipDateFormat = new Intl.DateTimeFormat("en-US", {
 	timeZone: "UTC",
 });
 
-const formatTooltipDate = (iso: string): string =>
-	tooltipDateFormat.format(Date.parse(iso));
+const tooltipDateWithYearFormat = new Intl.DateTimeFormat("en-US", {
+	month: "short",
+	day: "numeric",
+	year: "numeric",
+	timeZone: "UTC",
+});
+
+/**
+ * "Jun 1" within the current year, "Jun 1, 2027" outside it — the year only
+ * earns its space when it disambiguates. `today` anchors "current"; each date in
+ * a span is judged on its own, so a year-crossing drag reads "Dec 30 – Jan 1, 2027".
+ */
+const formatTooltipDate = (iso: string, today: number): string => {
+	const ms = Date.parse(iso);
+	const sameYear =
+		new Date(ms).getUTCFullYear() === new Date(today).getUTCFullYear();
+	return (sameYear ? tooltipDateFormat : tooltipDateWithYearFormat).format(ms);
+};
 
 /**
  * The date label and the ms-offset to anchor a drag/resize tooltip at:
@@ -77,12 +93,12 @@ export const gestureTooltip = (
 ): { ms: number; label: string } => {
 	const { startDate, endDate } = rangeToDates(range, today);
 	if (role === "resize-start")
-		return { ms: range.from, label: formatTooltipDate(startDate) };
+		return { ms: range.from, label: formatTooltipDate(startDate, today) };
 	if (role === "resize-end")
-		return { ms: range.to, label: formatTooltipDate(endDate) };
+		return { ms: range.to, label: formatTooltipDate(endDate, today) };
 	return {
 		ms: range.from,
-		label: `${formatTooltipDate(startDate)} – ${formatTooltipDate(endDate)}`,
+		label: `${formatTooltipDate(startDate, today)} – ${formatTooltipDate(endDate, today)}`,
 	};
 };
 

@@ -17,6 +17,7 @@ import { layoutItems } from "../controller/layout";
 import CustomizeMenu from "../customize-menu";
 import { useTimelineData } from "../data/context";
 import { DraftTaskProvider } from "../draft/use-draft-task";
+import { DragRangeProvider } from "../drag/context";
 import TimeUnitsBar from "../header/time-units-bar";
 import MilestoneMarkers from "../milestone-markers";
 import NowLine from "../now-line";
@@ -139,123 +140,125 @@ function SplitLayoutInner({
 	}, [clear]);
 
 	return (
-		<DraftTaskProvider projectId={projectId ?? ""} enabled={draftEnabled}>
-			<div className="relative flex h-full flex-col">
-				{/* toolbar */}
-				<div className="flex items-center justify-between border-b border-border p-2">
-					<div className="flex items-center gap-1.5">
-						{onNewTask && (
-							<Button variant="outline" size="sm" onClick={onNewTask}>
-								<PlusIcon className="size-3.5" />
-								New task
-							</Button>
+		<DragRangeProvider>
+			<DraftTaskProvider projectId={projectId ?? ""} enabled={draftEnabled}>
+				<div className="relative flex h-full flex-col">
+					{/* toolbar */}
+					<div className="flex items-center justify-between border-b border-border p-2">
+						<div className="flex items-center gap-1.5">
+							{onNewTask && (
+								<Button variant="outline" size="sm" onClick={onNewTask}>
+									<PlusIcon className="size-3.5" />
+									New task
+								</Button>
+							)}
+						</div>
+						<div className="flex items-center gap-1.5">
+							<button
+								type="button"
+								aria-label="Scroll to earlier dates"
+								data-testid="timeline-pan-earlier"
+								onClick={() => panViewports(-PAN_STEP)}
+								className="rounded-md border border-border p-1 hover:bg-accent"
+							>
+								<ChevronLeft className="size-4" />
+							</button>
+							<button
+								type="button"
+								onClick={scrollToToday}
+								className="rounded-md border border-border px-2.5 py-1 text-xs font-medium hover:bg-accent"
+							>
+								Today
+							</button>
+							<button
+								type="button"
+								aria-label="Scroll to later dates"
+								data-testid="timeline-pan-later"
+								onClick={() => panViewports(PAN_STEP)}
+								className="rounded-md border border-border p-1 hover:bg-accent"
+							>
+								<ChevronRight className="size-4" />
+							</button>
+							<ZoomControl />
+							<CustomizeMenu
+								viewSwitch={viewSwitch}
+								table={{ collapsed, onToggle: toggleCollapsed }}
+							/>
+						</div>
+					</div>
+					{/* split region (table | timeline) — divider spans only this, not the toolbar */}
+					<div className="relative flex min-h-0 flex-1 flex-col">
+						{/* header band */}
+						<div className="relative z-20 flex h-12 shrink-0 border-b border-border">
+							<div
+								className="relative z-30 shrink-0 overflow-hidden border-r border-border bg-muted/40"
+								style={{ width: tableWidth }}
+							>
+								{tableHeader}
+							</div>
+							<div className="relative" style={{ width: viewportWidth }}>
+								<TimeUnitsBar />
+							</div>
+						</div>
+
+						{/* body */}
+						<div className="relative flex-1 overflow-hidden">
+							{/* pinned timeline background over the right region */}
+							<div
+								className="absolute inset-y-0"
+								style={{ left: tableWidth, width: viewportWidth }}
+							>
+								<TimelineGrid />
+								<NowLine />
+								<MilestoneMarkers />
+							</div>
+							{/* shared vertical scroll: table column + items layer move together */}
+							<div
+								ref={scrollRef}
+								className="absolute inset-0 overflow-y-auto overflow-x-hidden"
+							>
+								<VirtualRowsProvider scrollRef={scrollRef} count={rowCount}>
+									<div className="flex min-h-full">
+										<div
+											data-testid="timeline-table-column"
+											className="relative z-30 min-h-full shrink-0 overflow-hidden border-r border-border bg-background-primary"
+											style={{ width: tableWidth }}
+										>
+											{table}
+										</div>
+										<div
+											ref={viewportRef}
+											className="relative flex-1 touch-none select-none"
+											onWheel={onWheel}
+										>
+											<ItemsLayer />
+										</div>
+									</div>
+								</VirtualRowsProvider>
+							</div>
+						</div>
+
+						{/* full-height draggable divider (hidden while the table is collapsed) */}
+						{!collapsed && (
+							<div
+								data-testid="timeline-split-divider"
+								onPointerDown={onDividerPointerDown}
+								className="absolute inset-y-0 z-40 w-3 -translate-x-1/2 cursor-col-resize hover:bg-border"
+								style={{ left: tableWidth }}
+							/>
 						)}
-					</div>
-					<div className="flex items-center gap-1.5">
-						<button
-							type="button"
-							aria-label="Scroll to earlier dates"
-							data-testid="timeline-pan-earlier"
-							onClick={() => panViewports(-PAN_STEP)}
-							className="rounded-md border border-border p-1 hover:bg-accent"
-						>
-							<ChevronLeft className="size-4" />
-						</button>
-						<button
-							type="button"
-							onClick={scrollToToday}
-							className="rounded-md border border-border px-2.5 py-1 text-xs font-medium hover:bg-accent"
-						>
-							Today
-						</button>
-						<button
-							type="button"
-							aria-label="Scroll to later dates"
-							data-testid="timeline-pan-later"
-							onClick={() => panViewports(PAN_STEP)}
-							className="rounded-md border border-border p-1 hover:bg-accent"
-						>
-							<ChevronRight className="size-4" />
-						</button>
-						<ZoomControl />
-						<CustomizeMenu
-							viewSwitch={viewSwitch}
-							table={{ collapsed, onToggle: toggleCollapsed }}
-						/>
-					</div>
-				</div>
-				{/* split region (table | timeline) — divider spans only this, not the toolbar */}
-				<div className="relative flex min-h-0 flex-1 flex-col">
-					{/* header band */}
-					<div className="relative z-20 flex h-12 shrink-0 border-b border-border">
-						<div
-							className="relative z-30 shrink-0 overflow-hidden border-r border-border bg-muted/40"
-							style={{ width: tableWidth }}
-						>
-							{tableHeader}
-						</div>
-						<div className="relative" style={{ width: viewportWidth }}>
-							<TimeUnitsBar />
-						</div>
-					</div>
 
-					{/* body */}
-					<div className="relative flex-1 overflow-hidden">
-						{/* pinned timeline background over the right region */}
-						<div
-							className="absolute inset-y-0"
-							style={{ left: tableWidth, width: viewportWidth }}
-						>
-							<TimelineGrid />
-							<NowLine />
-							<MilestoneMarkers />
-						</div>
-						{/* shared vertical scroll: table column + items layer move together */}
-						<div
-							ref={scrollRef}
-							className="absolute inset-0 overflow-y-auto overflow-x-hidden"
-						>
-							<VirtualRowsProvider scrollRef={scrollRef} count={rowCount}>
-								<div className="flex min-h-full">
-									<div
-										data-testid="timeline-table-column"
-										className="relative z-30 min-h-full shrink-0 overflow-hidden border-r border-border bg-background-primary"
-										style={{ width: tableWidth }}
-									>
-										{table}
-									</div>
-									<div
-										ref={viewportRef}
-										className="relative flex-1 touch-none select-none"
-										onWheel={onWheel}
-									>
-										<ItemsLayer />
-									</div>
-								</div>
-							</VirtualRowsProvider>
-						</div>
-					</div>
-
-					{/* full-height draggable divider (hidden while the table is collapsed) */}
-					{!collapsed && (
-						<div
-							data-testid="timeline-split-divider"
-							onPointerDown={onDividerPointerDown}
-							className="absolute inset-y-0 z-40 w-3 -translate-x-1/2 cursor-col-resize hover:bg-border"
-							style={{ left: tableWidth }}
-						/>
-					)}
-
-					{/* footer: horizontal scrollbar under the timeline region only */}
-					<div className="flex shrink-0">
-						<div className="shrink-0" style={{ width: tableWidth }} />
-						<div className="relative" style={{ width: viewportWidth }}>
-							<TimelineScrollbar />
+						{/* footer: horizontal scrollbar under the timeline region only */}
+						<div className="flex shrink-0">
+							<div className="shrink-0" style={{ width: tableWidth }} />
+							<div className="relative" style={{ width: viewportWidth }}>
+								<TimelineScrollbar />
+							</div>
 						</div>
 					</div>
 				</div>
-			</div>
-		</DraftTaskProvider>
+			</DraftTaskProvider>
+		</DragRangeProvider>
 	);
 }
 

@@ -1,6 +1,12 @@
 import type { CreateTaskInput } from "@orbit/shared";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from "@testing-library/react";
 import { type ReactNode, useState } from "react";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { TimelineItem } from "@/data/timeline-items";
@@ -12,6 +18,14 @@ vi.mock("../data/context", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("../data/context")>();
 	return { ...actual, useTimelineData: vi.fn() };
 });
+
+// SchedulerLayout reads weekStart from usePreferences, which otherwise issues a
+// real /preferences request per mount. Those requests never resolve under
+// happy-dom and starve the file's 5s test timeout once enough tests mount the
+// view, so pin it to the same default the component falls back to.
+vi.mock("@/hooks/use-preferences", () => ({
+	usePreferences: () => ({ data: { weekStart: 1 } }),
+}));
 
 // Only bars whose dates overlap the (today-centered) visible viewport are
 // rendered by the scheduler at the default "weeks" zoom (~17 visible days),
@@ -430,33 +444,6 @@ describe("SchedulerView", () => {
 		expect(renameTask).toHaveBeenCalledTimes(1);
 	});
 
-	it("shows a drag tooltip with the committed dates while dragging a bar", async () => {
-		renderScheduler();
-		await screen.findAllByTestId("scheduler-group-header");
-		const bar = screen.getAllByTestId("scheduler-bar")[0] as HTMLElement;
-
-		fireEvent.pointerDown(bar, { clientX: 200, clientY: 50, pointerId: 1 });
-		// No movement yet: `active` is set but `pointer` is not, so no tooltip.
-		expect(screen.queryByTestId("timeline-drag-tooltip")).toBeNull();
-
-		fireEvent.pointerMove(window, { clientX: 360, clientY: 55 });
-		const tip = screen.getByTestId("timeline-drag-tooltip");
-		expect(tip.textContent).toMatch(/\w{3} \d+ – \w{3} \d+/);
-
-		fireEvent.pointerUp(window, { clientX: 360, clientY: 55 });
-		expect(screen.queryByTestId("timeline-drag-tooltip")).toBeNull();
-	});
-
-	it("shows no drag tooltip for a click without movement", async () => {
-		renderScheduler();
-		await screen.findAllByTestId("scheduler-group-header");
-		const bar = screen.getAllByTestId("scheduler-bar")[0] as HTMLElement;
-
-		fireEvent.pointerDown(bar, { clientX: 200, clientY: 50, pointerId: 1 });
-		fireEvent.pointerUp(window, { clientX: 200, clientY: 50 });
-		expect(screen.queryByTestId("timeline-drag-tooltip")).toBeNull();
-	});
-
 	it("tints the timeline header while dragging a bar, and clears on release", async () => {
 		renderScheduler();
 		await screen.findAllByTestId("scheduler-group-header");
@@ -480,5 +467,232 @@ describe("SchedulerView", () => {
 		expect(document.querySelectorAll("[data-highlighted='true']").length).toBe(
 			0,
 		);
+	});
+});
+
+describe("unplanned panel", () => {
+	const undated = [
+		{ id: "u-1", name: "Write launch copy", parentId: null },
+		{ id: "u-2", name: "Audit billing flow", parentId: null },
+	];
+
+	function renderWithUndated(
+		overrides: Partial<ReturnType<typeof useTimelineData>> = {},
+	) {
+		vi.mocked(useTimelineData).mockReturnValue(
+			defaultTimelineData({ undatedTaskRows: undated, ...overrides }),
+		);
+		const qc = new QueryClient({
+			defaultOptions: { queries: { retry: false } },
+		});
+		return render(
+			<QueryClientProvider client={qc}>
+				<TimelineDataProvider>
+					<SchedulerView />
+				</TimelineDataProvider>
+			</QueryClientProvider>,
+		);
+	}
+
+	function composer() {
+		const panel = screen.getByTestId("scheduler-unplanned-panel");
+		return within(panel).getByLabelText("New task name") as HTMLInputElement;
+	}
+
+	it("lists every undated task with a count", () => {
+		renderWithUndated();
+		const panel = screen.getByTestId("scheduler-unplanned-panel");
+		expect(within(panel).getAllByTestId("unplanned-task")).toHaveLength(2);
+		expect(within(panel).getByText("Write launch copy")).toBeTruthy();
+		expect(within(panel).getByText("Audit billing flow")).toBeTruthy();
+	});
+
+	it("filters the list by name, case-insensitively", () => {
+		renderWithUndated();
+		const panel = screen.getByTestId("scheduler-unplanned-panel");
+		fireEvent.change(within(panel).getByLabelText("Search unplanned tasks"), {
+			target: { value: "BILLING" },
+		});
+		const rows = within(panel).getAllByTestId("unplanned-task");
+		expect(rows).toHaveLength(1);
+		expect(rows[0].textContent).toBe("Audit billing flow");
+	});
+
+	it("shows a no-matches message when the query matches nothing", () => {
+		renderWithUndated();
+		const panel = screen.getByTestId("scheduler-unplanned-panel");
+		fireEvent.change(within(panel).getByLabelText("Search unplanned tasks"), {
+			target: { value: "zzz" },
+		});
+		expect(within(panel).queryByTestId("unplanned-task")).toBeNull();
+		expect(within(panel).getByText("No matches")).toBeTruthy();
+	});
+
+	it("submitting the composer creates a task with no dates", async () => {
+		const createTask = vi.fn(() => Promise.resolve({ id: "created" }));
+		renderWithUndated({ projectId: "proj-1", createTask });
+
+		const input = composer();
+		fireEvent.change(input, { target: { value: "  Draft the RFC  " } });
+		fireEvent.submit(input.closest("form") as HTMLFormElement);
+
+		// Trimmed name, and crucially no startDate/endDate — that is what keeps
+		// the new task in the unplanned bucket.
+		expect(createTask).toHaveBeenCalledWith({ name: "Draft the RFC" });
+		await waitFor(() => expect(composer().value).toBe(""));
+	});
+
+	it("does not create a task from a blank or whitespace-only name", () => {
+		const createTask = vi.fn(() => Promise.resolve({ id: "created" }));
+		renderWithUndated({ projectId: "proj-1", createTask });
+
+		const input = composer();
+		const form = input.closest("form") as HTMLFormElement;
+
+		fireEvent.submit(form);
+		fireEvent.change(input, { target: { value: "   " } });
+		fireEvent.submit(form);
+
+		expect(createTask).not.toHaveBeenCalled();
+	});
+
+	it("disables the composer when no project is selected", () => {
+		renderWithUndated({ projectId: undefined });
+		expect(composer().disabled).toBe(true);
+	});
+
+	/**
+	 * The drop hook hit-tests the pointer against the lanes viewport's real box;
+	 * happy-dom reports an all-zero rect, so give it one. left/top stay at 0 to
+	 * match what resolveLaneAt already assumes about `contentY`.
+	 */
+	function stubViewportRect() {
+		const vp = screen.getByTestId("scheduler-viewport");
+		vp.getBoundingClientRect = () =>
+			({
+				left: 0,
+				top: 0,
+				right: 800,
+				bottom: 400,
+				width: 800,
+				height: 400,
+				x: 0,
+				y: 0,
+				toJSON: () => {},
+			}) as DOMRect;
+		return vp;
+	}
+
+	function unplannedRow(id: string) {
+		const panel = screen.getByTestId("scheduler-unplanned-panel");
+		return within(panel)
+			.getAllByTestId("unplanned-task")
+			.find((el) => el.getAttribute("data-task-id") === id) as HTMLElement;
+	}
+
+	it("dragging a panel task onto a lane schedules it for that assignee", () => {
+		const scheduleTask = vi.fn();
+		renderWithUndated({ projectId: "proj-1", scheduleTask });
+		stubViewportRect();
+
+		const row = unplannedRow("u-1");
+		fireEvent.pointerDown(row, { clientX: 700, clientY: 50, pointerId: 1 });
+		fireEvent.pointerMove(window, { clientX: 300, clientY: 50 });
+
+		// A live preview and lane ring confirm the drop target before release.
+		expect(screen.getByTestId("scheduler-drop-preview")).toBeTruthy();
+		expect(screen.getByTestId("scheduler-drop-lane")).toBeTruthy();
+
+		fireEvent.pointerUp(window, { clientX: 300, clientY: 50 });
+
+		expect(scheduleTask).toHaveBeenCalledTimes(1);
+		const [taskId, startDate, endDate, assigneeId] = scheduleTask.mock.calls[0];
+		expect(taskId).toBe("u-1");
+		// A drop lands on the single day under the pointer.
+		expect(startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+		expect(endDate).toBe(startDate);
+		// clientY 50 falls in the first row, which sorts alphabetically to Ana.
+		expect(assigneeId).toBe("u_ana");
+
+		// The preview clears on release.
+		expect(screen.queryByTestId("scheduler-drop-preview")).toBeNull();
+	});
+
+	it("releasing outside the lanes viewport cancels the drop", () => {
+		const scheduleTask = vi.fn();
+		renderWithUndated({ projectId: "proj-1", scheduleTask });
+		stubViewportRect();
+
+		const row = unplannedRow("u-2");
+		fireEvent.pointerDown(row, { clientX: 700, clientY: 50, pointerId: 1 });
+		fireEvent.pointerMove(window, { clientX: 300, clientY: 50 });
+		expect(screen.getByTestId("scheduler-drop-preview")).toBeTruthy();
+
+		// Back over the panel (x past the viewport's right edge): no preview, no commit.
+		fireEvent.pointerMove(window, { clientX: 900, clientY: 50 });
+		expect(screen.queryByTestId("scheduler-drop-preview")).toBeNull();
+		fireEvent.pointerUp(window, { clientX: 900, clientY: 50 });
+
+		expect(scheduleTask).not.toHaveBeenCalled();
+	});
+
+	it("releasing over the panel cancels, even though it overlays the viewport", () => {
+		const scheduleTask = vi.fn();
+		renderWithUndated({ projectId: "proj-1", scheduleTask });
+		stubViewportRect();
+		// The panel floats over the viewport's right edge, so x=600 is inside the
+		// viewport rect *and* over the panel.
+		const panel = screen.getByTestId("scheduler-unplanned-panel");
+		panel.getBoundingClientRect = () =>
+			({
+				left: 460,
+				top: 0,
+				right: 800,
+				bottom: 400,
+				width: 340,
+				height: 400,
+				x: 460,
+				y: 0,
+				toJSON: () => {},
+			}) as DOMRect;
+
+		const row = unplannedRow("u-1");
+		fireEvent.pointerDown(row, { clientX: 600, clientY: 50, pointerId: 1 });
+		fireEvent.pointerMove(window, { clientX: 300, clientY: 50 });
+		expect(screen.getByTestId("scheduler-drop-preview")).toBeTruthy();
+
+		fireEvent.pointerMove(window, { clientX: 600, clientY: 50 });
+		expect(screen.queryByTestId("scheduler-drop-preview")).toBeNull();
+		fireEvent.pointerUp(window, { clientX: 600, clientY: 50 });
+
+		expect(scheduleTask).not.toHaveBeenCalled();
+	});
+
+	it("a click with no movement does not schedule the task", () => {
+		const scheduleTask = vi.fn();
+		renderWithUndated({ projectId: "proj-1", scheduleTask });
+		stubViewportRect();
+
+		const row = unplannedRow("u-1");
+		fireEvent.pointerDown(row, { clientX: 700, clientY: 50, pointerId: 1 });
+		fireEvent.pointerUp(window, { clientX: 700, clientY: 50 });
+
+		expect(scheduleTask).not.toHaveBeenCalled();
+	});
+
+	it("the toolbar button hides and re-shows the panel", () => {
+		renderWithUndated();
+		const toggle = screen.getByLabelText("Toggle unplanned tasks");
+
+		expect(toggle.getAttribute("aria-pressed")).toBe("true");
+		expect(screen.getByTestId("scheduler-unplanned-panel")).toBeTruthy();
+
+		fireEvent.click(toggle);
+		expect(toggle.getAttribute("aria-pressed")).toBe("false");
+		expect(screen.queryByTestId("scheduler-unplanned-panel")).toBeNull();
+
+		fireEvent.click(toggle);
+		expect(toggle.getAttribute("aria-pressed")).toBe("true");
+		expect(screen.getByTestId("scheduler-unplanned-panel")).toBeTruthy();
 	});
 });

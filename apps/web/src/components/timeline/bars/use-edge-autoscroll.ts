@@ -35,10 +35,19 @@ const edgeVelocity = (fromLow: number, fromHigh: number): number => {
  * Shared by bar drag/resize and dependency-link drags. `onPan` fires whenever a
  * scroll happened (either axis) with the per-frame horizontal pan in ms, so a
  * caller can keep a draft or hit test in step with the scroll.
+ *
+ * Pass `vertical: false` for gestures that latch their row at press time (e.g.
+ * lane create-drag), where scrolling rows under the cursor only disorients.
  */
-export function useEdgeAutoScroll() {
+export function useEdgeAutoScroll({
+	vertical = true,
+}: {
+	vertical?: boolean;
+} = {}) {
 	const { zoomLevel, setOffsetMs, viewportRef, scrollContainerRef } =
 		useTimelineController();
+	const verticalRef = useRef(vertical);
+	verticalRef.current = vertical;
 	const zoomRef = useRef(zoomLevel);
 	zoomRef.current = zoomLevel;
 
@@ -85,7 +94,7 @@ export function useEdgeAutoScroll() {
 				}
 
 				// Vertical: scroll the rows container via its top/bottom edges.
-				const vEl = scrollContainerRef.current;
+				const vEl = verticalRef.current ? scrollContainerRef.current : null;
 				if (vEl) {
 					const rect = vEl.getBoundingClientRect();
 					const scrollPx = edgeVelocity(y - rect.top, rect.bottom - y);

@@ -14,8 +14,8 @@ const ONE_DAY = 86_400_000;
 
 describe("pxPerMs", () => {
 	it("derives ms scale from PX_PER_DAY", () => {
-		// weeks renders 48px per day → 48 / 86_400_000 px per ms
-		expect(pxPerMs("weeks")).toBeCloseTo(48 / ONE_DAY, 15);
+		// weeks renders 64px per day → 64 / 86_400_000 px per ms
+		expect(pxPerMs("weeks")).toBeCloseTo(64 / ONE_DAY, 15);
 	});
 });
 

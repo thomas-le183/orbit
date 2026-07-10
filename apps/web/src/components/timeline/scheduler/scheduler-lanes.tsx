@@ -1,17 +1,14 @@
 import { cn } from "@orbit/shared";
 import {
 	Fragment,
-	type ReactNode,
 	type PointerEvent as ReactPointerEvent,
 	useRef,
 } from "react";
-import { gestureTooltip } from "../bars/use-bar-interaction";
 import { MIN_BAR_WIDTH_PX } from "../constants";
 import { useTimelineController } from "../controller/context";
 import { type Geometry, rangeVisibility } from "../controller/geometry";
 import { useHorizontalPercentageOffset } from "../controller/hooks";
 import { useTimelineData } from "../data/context";
-import DragTooltip from "../drag/drag-tooltip";
 import { ROW_PADDING } from "../layout/row-metrics";
 import { useRowSelection } from "../selection/context";
 import { ONE_DAY, startOfUtcDay } from "../units/make-units";
@@ -20,6 +17,7 @@ import { barHeight, GROUP_PADDING } from "./lane-metrics";
 import type { SchedulerRow } from "./layout";
 import type { DragRole } from "./use-bar-drag";
 import type { LaneCreateDraft } from "./use-lane-create";
+import type { UnplannedDropDraft } from "./use-unplanned-drag";
 
 /** Horizontal gap trimmed off each side of a bar so it reads as distinct. */
 const BAR_INLINE_INSET_PX = 3;
@@ -30,11 +28,10 @@ export default function SchedulerLanes({
 	beginResize,
 	beginDrag,
 	dragDraft,
-	dragActive,
-	dragPointer,
 	wasDragged,
 	beginCreate,
 	createDraft,
+	dropDraft,
 	renamingId,
 	onRename,
 	clearRenaming,
@@ -60,14 +57,13 @@ export default function SchedulerLanes({
 		targetLaneKey?: string | null;
 		pointerContentY?: number;
 	} | null;
-	dragActive: { id: string; role: DragRole } | null;
-	dragPointer: { x: number; y: number } | null;
 	wasDragged: () => boolean;
 	beginCreate: (
 		e: ReactPointerEvent,
 		row: { key: string; assigneeId?: string },
 	) => void;
 	createDraft: LaneCreateDraft | null;
+	dropDraft: UnplannedDropDraft | null;
 	renamingId: string | null;
 	onRename: (id: string, name: string) => void;
 	clearRenaming: () => void;
@@ -85,16 +81,20 @@ export default function SchedulerLanes({
 	const geom: Geometry = { offsetMs, zoom: zoomLevel, viewportWidth };
 	const minWidthPercent = (MIN_BAR_WIDTH_PX / viewportWidth) * 100;
 
-	// Date tooltip that follows the cursor during a drag/resize gesture. Gated on
-	// `dragPointer`, which is only set once the pointer actually moves — so a
-	// plain click-to-select never flashes it.
-	let dragTooltip: ReactNode = null;
-	if (dragActive && dragPointer && dragDraft) {
-		const tip = gestureTooltip(dragActive.role, dragDraft.range, today);
-		dragTooltip = (
-			<DragTooltip x={dragPointer.x} y={dragPointer.y} label={tip.label} />
+	/** Horizontal bounds (viewport %) of an inclusive UTC day range, if on-screen. */
+	const rangeBounds = (
+		startDate: string,
+		endDate: string,
+	): { left: number; width: number } | null => {
+		const left = getPercentageOffset(
+			startOfUtcDay(Date.parse(startDate)) - today,
 		);
-	}
+		const right = getPercentageOffset(
+			startOfUtcDay(Date.parse(endDate)) - today + ONE_DAY,
+		);
+		if (!Number.isFinite(left) || !Number.isFinite(right)) return null;
+		return { left, width: Math.max(right - left, 0) };
+	};
 
 	return (
 		<div
@@ -122,24 +122,45 @@ export default function SchedulerLanes({
 					/>
 					{createDraft?.laneKey === row.key &&
 						(() => {
-							const left = getPercentageOffset(
-								startOfUtcDay(Date.parse(createDraft.startDate)) - today,
+							const bounds = rangeBounds(
+								createDraft.startDate,
+								createDraft.endDate,
 							);
-							const right = getPercentageOffset(
-								startOfUtcDay(Date.parse(createDraft.endDate)) -
-									today +
-									ONE_DAY,
-							);
-							if (!Number.isFinite(left) || !Number.isFinite(right)) {
-								return null;
-							}
+							if (!bounds) return null;
 							return (
 								<span
 									data-testid="scheduler-create-preview"
 									className="pointer-events-none absolute rounded-md border-2 border-dashed border-primary/60 bg-primary/15"
 									style={{
-										left: `${left}%`,
-										width: `${Math.max(right - left, 0)}%`,
+										left: `${bounds.left}%`,
+										width: `${bounds.width}%`,
+										top: row.top + ROW_PADDING,
+										height: row.height - ROW_PADDING * 2,
+									}}
+								/>
+							);
+						})()}
+					{dropDraft?.laneKey === row.key && (
+						<div
+							data-testid="scheduler-drop-lane"
+							className="pointer-events-none absolute inset-x-0 rounded-sm ring-2 ring-inset ring-primary/60"
+							style={{ top: row.top, height: row.height }}
+						/>
+					)}
+					{dropDraft?.laneKey === row.key &&
+						(() => {
+							const bounds = rangeBounds(
+								dropDraft.startDate,
+								dropDraft.endDate,
+							);
+							if (!bounds) return null;
+							return (
+								<span
+									data-testid="scheduler-drop-preview"
+									className="pointer-events-none absolute rounded-md border-2 border-dashed border-primary bg-primary/25"
+									style={{
+										left: `${bounds.left}%`,
+										width: `${bounds.width}%`,
 										top: row.top + ROW_PADDING,
 										height: row.height - ROW_PADDING * 2,
 									}}
@@ -314,7 +335,6 @@ export default function SchedulerLanes({
 					)}
 				</Fragment>
 			))}
-			{dragTooltip}
 		</div>
 	);
 }

@@ -9,7 +9,7 @@ export const RENDER_BUFFER_SCREENS = 1;
 export const DEFAULT_ZOOM: ZoomLevel = "weeks";
 
 /** Approximate rendered width of a top-row label, used by the sticky-label math. */
-export const TOP_LABEL_WIDTH_PX = 64;
+export const TOP_LABEL_WIDTH_PX = 128;
 
 /**
  * Floor (in px) for a rendered task-bar's width. At far-out zooms a short task
