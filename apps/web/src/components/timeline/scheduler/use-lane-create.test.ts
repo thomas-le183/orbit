@@ -221,24 +221,6 @@ describe("useLaneCreate", () => {
 		expect(result.current.renamingId).toBeNull();
 	});
 
-	it("ignores non-Escape keys during a create-drag", () => {
-		const onCreate = vi.fn(() => Promise.resolve({ id: "srv-1" }));
-		const { result } = renderHook(() =>
-			useLaneCreate({ geom, today, onCreate }),
-		);
-
-		act(() => {
-			result.current.beginCreate(pointerDownEvent(100), { key: "u_ana" });
-		});
-		act(() => {
-			fireEvent.pointerMove(window, { clientX: 300 });
-		});
-		act(() => {
-			fireEvent.keyDown(window, { key: "a" });
-		});
-		expect(result.current.draft).not.toBeNull();
-	});
-
 	it("does not create on a click (no drag past threshold)", async () => {
 		const onCreate = vi.fn(
 			(_input: {

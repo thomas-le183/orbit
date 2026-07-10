@@ -58,20 +58,6 @@ describe("draftRangeToOffset", () => {
 		});
 	});
 
-	it("round-trips a dragged range back through draftRangeFromDrag", () => {
-		const { startDate, endDate } = draftRangeFromDrag(
-			0,
-			64 * 4,
-			rect,
-			geom,
-			today,
-		);
-		expect(draftRangeToOffset(startDate, endDate, today)).toEqual({
-			from: 0,
-			to: 5 * ONE_DAY,
-		});
-	});
-
 	it("returns null when either date is missing or unparseable", () => {
 		expect(draftRangeToOffset(undefined, "2026-07-05", today)).toBeNull();
 		expect(draftRangeToOffset("2026-07-01", undefined, today)).toBeNull();

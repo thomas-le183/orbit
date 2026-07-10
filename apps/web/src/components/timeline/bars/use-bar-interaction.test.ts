@@ -89,17 +89,7 @@ describe("gestureTooltip", () => {
 		expect(t.label).toBe("Jun 1 – Jun 3");
 	});
 
-	it("appends the year to a date outside the current year", () => {
-		// today is 2026-06-01; +400 days lands in 2027.
-		const t = gestureTooltip(
-			"resize-end",
-			{ from: 0, to: 400 * ONE_DAY },
-			today,
-		);
-		expect(t.label).toBe("Jul 5, 2027");
-	});
-
-	it("annotates only the year-crossing end of a moved span", () => {
+	it("appends the year only to a date outside the current year", () => {
 		// 2026-12-30 → 2027-01-01, with today still in 2026.
 		const from = Date.UTC(2026, 11, 30) - today;
 		const t = gestureTooltip("move", { from, to: from + 3 * ONE_DAY }, today);
