@@ -17,10 +17,18 @@ const ZOOM_OPTIONS: { value: ZoomLevel; label: string }[] = [
 	{ value: "years", label: "Years" },
 ];
 
-export default function ZoomControl() {
+export default function ZoomControl({
+	levels,
+}: {
+	/** Restrict the offered zoom levels (order preserved). Defaults to all. */
+	levels?: ZoomLevel[];
+} = {}) {
 	const [zoomLevel, setZoomLevel] = useZoomLevel();
+	const options = levels
+		? ZOOM_OPTIONS.filter((o) => levels.includes(o.value))
+		: ZOOM_OPTIONS;
 	const currentLabel =
-		ZOOM_OPTIONS.find((o) => o.value === zoomLevel)?.label ?? "View";
+		options.find((o) => o.value === zoomLevel)?.label ?? "View";
 
 	return (
 		<DropdownMenu>
@@ -35,7 +43,7 @@ export default function ZoomControl() {
 					value={zoomLevel}
 					onValueChange={(value) => setZoomLevel(value as ZoomLevel)}
 				>
-					{ZOOM_OPTIONS.map((option) => (
+					{options.map((option) => (
 						<DropdownMenuRadioItem key={option.value} value={option.value}>
 							{option.label}
 						</DropdownMenuRadioItem>

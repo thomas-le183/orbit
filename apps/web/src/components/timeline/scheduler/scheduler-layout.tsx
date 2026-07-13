@@ -366,7 +366,7 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 						>
 							<ChevronRight className="size-4" />
 						</button>
-						<ZoomControl />
+						<ZoomControl levels={["weeks", "months"]} />
 						<button
 							type="button"
 							aria-label="Toggle unplanned tasks"

@@ -32,4 +32,20 @@ describe("ZoomControl", () => {
 		await user.click(screen.getByRole("menuitemradio", { name: "Quarters" }));
 		expect(screen.getByTestId("zoom-readout").textContent).toBe("quarters");
 	});
+
+	it("offers only the levels it is restricted to", async () => {
+		const user = userEvent.setup();
+		render(
+			<TimelineProvider initialZoom="weeks">
+				<ZoomControl levels={["weeks", "months"]} />
+			</TimelineProvider>,
+		);
+		await user.click(screen.getByRole("button", { name: /weeks/i }));
+		expect(screen.getByRole("menuitemradio", { name: "Weeks" })).toBeTruthy();
+		expect(screen.getByRole("menuitemradio", { name: "Months" })).toBeTruthy();
+		expect(
+			screen.queryByRole("menuitemradio", { name: "Quarters" }),
+		).toBeNull();
+		expect(screen.queryByRole("menuitemradio", { name: "Years" })).toBeNull();
+	});
 });
