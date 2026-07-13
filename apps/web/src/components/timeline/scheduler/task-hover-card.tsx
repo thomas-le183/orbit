@@ -1,5 +1,6 @@
 import { cn } from "@orbit/shared";
 import { UserAvatar } from "@orbit/ui/custom/user-avatar";
+import { CalendarDays, Clock, Flag, Gauge } from "lucide-react";
 import type { TaskStatus, TimelineItem } from "@/data/timeline-items";
 import { formatWorkload, spanDays } from "./workload";
 
@@ -12,10 +13,12 @@ const STATUS_META: Record<TaskStatus, { label: string; dot: string }> = {
 	blocked: { label: "Blocked", dot: "bg-destructive" },
 };
 
-/** Format a "YYYY-MM-DD" day as e.g. "Jun 3" (UTC, so no timezone drift). */
-function formatDay(date: string): string {
-	const ms = Date.parse(`${date}T00:00:00Z`);
-	if (!Number.isFinite(ms)) return date;
+function parseDay(date: string): number {
+	return Date.parse(`${date}T00:00:00Z`);
+}
+
+/** "Jun 3" — month + day, no year (UTC, so no timezone drift). */
+function monthDay(ms: number): string {
 	return new Intl.DateTimeFormat("en-US", {
 		month: "short",
 		day: "numeric",
@@ -23,20 +26,48 @@ function formatDay(date: string): string {
 	}).format(ms);
 }
 
-/** One label-left / value-right detail row. */
-function Row({
-	label,
+/** Year of a UTC day. */
+function year(ms: number): number {
+	return new Date(ms).getUTCFullYear();
+}
+
+/**
+ * Compact date span. A single day reads "Jun 3, 2026"; a same-year span folds
+ * the year to the end ("Jun 1 → Jun 4, 2026"); a cross-year span carries the
+ * year on both ends. Multi-day spans append the inclusive day count.
+ */
+function formatDateRange(startDate: string, endDate: string): string {
+	const start = parseDay(startDate);
+	const end = parseDay(endDate);
+	if (!Number.isFinite(start)) return startDate;
+	if (!Number.isFinite(end) || end <= start) {
+		return `${monthDay(start)}, ${year(start)}`;
+	}
+	const days = spanDays(startDate, endDate);
+	const range =
+		year(start) === year(end)
+			? `${monthDay(start)} → ${monthDay(end)}, ${year(end)}`
+			: `${monthDay(start)}, ${year(start)} → ${monthDay(end)}, ${year(end)}`;
+	return `${range} · ${days}d`;
+}
+
+/**
+ * One detail line: a 16px leading slot (icon or visual cue) + a self-describing
+ * value. No text label — the cue and value carry the meaning.
+ */
+function Line({
+	cue,
 	children,
 }: {
-	label: string;
+	cue: React.ReactNode;
 	children: React.ReactNode;
 }) {
 	return (
-		<div className="flex items-center justify-between gap-3">
-			<span className="text-muted-foreground">{label}</span>
-			<span className="min-w-0 truncate text-right font-medium">
-				{children}
+		<div className="flex items-center gap-2">
+			<span className="flex size-4 shrink-0 items-center justify-center text-muted-foreground [&>svg]:size-3.5">
+				{cue}
 			</span>
+			<span className="min-w-0 truncate">{children}</span>
 		</div>
 	);
 }
@@ -44,7 +75,8 @@ function Row({
 /**
  * Rich detail card for a scheduler bar. Surfaces everything the bar can't fit
  * inline: full (untruncated) name, status, assignee, date span, and — mirroring
- * the height/band model — both the total estimate and its per-day effort.
+ * the height/band model — both the total estimate and its per-day effort. Rows
+ * carry no text labels; each value is self-describing via a leading cue.
  * Milestones drop the effort/progress rows and show their single date.
  */
 export default function TaskHoverCard({ item }: { item: TimelineItem }) {
@@ -67,48 +99,43 @@ export default function TaskHoverCard({ item }: { item: TimelineItem }) {
 			</div>
 
 			<div className="flex flex-col gap-1.5 text-xs">
-				{isMilestone && (
-					<Row label="Type">
-						<span className="text-muted-foreground">Milestone</span>
-					</Row>
-				)}
+				{isMilestone && <Line cue={<Flag />}>Milestone</Line>}
 				{status && (
-					<Row label="Status">
-						<span className="inline-flex items-center gap-1.5">
-							<span className={cn("size-2 rounded-full", status.dot)} />
-							{status.label}
-						</span>
-					</Row>
+					<Line
+						cue={<span className={cn("size-2 rounded-full", status.dot)} />}
+					>
+						{status.label}
+					</Line>
 				)}
 				{item.assignee && (
-					<Row label="Assignee">
-						<span className="inline-flex items-center gap-1.5">
+					<Line
+						cue={
 							<UserAvatar
-								size="sm"
+								size="default"
+								className="size-4"
 								colorSeed={item.assignee.id}
 								placeholder={item.assignee.name}
 								avatarUrl={item.assignee.avatarUrl}
 							/>
-							<span className="truncate">{item.assignee.name}</span>
-						</span>
-					</Row>
+						}
+					>
+						{item.assignee.name}
+					</Line>
 				)}
-				<Row label={isMilestone ? "Date" : "Dates"}>
-					{isMilestone || days <= 1
-						? formatDay(item.startDate)
-						: `${formatDay(item.startDate)} → ${formatDay(item.endDate)} · ${days}d`}
-				</Row>
+				<Line cue={<CalendarDays />}>
+					{formatDateRange(item.startDate, item.endDate)}
+				</Line>
 				{!isMilestone && perDay != null && (
-					<Row label="Estimate">
+					<Line cue={<Clock />}>
 						{days > 1
 							? `${formatWorkload(item.estimatedTime as number)} · ${formatWorkload(perDay)}/day`
 							: formatWorkload(item.estimatedTime as number)}
-					</Row>
+					</Line>
 				)}
 				{!isMilestone && item.progress !== undefined && (
-					<Row label="Progress">
-						<span className="inline-flex items-center gap-1.5">
-							<span className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
+					<Line cue={<Gauge />}>
+						<span className="inline-flex items-center gap-2">
+							<span className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-muted">
 								<span
 									className="block h-full rounded-full bg-primary"
 									style={{ width: `${item.progress}%` }}
@@ -116,7 +143,7 @@ export default function TaskHoverCard({ item }: { item: TimelineItem }) {
 							</span>
 							{item.progress}%
 						</span>
-					</Row>
+					</Line>
 				)}
 			</div>
 		</div>

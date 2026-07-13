@@ -27,8 +27,8 @@ describe("TaskHoverCard", () => {
 		expect(screen.getByText("Ship the thing")).toBeInTheDocument();
 		expect(screen.getByText("In progress")).toBeInTheDocument();
 		expect(screen.getByText("Ana Alpha")).toBeInTheDocument();
-		// 4-day inclusive span, rendered with the day count.
-		expect(screen.getByText(/Jun 1 → Jun 4 · 4d/)).toBeInTheDocument();
+		// 4-day inclusive span, same-year so the year folds to the end.
+		expect(screen.getByText("Jun 1 → Jun 4, 2026 · 4d")).toBeInTheDocument();
 		// Total and per-day (16h total, 4h/day).
 		expect(screen.getByText("16h · 4h/day")).toBeInTheDocument();
 		expect(screen.getByText("40%")).toBeInTheDocument();
@@ -46,10 +46,10 @@ describe("TaskHoverCard", () => {
 		);
 		expect(screen.getByText("2h")).toBeInTheDocument();
 		expect(screen.queryByText(/\/day/)).not.toBeInTheDocument();
-		expect(screen.getByText("Jun 2")).toBeInTheDocument();
+		expect(screen.getByText("Jun 2, 2026")).toBeInTheDocument();
 	});
 
-	it("omits effort and progress for a milestone and labels its type", () => {
+	it("omits effort and progress for a milestone and marks its type", () => {
 		render(
 			<TaskHoverCard
 				item={task({
@@ -65,8 +65,20 @@ describe("TaskHoverCard", () => {
 		);
 		expect(screen.getByText("Launch")).toBeInTheDocument();
 		expect(screen.getByText("Milestone")).toBeInTheDocument();
-		expect(screen.getByText("Jun 10")).toBeInTheDocument();
-		expect(screen.queryByText("Estimate")).not.toBeInTheDocument();
-		expect(screen.queryByText("Progress")).not.toBeInTheDocument();
+		expect(screen.getByText("Jun 10, 2026")).toBeInTheDocument();
+		// No effort/per-day and no progress figure on a milestone.
+		expect(screen.queryByText(/\/day/)).not.toBeInTheDocument();
+		expect(screen.queryByText(/%$/)).not.toBeInTheDocument();
+	});
+
+	it("carries the year on both ends of a cross-year span", () => {
+		render(
+			<TaskHoverCard
+				item={task({ startDate: "2025-12-30", endDate: "2026-01-02" })}
+			/>,
+		);
+		expect(
+			screen.getByText("Dec 30, 2025 → Jan 2, 2026 · 4d"),
+		).toBeInTheDocument();
 	});
 });
