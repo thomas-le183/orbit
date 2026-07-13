@@ -29,7 +29,7 @@ import TaskHoverCard from "./task-hover-card";
 import type { DragRole } from "./use-bar-drag";
 import type { LaneCreateDraft } from "./use-lane-create";
 import type { UnplannedDropDraft } from "./use-unplanned-drag";
-import { formatWorkload, spanDays } from "./workload";
+import { formatWorkload, spanDays, type WorkloadMetric } from "./workload";
 import WorkloadStrip from "./workload-strip";
 
 /** Horizontal gap trimmed off each side of a bar so it reads as distinct. */
@@ -43,6 +43,7 @@ const BAR_STACKED_MIN_HEIGHT = 32;
 export default function SchedulerLanes({
 	rows,
 	totalHeight,
+	workloadMode,
 	beginResize,
 	beginDrag,
 	dragDraft,
@@ -57,6 +58,8 @@ export default function SchedulerLanes({
 }: {
 	rows: SchedulerRow[];
 	totalHeight: number;
+	/** Which quantity the per-assignee workload band visualizes. */
+	workloadMode: WorkloadMetric;
 	beginResize: (
 		e: ReactPointerEvent,
 		target: { id: string; startHeight: number; days: number },
@@ -140,6 +143,7 @@ export default function SchedulerLanes({
 						row={row}
 						geom={geom}
 						today={today}
+						mode={workloadMode}
 						getPercentageOffset={getPercentageOffset}
 					/>
 					<div

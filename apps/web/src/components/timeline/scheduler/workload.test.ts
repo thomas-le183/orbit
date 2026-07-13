@@ -4,8 +4,11 @@ import { ONE_DAY, startOfUtcDay } from "../units/make-units";
 import {
 	capacityRatio,
 	DEFAULT_DAILY_CAPACITY_MINUTES,
+	DEFAULT_DAILY_TASK_CAPACITY,
 	dailyWorkload,
+	formatTaskCount,
 	formatWorkload,
+	taskCountRatio,
 } from "./workload";
 
 function task(partial: Partial<TimelineItem>): TimelineItem {
@@ -63,13 +66,42 @@ describe("dailyWorkload", () => {
 		expect(load[1].minutes).toBe(120);
 	});
 
-	it("ignores tasks with no or non-positive estimate", () => {
+	it("counts tasks with no or non-positive estimate but adds no minutes", () => {
+		const load = dailyWorkload([
+			task({ estimatedTime: undefined }),
+			task({ id: "z", estimatedTime: 0 }),
+		]);
+		// Both tasks are dated on 2026-06-01, so that day has 2 tasks and 0 minutes.
+		expect(load).toHaveLength(1);
+		expect(load[0].minutes).toBe(0);
+		expect(load[0].count).toBe(2);
+	});
+
+	it("skips undated and inverted-date tasks entirely", () => {
 		expect(
 			dailyWorkload([
-				task({ estimatedTime: undefined }),
-				task({ id: "z", estimatedTime: 0 }),
+				task({ startDate: "", endDate: "", estimatedTime: 60 }),
+				task({
+					id: "z",
+					startDate: "2026-06-04",
+					endDate: "2026-06-01",
+					estimatedTime: 60,
+				}),
 			]),
 		).toEqual([]);
+	});
+
+	it("counts each task once per day it spans", () => {
+		const load = dailyWorkload([
+			task({
+				startDate: "2026-06-01",
+				endDate: "2026-06-02",
+				estimatedTime: 60,
+			}),
+			task({ id: "b", startDate: "2026-06-02", endDate: "2026-06-02" }),
+		]);
+		// day 1: task a only; day 2: tasks a + b.
+		expect(load.map((d) => d.count)).toEqual([1, 2]);
 	});
 
 	it("keeps day keys on the UTC day grid", () => {
@@ -102,5 +134,22 @@ describe("formatWorkload", () => {
 		expect(formatWorkload(120)).toBe("2h");
 		expect(formatWorkload(210)).toBe("3.5h");
 		expect(formatWorkload(480)).toBe("8h");
+	});
+});
+
+describe("taskCountRatio", () => {
+	it("measures a day's task count against the fixed task capacity", () => {
+		expect(taskCountRatio(0)).toBe(0);
+		expect(taskCountRatio(DEFAULT_DAILY_TASK_CAPACITY)).toBe(1);
+		// One more task than capacity is over capacity.
+		expect(taskCountRatio(DEFAULT_DAILY_TASK_CAPACITY + 1)).toBeGreaterThan(1);
+	});
+});
+
+describe("formatTaskCount", () => {
+	it("pluralizes the task label", () => {
+		expect(formatTaskCount(0)).toBe("0 tasks");
+		expect(formatTaskCount(1)).toBe("1 task");
+		expect(formatTaskCount(3)).toBe("3 tasks");
 	});
 });

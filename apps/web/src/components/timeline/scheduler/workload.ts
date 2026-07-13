@@ -10,12 +10,24 @@ import { isNonWorkingDay } from "../units/working-days";
  */
 export const DEFAULT_DAILY_CAPACITY_MINUTES = 480;
 
-/** One calendar day's scheduled effort for an assignee. */
+/**
+ * Default daily task capacity — the number of concurrent tasks that fills the
+ * band in "count" mode. A day with more tasks reads as overloaded. Fixed for
+ * now, mirroring {@link DEFAULT_DAILY_CAPACITY_MINUTES}.
+ */
+export const DEFAULT_DAILY_TASK_CAPACITY = 5;
+
+/** Which quantity the workload band visualizes. */
+export type WorkloadMetric = "hours" | "count";
+
+/** One calendar day's scheduled load for an assignee. */
 export type DayLoad = {
 	/** UTC start-of-day, in ms — aligns to the timeline's day grid. */
 	dayMs: number;
-	/** Effort scheduled on this day, in minutes. */
+	/** Effort scheduled on this day, in minutes (0 for unestimated tasks). */
 	minutes: number;
+	/** Number of tasks scheduled on this day, regardless of estimate. */
+	count: number;
 };
 
 /**
@@ -33,29 +45,36 @@ export function spanDays(startDate: string, endDate: string): number {
 }
 
 /**
- * Per-day workload for a set of tasks. Each task's `estimatedTime` is spread
- * evenly across its inclusive start→end day span (an 8h task over 4 days counts
- * as 2h/day), then summed across tasks per calendar day. Tasks with no estimate
- * contribute nothing. Result is sorted by day, ascending.
+ * Per-day load for a set of tasks. Each task's `estimatedTime` is spread evenly
+ * across its inclusive start→end day span (an 8h task over 4 days counts as
+ * 2h/day) and summed per calendar day; the task also increments that day's
+ * `count`. A task with no estimate contributes to `count` but adds no minutes.
+ * Undated or inverted-date tasks are skipped entirely. Sorted by day ascending.
  */
 export function dailyWorkload(tasks: TimelineItem[]): DayLoad[] {
-	const byDay = new Map<number, number>();
+	const byDay = new Map<number, { minutes: number; count: number }>();
 	for (const task of tasks) {
-		if (task.estimatedTime == null || task.estimatedTime <= 0) continue;
 		const start = startOfUtcDay(Date.parse(task.startDate));
 		const end = startOfUtcDay(Date.parse(task.endDate));
 		if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
 			continue;
 		}
 		const dayCount = spanDays(task.startDate, task.endDate);
-		const perDay = task.estimatedTime / dayCount;
+		const estimate =
+			task.estimatedTime != null && task.estimatedTime > 0
+				? task.estimatedTime
+				: 0;
+		const perDay = estimate / dayCount;
 		for (let i = 0; i < dayCount; i++) {
 			const dayMs = start + i * ONE_DAY;
-			byDay.set(dayMs, (byDay.get(dayMs) ?? 0) + perDay);
+			const entry = byDay.get(dayMs) ?? { minutes: 0, count: 0 };
+			entry.minutes += perDay;
+			entry.count += 1;
+			byDay.set(dayMs, entry);
 		}
 	}
 	return [...byDay.entries()]
-		.map(([dayMs, minutes]) => ({ dayMs, minutes }))
+		.map(([dayMs, { minutes, count }]) => ({ dayMs, minutes, count }))
 		.sort((a, b) => a.dayMs - b.dayMs);
 }
 
@@ -85,4 +104,17 @@ export function capacityRatio(minutes: number, dayMs: number): number {
 export function formatWorkload(minutes: number): string {
 	const hours = Math.round((minutes / 60) * 100) / 100;
 	return `${hours}h`;
+}
+
+/**
+ * A day's task count as a fraction of the fixed daily task capacity. >1 means
+ * more concurrent tasks than the capacity, i.e. over capacity.
+ */
+export function taskCountRatio(count: number): number {
+	return count / DEFAULT_DAILY_TASK_CAPACITY;
+}
+
+/** Task-count label for a day, e.g. "1 task", "3 tasks". */
+export function formatTaskCount(count: number): string {
+	return `${count} ${count === 1 ? "task" : "tasks"}`;
 }

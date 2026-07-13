@@ -40,7 +40,8 @@ import { useBarDrag } from "./use-bar-drag";
 import { useEstimateResize } from "./use-estimate-resize";
 import { useLaneCreate } from "./use-lane-create";
 import { useUnplannedDrag } from "./use-unplanned-drag";
-import { spanDays } from "./workload";
+import { spanDays, type WorkloadMetric } from "./workload";
+import WorkloadModeControl from "./workload-mode-control";
 
 const PAN_STEP = 0.25;
 
@@ -119,6 +120,7 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 	const { onWheel } = usePan();
 	const { clear } = useRowSelection();
 	const [showUnplanned, setShowUnplanned] = useState(false);
+	const [workloadMode, setWorkloadMode] = useState<WorkloadMetric>("hours");
 	const [collapsedRows, setCollapsedRows] = useState<ReadonlySet<string>>(
 		() => new Set(),
 	);
@@ -367,6 +369,10 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 							<ChevronRight className="size-4" />
 						</button>
 						<ZoomControl levels={["weeks", "months"]} />
+						<WorkloadModeControl
+							value={workloadMode}
+							onChange={setWorkloadMode}
+						/>
 						<button
 							type="button"
 							aria-label="Toggle unplanned tasks"
@@ -436,6 +442,7 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 									<SchedulerLanes
 										rows={rows}
 										totalHeight={totalHeight}
+										workloadMode={workloadMode}
 										beginResize={beginResize}
 										beginDrag={beginDrag}
 										dragDraft={dragDraft}
