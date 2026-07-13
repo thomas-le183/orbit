@@ -1,22 +1,13 @@
 import type { TaskAssignee, TimelineItem } from "@/data/timeline-items";
 import { buildGroupRows, type GroupingMode } from "./group-rows";
 import {
-	barHeight,
 	CREATE_LANE_HEIGHT,
 	GROUP_PADDING,
 	LANE_GAP,
 	WORKLOAD_STRIP_HEIGHT,
 } from "./lane-metrics";
-import { type PackedBar, packLanes } from "./pack-lanes";
+import { type PackedBar, packBars } from "./pack-lanes";
 import { type DayLoad, dailyWorkload } from "./workload";
-
-export type PositionedLane = {
-	bars: PackedBar[];
-	/** Cumulative pixel offset from the start of the lane stack (after GROUP_PADDING). */
-	top: number;
-	/** Lane height = tallest bar in the lane. */
-	height: number;
-};
 
 export type SchedulerRow = {
 	key: string;
@@ -24,45 +15,31 @@ export type SchedulerRow = {
 	assignee?: TaskAssignee;
 	top: number;
 	height: number;
-	lanes: PositionedLane[];
+	/** Skyline-packed bars, each carrying its own top offset and height. */
+	bars: PackedBar[];
 	/** Per-day scheduled effort, rendered as the band atop the row. */
 	workload: DayLoad[];
-	/** Number of schedulable tasks — stable across collapse (lanes are dropped). */
+	/** Number of schedulable tasks — stable across collapse (bars are dropped). */
 	taskCount: number;
 	/** Collapsed rows shrink to just the workload band and hide their task bars. */
 	collapsed: boolean;
 };
 
 /**
- * Stack packed lanes vertically. Each lane is sized to its tallest bar; lanes
- * are separated by LANE_GAP. A bar-free CREATE_LANE_HEIGHT strip is reserved
- * below the last lane so drag-to-create stays reachable on a packed row.
- * Returns positioned lanes plus the group's total pixel height (including
- * GROUP_PADDING top and bottom).
+ * Full pixel height of a group row's bar area: the skyline stack, a trailing
+ * LANE_GAP, a bar-free CREATE_LANE_HEIGHT strip so drag-to-create stays
+ * reachable on a packed row, and GROUP_PADDING top and bottom. An empty stack
+ * keeps the create strip but drops the trailing gap.
  */
-export function stackLanes(lanes: PackedBar[][]): {
-	lanes: PositionedLane[];
-	height: number;
-} {
-	let top = 0;
-	const positioned: PositionedLane[] = lanes.map((bars, i) => {
-		const laneHeight = Math.max(...bars.map((b) => barHeight(b.item)));
-		const lane: PositionedLane = { bars, top, height: laneHeight };
-		top += laneHeight;
-		if (i < lanes.length - 1) top += LANE_GAP;
-		return lane;
-	});
-	const stackHeight = positioned.length === 0 ? 0 : top + LANE_GAP;
-	return {
-		lanes: positioned,
-		height: stackHeight + CREATE_LANE_HEIGHT + GROUP_PADDING * 2,
-	};
+function groupHeight(stackHeight: number): number {
+	const stack = stackHeight === 0 ? 0 : stackHeight + LANE_GAP;
+	return stack + CREATE_LANE_HEIGHT + GROUP_PADDING * 2;
 }
 
 /**
- * Compose grouping + lane packing + variable-height stacking into positioned
- * rows. `top` is the cumulative pixel offset of each row; `totalHeight` is the
- * full stacked height for the scroll container.
+ * Compose grouping + skyline bar packing into positioned rows. `top` is the
+ * cumulative pixel offset of each row; `totalHeight` is the full stacked height
+ * for the scroll container.
  */
 export function layoutScheduler(
 	items: TimelineItem[],
@@ -76,19 +53,20 @@ export function layoutScheduler(
 	let top = 0;
 	for (const g of groups) {
 		const collapsed = collapsedKeys.has(g.key);
-		// A collapsed row drops its lanes and shrinks to just the workload band.
-		const packed = collapsed ? [] : packLanes(g.tasks, today);
-		const { lanes, height: stackHeight } = stackLanes(packed);
+		// A collapsed row drops its bars and shrinks to just the workload band.
+		const { bars, height: stackHeight } = collapsed
+			? { bars: [], height: 0 }
+			: packBars(g.tasks, today);
 		const height = collapsed
 			? WORKLOAD_STRIP_HEIGHT
-			: stackHeight + WORKLOAD_STRIP_HEIGHT;
+			: groupHeight(stackHeight) + WORKLOAD_STRIP_HEIGHT;
 		rows.push({
 			key: g.key,
 			label: g.label,
 			assignee: g.assignee,
 			top,
 			height,
-			lanes,
+			bars,
 			workload: dailyWorkload(g.tasks),
 			taskCount: g.tasks.length,
 			collapsed,

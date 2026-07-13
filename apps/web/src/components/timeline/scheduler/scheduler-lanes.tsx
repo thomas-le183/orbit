@@ -19,11 +19,7 @@ import { ROW_PADDING } from "../layout/row-metrics";
 import { useRowSelection } from "../selection/context";
 import { ONE_DAY, startOfUtcDay } from "../units/make-units";
 import type { RelativeTimeRangeOffset } from "../units/types";
-import {
-	barHeight,
-	GROUP_PADDING,
-	WORKLOAD_STRIP_HEIGHT,
-} from "./lane-metrics";
+import { GROUP_PADDING, WORKLOAD_STRIP_HEIGHT } from "./lane-metrics";
 import type { SchedulerRow } from "./layout";
 import TaskHoverCard from "./task-hover-card";
 import type { DragRole } from "./use-bar-drag";
@@ -214,210 +210,216 @@ export default function SchedulerLanes({
 								style={{ top: row.top, height: row.height }}
 							/>
 						)}
-					{row.lanes.map((lane) =>
-						lane.bars.map(({ item, range: ownRange }) => {
-							const range =
-								dragDraft?.id === item.id ? dragDraft.range : ownRange;
-							if (rangeVisibility(range.from, range.to, geom) !== "visible") {
-								return null;
-							}
-							const left = getPercentageOffset(range.from);
-							const right = getPercentageOffset(range.to);
-							if (!Number.isFinite(left) || !Number.isFinite(right))
-								return null;
-							const width = Math.max(right - left, minWidthPercent);
-							const height = barHeight(item);
-							const days = spanDays(item.startDate, item.endDate);
-							// The bar height encodes per-day effort, so its label shows the
-							// same figure (total lives in the hover card).
-							const perDayMinutes =
-								item.estimatedTime != null ? item.estimatedTime / days : null;
-							const dragging = dragDraft?.id === item.id;
-							const top =
-								dragging && dragDraft?.pointerContentY != null
-									? dragDraft.pointerContentY - height / 2
-									: row.top + WORKLOAD_STRIP_HEIGHT + GROUP_PADDING + lane.top;
-							const selected = isSelected(item.id);
-							const hovered = hoveredId === item.id;
-							if (renamingId === item.id) {
-								return (
-									<div
-										key={item.id}
-										data-testid="scheduler-bar-renaming"
-										style={{
-											left: `calc(${left}% + ${BAR_INLINE_INSET_PX}px)`,
-											width: `calc(${width}% - ${BAR_INLINE_INSET_PX * 2}px)`,
-											top,
-											height,
-											backgroundColor: item.color,
+					{row.bars.map(({ item, range: ownRange, top: barTop, height }) => {
+						const range =
+							dragDraft?.id === item.id ? dragDraft.range : ownRange;
+						if (rangeVisibility(range.from, range.to, geom) !== "visible") {
+							return null;
+						}
+						const left = getPercentageOffset(range.from);
+						const right = getPercentageOffset(range.to);
+						if (!Number.isFinite(left) || !Number.isFinite(right)) return null;
+						const width = Math.max(right - left, minWidthPercent);
+						const days = spanDays(item.startDate, item.endDate);
+						// The bar height encodes per-day effort, so its label shows the
+						// same figure (total lives in the hover card).
+						const perDayMinutes =
+							item.estimatedTime != null ? item.estimatedTime / days : null;
+						const dragging = dragDraft?.id === item.id;
+						const top =
+							dragging && dragDraft?.pointerContentY != null
+								? dragDraft.pointerContentY - height / 2
+								: row.top + WORKLOAD_STRIP_HEIGHT + GROUP_PADDING + barTop;
+						const selected = isSelected(item.id);
+						const hovered = hoveredId === item.id;
+						if (renamingId === item.id) {
+							return (
+								<div
+									key={item.id}
+									data-testid="scheduler-bar-renaming"
+									style={{
+										left: `calc(${left}% + ${BAR_INLINE_INSET_PX}px)`,
+										width: `calc(${width}% - ${BAR_INLINE_INSET_PX * 2}px)`,
+										top,
+										height,
+										zIndex: 20,
+										backgroundColor: item.color,
+									}}
+									className="pointer-events-auto absolute flex items-center overflow-hidden rounded-md px-2 shadow-sm ring-2 ring-primary"
+									onPointerDown={(e) => e.stopPropagation()}
+								>
+									<input
+										data-testid="scheduler-bar-rename-input"
+										aria-label="Rename task"
+										defaultValue={item.name}
+										autoFocus
+										onFocus={(e) => {
+											// Reset the commit guard on each fresh focus so a
+											// missed unmount-blur can't leave it stuck true and
+											// swallow the next rename's blur-commit.
+											renameCommittedRef.current = false;
+											e.currentTarget.select();
 										}}
-										className="pointer-events-auto absolute flex items-center overflow-hidden rounded-md px-2 shadow-sm ring-2 ring-primary"
-										onPointerDown={(e) => e.stopPropagation()}
-									>
-										<input
-											data-testid="scheduler-bar-rename-input"
-											aria-label="Rename task"
-											defaultValue={item.name}
-											autoFocus
-											onFocus={(e) => {
-												// Reset the commit guard on each fresh focus so a
-												// missed unmount-blur can't leave it stuck true and
-												// swallow the next rename's blur-commit.
-												renameCommittedRef.current = false;
-												e.currentTarget.select();
-											}}
-											onKeyDown={(e) => {
-												if (e.key === "Enter") {
-													e.preventDefault();
-													renameCommittedRef.current = true;
-													const v = e.currentTarget.value.trim();
-													if (v && v !== item.name) onRename(item.id, v);
-													clearRenaming();
-												} else if (e.key === "Escape") {
-													e.preventDefault();
-													renameCommittedRef.current = true;
-													clearRenaming();
-												}
-											}}
-											onBlur={(e) => {
-												// Consume the unmount-blur fired right after an
-												// Enter/Escape commit so we don't rename twice.
-												if (renameCommittedRef.current) {
-													renameCommittedRef.current = false;
-													return;
-												}
+										onKeyDown={(e) => {
+											if (e.key === "Enter") {
+												e.preventDefault();
+												renameCommittedRef.current = true;
 												const v = e.currentTarget.value.trim();
 												if (v && v !== item.name) onRename(item.id, v);
 												clearRenaming();
+											} else if (e.key === "Escape") {
+												e.preventDefault();
+												renameCommittedRef.current = true;
+												clearRenaming();
+											}
+										}}
+										onBlur={(e) => {
+											// Consume the unmount-blur fired right after an
+											// Enter/Escape commit so we don't rename twice.
+											if (renameCommittedRef.current) {
+												renameCommittedRef.current = false;
+												return;
+											}
+											const v = e.currentTarget.value.trim();
+											if (v && v !== item.name) onRename(item.id, v);
+											clearRenaming();
+										}}
+										className="w-full bg-transparent text-xs font-medium text-white outline-none placeholder:text-white/70"
+									/>
+								</div>
+							);
+						}
+						return (
+							<HoverCard
+								key={item.id}
+								open={hoverCardId === item.id && !interacting}
+								onOpenChange={(open) => setHoverCardId(open ? item.id : null)}
+							>
+								<HoverCardTrigger
+									delay={700}
+									render={
+										<button
+											type="button"
+											data-testid="scheduler-bar"
+											data-selected={selected}
+											title={item.name}
+											onMouseEnter={() => setHovered(item.id)}
+											onMouseLeave={() => setHovered(null)}
+											onClick={() => {
+												if (wasDragged()) return;
+												toggle(item.id);
 											}}
-											className="w-full bg-transparent text-xs font-medium text-white outline-none placeholder:text-white/70"
+											onPointerDown={(e) =>
+												beginDrag(e, {
+													id: item.id,
+													role: "move",
+													range,
+													laneKey: row.key,
+												})
+											}
+											style={{
+												left: `calc(${left}% + ${BAR_INLINE_INSET_PX}px)`,
+												width: `calc(${width}% - ${BAR_INLINE_INSET_PX * 2}px)`,
+												top,
+												height,
+												// Lift an active bar above its stacked neighbors: a
+												// dragged bar follows the pointer over others, and a
+												// selected/hovered bar's ring shouldn't be clipped by a
+												// later-painted sibling.
+												zIndex: dragging
+													? 30
+													: selected || hovered
+														? 20
+														: undefined,
+												backgroundColor: item.color,
+											}}
+											className={cn(
+												"group pointer-events-auto absolute flex cursor-grab overflow-hidden rounded-md px-2 text-xs font-medium text-white shadow-sm",
+												height >= BAR_STACKED_MIN_HEIGHT
+													? "flex-col justify-between py-0.5"
+													: "items-center gap-1",
+												(selected || hovered) && "ring-2 ring-primary",
+											)}
 										/>
-									</div>
-								);
-							}
-							return (
-								<HoverCard
-									key={item.id}
-									open={hoverCardId === item.id && !interacting}
-									onOpenChange={(open) => setHoverCardId(open ? item.id : null)}
+									}
 								>
-									<HoverCardTrigger
-										delay={700}
-										render={
-											<button
-												type="button"
-												data-testid="scheduler-bar"
-												data-selected={selected}
-												title={item.name}
-												onMouseEnter={() => setHovered(item.id)}
-												onMouseLeave={() => setHovered(null)}
-												onClick={() => {
-													if (wasDragged()) return;
-													toggle(item.id);
-												}}
-												onPointerDown={(e) =>
-													beginDrag(e, {
-														id: item.id,
-														role: "move",
-														range,
-														laneKey: row.key,
-													})
-												}
-												style={{
-													left: `calc(${left}% + ${BAR_INLINE_INSET_PX}px)`,
-													width: `calc(${width}% - ${BAR_INLINE_INSET_PX * 2}px)`,
-													top,
-													height,
-													backgroundColor: item.color,
-												}}
-												className={cn(
-													"group pointer-events-auto absolute flex cursor-grab overflow-hidden rounded-md px-2 text-xs font-medium text-white shadow-sm",
-													height >= BAR_STACKED_MIN_HEIGHT
-														? "flex-col justify-between py-0.5"
-														: "items-center gap-1",
-													(selected || hovered) && "ring-2 ring-primary",
-												)}
-											/>
-										}
-									>
-										{item.progress !== undefined && (
-											<span
-												className="absolute inset-y-0 left-0 bg-black/20"
-												style={{ width: `${item.progress}%` }}
-											/>
+									{item.progress !== undefined && (
+										<span
+											className="absolute inset-y-0 left-0 bg-black/20"
+											style={{ width: `${item.progress}%` }}
+										/>
+									)}
+									<span
+										className={cn(
+											"relative truncate text-left leading-tight",
+											height >= BAR_STACKED_MIN_HEIGHT
+												? "w-full"
+												: "min-w-0 flex-1",
 										)}
+									>
+										{item.name}
+									</span>
+									{perDayMinutes != null && (
 										<span
 											className={cn(
-												"relative truncate text-left leading-tight",
+												"relative font-normal text-[10px] text-white/80",
 												height >= BAR_STACKED_MIN_HEIGHT
-													? "w-full"
-													: "min-w-0 flex-1",
+													? "self-end leading-none"
+													: "shrink-0",
 											)}
 										>
-											{item.name}
+											{formatWorkload(perDayMinutes)}/d
 										</span>
-										{perDayMinutes != null && (
+									)}
+									{item.kind === "task" && (
+										<span
+											data-testid="scheduler-bar-resize"
+											onPointerDown={(e) => {
+												e.stopPropagation();
+												beginResize(e, {
+													id: item.id,
+													startHeight: height,
+													days,
+												});
+											}}
+											className="pointer-events-auto absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
+										/>
+									)}
+									{item.kind === "task" && (
+										<>
 											<span
-												className={cn(
-													"relative font-normal text-[10px] text-white/80",
-													height >= BAR_STACKED_MIN_HEIGHT
-														? "self-end leading-none"
-														: "shrink-0",
-												)}
-											>
-												{formatWorkload(perDayMinutes)}/d
-											</span>
-										)}
-										{item.kind === "task" && (
-											<span
-												data-testid="scheduler-bar-resize"
+												data-testid="scheduler-bar-resize-start"
 												onPointerDown={(e) => {
 													e.stopPropagation();
-													beginResize(e, {
+													beginDrag(e, {
 														id: item.id,
-														startHeight: height,
-														days,
+														role: "resize-start",
+														range,
 													});
 												}}
-												className="pointer-events-auto absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
+												className="pointer-events-auto absolute inset-y-0 left-0 w-1.5 cursor-ew-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
 											/>
-										)}
-										{item.kind === "task" && (
-											<>
-												<span
-													data-testid="scheduler-bar-resize-start"
-													onPointerDown={(e) => {
-														e.stopPropagation();
-														beginDrag(e, {
-															id: item.id,
-															role: "resize-start",
-															range,
-														});
-													}}
-													className="pointer-events-auto absolute inset-y-0 left-0 w-1.5 cursor-ew-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
-												/>
-												<span
-													data-testid="scheduler-bar-resize-end"
-													onPointerDown={(e) => {
-														e.stopPropagation();
-														beginDrag(e, {
-															id: item.id,
-															role: "resize-end",
-															range,
-														});
-													}}
-													className="pointer-events-auto absolute inset-y-0 right-0 w-1.5 cursor-ew-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
-												/>
-											</>
-										)}
-									</HoverCardTrigger>
-									<HoverCardContent side="top" align="start">
-										<TaskHoverCard item={item} />
-									</HoverCardContent>
-								</HoverCard>
-							);
-						}),
-					)}
+											<span
+												data-testid="scheduler-bar-resize-end"
+												onPointerDown={(e) => {
+													e.stopPropagation();
+													beginDrag(e, {
+														id: item.id,
+														role: "resize-end",
+														range,
+													});
+												}}
+												className="pointer-events-auto absolute inset-y-0 right-0 w-1.5 cursor-ew-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
+											/>
+										</>
+									)}
+								</HoverCardTrigger>
+								<HoverCardContent side="top" align="start">
+									<TaskHoverCard item={item} />
+								</HoverCardContent>
+							</HoverCard>
+						);
+					})}
 				</Fragment>
 			))}
 		</div>
