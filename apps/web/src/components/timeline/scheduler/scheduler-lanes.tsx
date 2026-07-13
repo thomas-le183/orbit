@@ -22,7 +22,7 @@ import type { SchedulerRow } from "./layout";
 import type { DragRole } from "./use-bar-drag";
 import type { LaneCreateDraft } from "./use-lane-create";
 import type { UnplannedDropDraft } from "./use-unplanned-drag";
-import { formatWorkload } from "./workload";
+import { formatWorkload, spanDays } from "./workload";
 import WorkloadStrip from "./workload-strip";
 
 /** Horizontal gap trimmed off each side of a bar so it reads as distinct. */
@@ -51,7 +51,7 @@ export default function SchedulerLanes({
 	totalHeight: number;
 	beginResize: (
 		e: ReactPointerEvent,
-		target: { id: string; startHeight: number },
+		target: { id: string; startHeight: number; days: number },
 	) => void;
 	beginDrag: (
 		e: ReactPointerEvent,
@@ -342,7 +342,11 @@ export default function SchedulerLanes({
 											data-testid="scheduler-bar-resize"
 											onPointerDown={(e) => {
 												e.stopPropagation();
-												beginResize(e, { id: item.id, startHeight: height });
+												beginResize(e, {
+													id: item.id,
+													startHeight: height,
+													days: spanDays(item.startDate, item.endDate),
+												});
 											}}
 											className="pointer-events-auto absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
 										/>

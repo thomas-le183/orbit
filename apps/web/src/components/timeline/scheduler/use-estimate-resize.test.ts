@@ -24,16 +24,17 @@ describe("useEstimateResize", () => {
 
 		expect(result.current.draft).toBeNull();
 
-		// Begin on a 24px (min) bar at clientY 100.
+		// Begin on a 24px bar for a single-day task at clientY 100.
 		act(() => {
 			result.current.beginResize(pointerDownEvent(100), {
 				id: "t1",
 				startHeight: 24,
+				days: 1,
 			});
 		});
 		expect(result.current.active).toBe("t1");
 
-		// Move down 30px → 54px → 391 min → snaps to 390 (nearest 15).
+		// Move down 30px → 54px → 391 min/day → snaps to 390 (nearest 15).
 		act(() => {
 			fireEvent.pointerMove(window, { clientY: 130 });
 		});
@@ -48,6 +49,28 @@ describe("useEstimateResize", () => {
 		expect(result.current.active).toBeNull();
 	});
 
+	it("multiplies the per-day effort by the day span for the total estimate", () => {
+		const onCommit = vi.fn();
+		const { result } = renderHook(() => useEstimateResize({ onCommit }));
+
+		// Same drag as above (390 min/day) but on a 3-day task → 1170 total.
+		act(() => {
+			result.current.beginResize(pointerDownEvent(100), {
+				id: "t1",
+				startHeight: 24,
+				days: 3,
+			});
+		});
+		act(() => {
+			fireEvent.pointerMove(window, { clientY: 130 });
+		});
+		expect(result.current.draft).toEqual({ id: "t1", estimatedTime: 1170 });
+		act(() => {
+			fireEvent.pointerUp(window, { clientY: 130 });
+		});
+		expect(onCommit).toHaveBeenCalledWith("t1", 1170);
+	});
+
 	it("ignores a second beginResize while a gesture is active", () => {
 		const onCommit = vi.fn();
 		const { result } = renderHook(() => useEstimateResize({ onCommit }));
@@ -55,12 +78,14 @@ describe("useEstimateResize", () => {
 			result.current.beginResize(pointerDownEvent(100), {
 				id: "t1",
 				startHeight: 24,
+				days: 1,
 			});
 		});
 		act(() => {
 			result.current.beginResize(pointerDownEvent(200), {
 				id: "t2",
 				startHeight: 96,
+				days: 1,
 			});
 		});
 		expect(result.current.active).toBe("t1");

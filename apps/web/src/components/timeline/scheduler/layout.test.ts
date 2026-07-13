@@ -77,6 +77,7 @@ describe("layoutScheduler", () => {
 });
 
 describe("stackLanes", () => {
+	// Single-day bars, so each bar's per-day effort equals its total estimate.
 	const bar = (estimatedTime?: number): PackedBar => ({
 		item: {
 			id: "t",
@@ -84,7 +85,7 @@ describe("stackLanes", () => {
 			name: "T",
 			parentId: null,
 			startDate: "2026-06-01",
-			endDate: "2026-06-02",
+			endDate: "2026-06-01",
 			color: "#000",
 			estimatedTime,
 		},
@@ -92,8 +93,8 @@ describe("stackLanes", () => {
 	});
 
 	it("sizes each lane to its tallest bar and stacks tops with a gap", () => {
-		// lane 0: max(490m → 1/3 of the band, 15m → floor) = laneA;
-		// lane 1: 1440m → ceiling.
+		// lane 0: max(490m/day → 1/3 of the band, 15m/day → floor) = laneA;
+		// lane 1: 1440m/day → ceiling.
 		const laneA = MIN_BAR_HEIGHT + (MAX_BAR_HEIGHT - MIN_BAR_HEIGHT) / 3;
 		const { lanes, height } = stackLanes([[bar(490), bar(15)], [bar(1440)]]);
 

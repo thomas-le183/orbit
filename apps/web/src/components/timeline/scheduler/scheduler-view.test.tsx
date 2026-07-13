@@ -312,7 +312,8 @@ describe("SchedulerView", () => {
 		const handle = handles[0];
 		const bar = handle.closest("[data-testid='scheduler-bar']") as HTMLElement;
 
-		// Drag far downward: any startHeight + large dy clamps to MAX (96px → 24h).
+		// Drag far downward: any startHeight + large dy clamps to MAX height
+		// (max per-day effort → 160px), whatever the task's day span.
 		fireEvent.pointerDown(handle, { clientY: 100, pointerId: 1 });
 		fireEvent.pointerMove(window, { clientY: 400 });
 		fireEvent.pointerUp(window, { clientY: 400 });

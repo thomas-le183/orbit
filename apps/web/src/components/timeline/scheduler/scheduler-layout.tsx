@@ -32,6 +32,7 @@ import TimelineScrollbar from "../scrollbar";
 import { RowSelectionProvider, useRowSelection } from "../selection/context";
 import { usePan } from "../use-pan";
 import ZoomControl from "../zoom-control";
+import { rescaleEstimateForSpan } from "./lane-metrics";
 import { layoutScheduler, type SchedulerRow } from "./layout";
 import SchedulerLanes from "./scheduler-lanes";
 import UnplannedPanel from "./unplanned-panel";
@@ -39,6 +40,7 @@ import { useBarDrag } from "./use-bar-drag";
 import { useEstimateResize } from "./use-estimate-resize";
 import { useLaneCreate } from "./use-lane-create";
 import { useUnplannedDrag } from "./use-unplanned-drag";
+import { spanDays } from "./workload";
 
 const PAN_STEP = 0.25;
 
@@ -235,8 +237,24 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 				targetLaneKey != null
 					? rows.find((r) => r.key === targetLaneKey)?.assignee
 					: undefined;
-			updateItem(id, assignee ? { ...dates, assignee } : dates);
+			// A horizontal resize changes the day span, so carry the estimate with
+			// it at a constant per-day effort (a move keeps the span, so nothing to
+			// rescale). Persist the new total alongside the dates.
+			const item = items.find((i) => i.id === id);
+			const rescaled = item
+				? rescaleEstimateForSpan(
+						item.estimatedTime,
+						spanDays(item.startDate, item.endDate),
+						spanDays(dates.startDate, dates.endDate),
+					)
+				: null;
+			const patch = { ...dates, ...(assignee ? { assignee } : {}) };
+			updateItem(
+				id,
+				rescaled != null ? { ...patch, estimatedTime: rescaled } : patch,
+			);
 			scheduleTask(id, dates.startDate, dates.endDate, assignee?.id);
+			if (rescaled != null) setEstimate(id, rescaled);
 		},
 		resolveLaneAt,
 	});

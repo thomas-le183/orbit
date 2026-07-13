@@ -1,13 +1,19 @@
 import type { TimelineItem } from "@/data/timeline-items";
+import { spanDays } from "./workload";
 
 /** Bar height for a task with no estimate (milestones, parents). Tunable. */
 export const MIN_BAR_HEIGHT = 16;
-/** Ceiling so one large estimate can't dominate a row. Tunable. */
+/** Ceiling so one intense day can't dominate a row. Tunable. */
 export const MAX_BAR_HEIGHT = 160;
-/** Estimate (minutes) that sits at MIN_BAR_HEIGHT — the shortest adjustable bar. */
-export const MIN_ESTIMATE_MIN = 15;
-/** Estimate (minutes) that reaches MAX_BAR_HEIGHT — a full 24h day. */
-export const MAX_ESTIMATE_MIN = 24 * 60;
+/**
+ * Per-day effort (minutes) that sits at MIN_BAR_HEIGHT — the lightest day a bar
+ * can express before flattening to the floor.
+ */
+export const MIN_PER_DAY_MINUTES = 15;
+/**
+ * Per-day effort (minutes) that reaches MAX_BAR_HEIGHT — a fully packed 24h day.
+ */
+export const MAX_PER_DAY_MINUTES = 24 * 60;
 /** Vertical gap between stacked lanes within a group. */
 export const LANE_GAP = 8;
 /** Padding above/below the stack of lanes inside a group row. */
@@ -27,16 +33,25 @@ export const WORKLOAD_STRIP_HEIGHT = 40;
 export const CREATE_LANE_HEIGHT = 24;
 
 /**
- * Pixel height of a bar from its estimatedTime (minutes). The estimate range
- * [MIN_ESTIMATE_MIN, MAX_ESTIMATE_MIN] maps linearly onto the visual band
- * [MIN_BAR_HEIGHT, MAX_BAR_HEIGHT]; estimates outside that range clamp to the
- * band so no bar ever escapes it.
+ * A bar's height encodes its **per-day** effort, not its total estimate: total
+ * estimate = per-day effort × day span, so the same total draws taller when
+ * squeezed into fewer days and shorter when spread wider. The per-day range
+ * [MIN_PER_DAY_MINUTES, MAX_PER_DAY_MINUTES] maps linearly onto the visual band
+ * [MIN_BAR_HEIGHT, MAX_BAR_HEIGHT], clamped so no bar escapes the band. This
+ * keeps a bar's height in step with the workload band above it, which measures
+ * the same per-day effort against daily capacity.
  */
 export function barHeight(item: TimelineItem): number {
 	if (item.estimatedTime == null) return MIN_BAR_HEIGHT;
+	const perDay = item.estimatedTime / spanDays(item.startDate, item.endDate);
+	return heightFromPerDay(perDay);
+}
+
+/** Pixel height for a given per-day effort (minutes), clamped to the band. */
+function heightFromPerDay(perDayMinutes: number): number {
 	const frac =
-		(item.estimatedTime - MIN_ESTIMATE_MIN) /
-		(MAX_ESTIMATE_MIN - MIN_ESTIMATE_MIN);
+		(perDayMinutes - MIN_PER_DAY_MINUTES) /
+		(MAX_PER_DAY_MINUTES - MIN_PER_DAY_MINUTES);
 	const clamped = Math.min(1, Math.max(0, frac));
 	return MIN_BAR_HEIGHT + clamped * (MAX_BAR_HEIGHT - MIN_BAR_HEIGHT);
 }
@@ -45,18 +60,36 @@ export function barHeight(item: TimelineItem): number {
 export const ESTIMATE_SNAP_MIN = 15;
 
 /**
- * Bottom-edge drag → snapped estimatedTime (minutes). Height is clamped to the
- * visual band [MIN_BAR_HEIGHT, MAX_BAR_HEIGHT] (the inverse of `barHeight`), so
- * the estimate stays within [MIN_ESTIMATE_MIN, MAX_ESTIMATE_MIN], then snaps to
- * the nearest ESTIMATE_SNAP_MIN.
+ * Bottom-edge drag → snapped **per-day** effort (minutes). Height is clamped to
+ * the visual band [MIN_BAR_HEIGHT, MAX_BAR_HEIGHT] (the inverse of `barHeight`),
+ * so the per-day value stays within [MIN_PER_DAY_MINUTES, MAX_PER_DAY_MINUTES],
+ * then snaps to the nearest ESTIMATE_SNAP_MIN. The caller multiplies by the
+ * task's day span to get the new total estimate.
  */
-export function estimateFromDrag(startHeight: number, dy: number): number {
+export function perDayFromDrag(startHeight: number, dy: number): number {
 	const h = Math.min(
 		MAX_BAR_HEIGHT,
 		Math.max(MIN_BAR_HEIGHT, startHeight + dy),
 	);
 	const frac = (h - MIN_BAR_HEIGHT) / (MAX_BAR_HEIGHT - MIN_BAR_HEIGHT);
-	const raw = MIN_ESTIMATE_MIN + frac * (MAX_ESTIMATE_MIN - MIN_ESTIMATE_MIN);
+	const raw =
+		MIN_PER_DAY_MINUTES + frac * (MAX_PER_DAY_MINUTES - MIN_PER_DAY_MINUTES);
 	const snapped = Math.round(raw / ESTIMATE_SNAP_MIN) * ESTIMATE_SNAP_MIN;
-	return Math.min(MAX_ESTIMATE_MIN, Math.max(MIN_ESTIMATE_MIN, snapped));
+	return Math.min(MAX_PER_DAY_MINUTES, Math.max(MIN_PER_DAY_MINUTES, snapped));
+}
+
+/**
+ * Rescale a task's total estimate to a new day span while holding its per-day
+ * effort constant — the horizontal counterpart to `perDayFromDrag`. Widening a
+ * bar adds days of the same intensity (more total); narrowing removes them.
+ * Returns null when there is no estimate to carry over.
+ */
+export function rescaleEstimateForSpan(
+	estimatedTime: number | null | undefined,
+	oldSpanDays: number,
+	newSpanDays: number,
+): number | null {
+	if (estimatedTime == null || oldSpanDays <= 0) return null;
+	const perDay = estimatedTime / oldSpanDays;
+	return Math.round(perDay * newSpanDays);
 }

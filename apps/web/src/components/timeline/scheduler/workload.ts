@@ -19,6 +19,20 @@ export type DayLoad = {
 };
 
 /**
+ * Inclusive day span of a task's [startDate, endDate] range — a task ending on
+ * its start day is 1 day, not 0. The shared definition of "how many days does
+ * this task occupy", used both to spread a workload estimate and to convert
+ * between a task's total estimate and its per-day effort. Returns 1 for missing
+ * or inverted dates so callers never divide by zero.
+ */
+export function spanDays(startDate: string, endDate: string): number {
+	const start = startOfUtcDay(Date.parse(startDate));
+	const end = startOfUtcDay(Date.parse(endDate));
+	if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return 1;
+	return Math.round((end - start) / ONE_DAY) + 1;
+}
+
+/**
  * Per-day workload for a set of tasks. Each task's `estimatedTime` is spread
  * evenly across its inclusive start→end day span (an 8h task over 4 days counts
  * as 2h/day), then summed across tasks per calendar day. Tasks with no estimate
@@ -33,7 +47,7 @@ export function dailyWorkload(tasks: TimelineItem[]): DayLoad[] {
 		if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
 			continue;
 		}
-		const dayCount = Math.round((end - start) / ONE_DAY) + 1;
+		const dayCount = spanDays(task.startDate, task.endDate);
 		const perDay = task.estimatedTime / dayCount;
 		for (let i = 0; i < dayCount; i++) {
 			const dayMs = start + i * ONE_DAY;
