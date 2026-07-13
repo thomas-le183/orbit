@@ -256,6 +256,11 @@ describe("SchedulerView", () => {
 		for (const cell of cells) {
 			expect(cell.getAttribute("data-overloaded")).toMatch(/^(true|false)$/);
 		}
+		// Each band draws a capacity reference line and labels its busiest day.
+		expect(screen.getAllByTestId("workload-capacity-line").length).toBe(
+			strips.length,
+		);
+		expect(screen.getAllByTestId("workload-peak").length).toBe(strips.length);
 	});
 
 	it("shows an empty-state band for an assignee with no workload", async () => {

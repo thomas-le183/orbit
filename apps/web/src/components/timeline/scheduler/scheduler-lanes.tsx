@@ -298,6 +298,7 @@ export default function SchedulerLanes({
 									onOpenChange={(open) => setHoverCardId(open ? item.id : null)}
 								>
 									<HoverCardTrigger
+										delay={700}
 										render={
 											<button
 												type="button"
