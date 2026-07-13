@@ -4,7 +4,9 @@ import {
 	barHeight,
 	estimateFromDrag,
 	MAX_BAR_HEIGHT,
+	MAX_ESTIMATE_MIN,
 	MIN_BAR_HEIGHT,
+	MIN_ESTIMATE_MIN,
 } from "./lane-metrics";
 
 function item(estimatedTime?: number): TimelineItem {
@@ -25,41 +27,44 @@ describe("barHeight", () => {
 		expect(barHeight(item(undefined))).toBe(MIN_BAR_HEIGHT);
 	});
 
-	it("clamps small estimates to the floor", () => {
-		// 60min * 0.2 = 12 → clamped up to 24
-		expect(barHeight(item(60))).toBe(MIN_BAR_HEIGHT);
+	it("puts the minimum estimate (and anything below it) at the floor", () => {
+		expect(barHeight(item(MIN_ESTIMATE_MIN))).toBe(MIN_BAR_HEIGHT); // 15m
+		expect(barHeight(item(5))).toBe(MIN_BAR_HEIGHT); // below 15m → clamped
 	});
 
-	it("clamps large estimates to the ceiling", () => {
-		// 1000min * 0.2 = 200 → clamped down to 96
-		expect(barHeight(item(1000))).toBe(MAX_BAR_HEIGHT);
+	it("puts the maximum estimate (and anything above it) at the ceiling", () => {
+		expect(barHeight(item(MAX_ESTIMATE_MIN))).toBe(MAX_BAR_HEIGHT); // 24h
+		expect(barHeight(item(2000))).toBe(MAX_BAR_HEIGHT); // above 24h → clamped
 	});
 
-	it("scales linearly in the middle band", () => {
-		// 300min * 0.2 = 60
-		expect(barHeight(item(300))).toBe(60);
+	it("scales linearly across the 15m..24h band", () => {
+		const span = MAX_BAR_HEIGHT - MIN_BAR_HEIGHT;
+		// 490m → 1/3 of the range; 965m → 2/3.
+		expect(barHeight(item(490))).toBe(MIN_BAR_HEIGHT + span / 3);
+		expect(barHeight(item(965))).toBe(MIN_BAR_HEIGHT + (2 * span) / 3);
 	});
 });
 
 describe("estimateFromDrag", () => {
-	// barHeight band is 24..96px → 120..480 min at 0.2 px/min, snapped to 30.
-	it("clamps to the floor when dragged up past the minimum", () => {
-		// startHeight 24 (min), dy -100 → clamps to 24px → 120 min
-		expect(estimateFromDrag(24, -100)).toBe(120);
+	// The height band maps to 15..1440 min, snapped to 15.
+	it("clamps to the minimum estimate when dragged up past the floor", () => {
+		expect(estimateFromDrag(MIN_BAR_HEIGHT, -100)).toBe(MIN_ESTIMATE_MIN); // 15m
 	});
 
-	it("clamps to the ceiling when dragged down past the maximum", () => {
-		// startHeight 96 (max), dy +100 → clamps to 96px → 480 min
-		expect(estimateFromDrag(96, 100)).toBe(480);
+	it("clamps to the maximum estimate when dragged down past the ceiling", () => {
+		expect(estimateFromDrag(MAX_BAR_HEIGHT, 100)).toBe(MAX_ESTIMATE_MIN); // 24h
 	});
 
-	it("snaps to the nearest 30 minutes", () => {
-		// startHeight 24, dy +38 → 62px → 310 min → snaps to 300
-		expect(estimateFromDrag(24, 38)).toBe(300);
+	it("maps an interior height and snaps to the nearest 15 minutes", () => {
+		const span = MAX_BAR_HEIGHT - MIN_BAR_HEIGHT;
+		// Midpoint height → 727.5 min → snaps to 735.
+		expect(estimateFromDrag(MIN_BAR_HEIGHT, span / 2)).toBe(735);
+		expect(estimateFromDrag(MIN_BAR_HEIGHT, span / 2) % 15).toBe(0);
 	});
 
-	it("starts from a no-estimate bar height (24px)", () => {
-		// startHeight 24, dy +36 → 60px → 300 min
-		expect(estimateFromDrag(24, 36)).toBe(300);
+	it("starts from a no-estimate bar height", () => {
+		const span = MAX_BAR_HEIGHT - MIN_BAR_HEIGHT;
+		// Quarter height → 371.25 min → snaps to 375.
+		expect(estimateFromDrag(MIN_BAR_HEIGHT, span / 4)).toBe(375);
 	});
 });

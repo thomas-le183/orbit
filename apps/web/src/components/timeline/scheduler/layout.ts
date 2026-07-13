@@ -5,8 +5,10 @@ import {
 	CREATE_LANE_HEIGHT,
 	GROUP_PADDING,
 	LANE_GAP,
+	WORKLOAD_STRIP_HEIGHT,
 } from "./lane-metrics";
 import { type PackedBar, packLanes } from "./pack-lanes";
+import { type DayLoad, dailyWorkload } from "./workload";
 
 export type PositionedLane = {
 	bars: PackedBar[];
@@ -23,6 +25,12 @@ export type SchedulerRow = {
 	top: number;
 	height: number;
 	lanes: PositionedLane[];
+	/** Per-day scheduled effort, rendered as the band atop the row. */
+	workload: DayLoad[];
+	/** Number of schedulable tasks — stable across collapse (lanes are dropped). */
+	taskCount: number;
+	/** Collapsed rows shrink to just the workload band and hide their task bars. */
+	collapsed: boolean;
 };
 
 /**
@@ -61,13 +69,19 @@ export function layoutScheduler(
 	mode: GroupingMode,
 	today: number,
 	allAssignees: TaskAssignee[] = [],
+	collapsedKeys: ReadonlySet<string> = new Set(),
 ): { rows: SchedulerRow[]; totalHeight: number } {
 	const groups = buildGroupRows(items, mode, allAssignees);
 	const rows: SchedulerRow[] = [];
 	let top = 0;
 	for (const g of groups) {
-		const packed = packLanes(g.tasks, today);
-		const { lanes, height } = stackLanes(packed);
+		const collapsed = collapsedKeys.has(g.key);
+		// A collapsed row drops its lanes and shrinks to just the workload band.
+		const packed = collapsed ? [] : packLanes(g.tasks, today);
+		const { lanes, height: stackHeight } = stackLanes(packed);
+		const height = collapsed
+			? WORKLOAD_STRIP_HEIGHT
+			: stackHeight + WORKLOAD_STRIP_HEIGHT;
 		rows.push({
 			key: g.key,
 			label: g.label,
@@ -75,6 +89,9 @@ export function layoutScheduler(
 			top,
 			height,
 			lanes,
+			workload: dailyWorkload(g.tasks),
+			taskCount: g.tasks.length,
+			collapsed,
 		});
 		top += height;
 	}

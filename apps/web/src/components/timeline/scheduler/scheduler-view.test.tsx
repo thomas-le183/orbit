@@ -242,6 +242,66 @@ describe("SchedulerView", () => {
 		expect(screen.getByText("Maya Chen")).toBeInTheDocument();
 	});
 
+	it("renders a per-day workload band atop rows with estimated tasks", async () => {
+		renderScheduler();
+		await screen.findAllByTestId("scheduler-group-header");
+
+		// Every seeded task carries an estimate dated inside the viewport, so each
+		// assignee row gets a workload strip with at least one per-day cell.
+		const strips = screen.getAllByTestId("workload-strip");
+		expect(strips.length).toBeGreaterThan(0);
+		const cells = screen.getAllByTestId("workload-cell");
+		expect(cells.length).toBeGreaterThan(0);
+		// Each cell records whether its day is over capacity.
+		for (const cell of cells) {
+			expect(cell.getAttribute("data-overloaded")).toMatch(/^(true|false)$/);
+		}
+	});
+
+	it("shows an empty-state band for an assignee with no workload", async () => {
+		vi.mocked(useTimelineData).mockReturnValue(
+			defaultTimelineData({
+				items: [],
+				assignees: [{ id: "u_idle", name: "Idle Ian", avatarUrl: "" }],
+			}),
+		);
+		const qc = new QueryClient({
+			defaultOptions: { queries: { retry: false } },
+		});
+		render(
+			<QueryClientProvider client={qc}>
+				<TimelineDataProvider>
+					<SchedulerView />
+				</TimelineDataProvider>
+			</QueryClientProvider>,
+		);
+		await screen.findAllByTestId("scheduler-group-header");
+
+		// The band renders an empty placeholder rather than nothing, and no cells.
+		expect(screen.getByTestId("workload-strip-empty")).toBeInTheDocument();
+		expect(screen.getByText("No workload")).toBeInTheDocument();
+		expect(screen.queryAllByTestId("workload-cell")).toHaveLength(0);
+	});
+
+	it("collapsing a row hides its task bars but keeps its workload band", async () => {
+		renderScheduler();
+		await screen.findAllByTestId("scheduler-group-header");
+
+		const barsBefore = screen.getAllByTestId("scheduler-bar").length;
+		const stripsBefore = screen.getAllByTestId("workload-strip").length;
+		// Ana Alpha sorts first and owns two of the seeded bars.
+		const [firstToggle] = screen.getAllByTestId("scheduler-group-collapse");
+		expect(firstToggle.getAttribute("aria-expanded")).toBe("true");
+
+		fireEvent.click(firstToggle);
+
+		expect(firstToggle.getAttribute("aria-expanded")).toBe("false");
+		// Two of Ana's bars are gone; the rest remain.
+		expect(screen.getAllByTestId("scheduler-bar").length).toBe(barsBefore - 2);
+		// The band is still rendered for every row (including the collapsed one).
+		expect(screen.getAllByTestId("workload-strip").length).toBe(stripsBefore);
+	});
+
 	it("drag on a bar's resize handle sets its height to the clamped max", async () => {
 		renderScheduler();
 		await screen.findAllByTestId("scheduler-group-header");
@@ -252,12 +312,12 @@ describe("SchedulerView", () => {
 		const handle = handles[0];
 		const bar = handle.closest("[data-testid='scheduler-bar']") as HTMLElement;
 
-		// Drag far downward: any startHeight + large dy clamps to MAX (96px → 480min).
+		// Drag far downward: any startHeight + large dy clamps to MAX (96px → 24h).
 		fireEvent.pointerDown(handle, { clientY: 100, pointerId: 1 });
 		fireEvent.pointerMove(window, { clientY: 400 });
 		fireEvent.pointerUp(window, { clientY: 400 });
 
-		expect(bar.style.height).toBe("96px");
+		expect(bar.style.height).toBe("160px");
 	});
 
 	it("committing a bar resize persists the estimate via setEstimate", async () => {
@@ -485,13 +545,17 @@ describe("unplanned panel", () => {
 		const qc = new QueryClient({
 			defaultOptions: { queries: { retry: false } },
 		});
-		return render(
+		const utils = render(
 			<QueryClientProvider client={qc}>
 				<TimelineDataProvider>
 					<SchedulerView />
 				</TimelineDataProvider>
 			</QueryClientProvider>,
 		);
+		// The unplanned panel is hidden by default; open it so the tests below can
+		// assert against it (leaves state identical to a user opening the panel).
+		fireEvent.click(screen.getByLabelText("Toggle unplanned tasks"));
+		return utils;
 	}
 
 	function composer() {

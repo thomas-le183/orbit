@@ -33,17 +33,17 @@ describe("useEstimateResize", () => {
 		});
 		expect(result.current.active).toBe("t1");
 
-		// Move down 36px → 60px → 300 min.
+		// Move down 30px → 54px → 391 min → snaps to 390 (nearest 15).
 		act(() => {
-			fireEvent.pointerMove(window, { clientY: 136 });
+			fireEvent.pointerMove(window, { clientY: 130 });
 		});
-		expect(result.current.draft).toEqual({ id: "t1", estimatedTime: 300 });
+		expect(result.current.draft).toEqual({ id: "t1", estimatedTime: 390 });
 
 		// Release commits and clears.
 		act(() => {
-			fireEvent.pointerUp(window, { clientY: 136 });
+			fireEvent.pointerUp(window, { clientY: 130 });
 		});
-		expect(onCommit).toHaveBeenCalledWith("t1", 300);
+		expect(onCommit).toHaveBeenCalledWith("t1", 390);
 		expect(result.current.draft).toBeNull();
 		expect(result.current.active).toBeNull();
 	});

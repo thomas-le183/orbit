@@ -1,0 +1,96 @@
+import { cn } from "@orbit/shared";
+import { type Geometry, rangeVisibility } from "../controller/geometry";
+import { ONE_DAY } from "../units/make-units";
+import { WORKLOAD_STRIP_HEIGHT } from "./lane-metrics";
+import type { SchedulerRow } from "./layout";
+import { capacityRatio, type DayLoad, formatWorkload } from "./workload";
+
+/** Vertical padding inside the band so fills don't touch the row borders. */
+const STRIP_INSET_PX = 4;
+/** Fills never render thinner than this, so a light day is still visible. */
+const MIN_FILL_PX = 2;
+
+/**
+ * Per-day workload band drawn across the top of an assignee row, aligned to the
+ * timeline's day grid. Each day's fill height is its scheduled effort relative
+ * to the assignee's daily capacity; days over capacity are clamped to full
+ * height and tinted as overloaded. Purely presentational and non-interactive —
+ * it sits above the lanes, which start below the band.
+ */
+export default function WorkloadStrip({
+	row,
+	geom,
+	today,
+	getPercentageOffset,
+}: {
+	row: SchedulerRow;
+	geom: Geometry;
+	today: number;
+	getPercentageOffset: (ms: number) => number;
+}) {
+	const innerHeight = WORKLOAD_STRIP_HEIGHT - STRIP_INSET_PX * 2;
+
+	// No scheduled effort (no tasks, or none with an estimate): keep the band as
+	// a quiet empty capacity track rather than leaving blank space.
+	if (row.workload.length === 0) {
+		return (
+			<div
+				data-testid="workload-strip-empty"
+				className="pointer-events-none absolute inset-x-0 flex items-center justify-center"
+				style={{ top: row.top + STRIP_INSET_PX, height: innerHeight }}
+			>
+				<span className="absolute inset-x-2 bottom-0 border-border border-b border-dashed" />
+				<span className="rounded-sm bg-background-primary px-1 text-[10px] font-medium text-muted-foreground/60">
+					No workload
+				</span>
+			</div>
+		);
+	}
+
+	const cell = (load: DayLoad) => {
+		const from = load.dayMs - today;
+		const to = from + ONE_DAY;
+		if (rangeVisibility(from, to, geom) !== "visible") return null;
+		const left = getPercentageOffset(from);
+		const right = getPercentageOffset(to);
+		if (!Number.isFinite(left) || !Number.isFinite(right)) return null;
+		const ratio = capacityRatio(load.minutes, load.dayMs);
+		const overloaded = ratio > 1;
+		const fill = Math.max(MIN_FILL_PX, Math.min(ratio, 1) * innerHeight);
+		return (
+			<span
+				key={load.dayMs}
+				data-testid="workload-cell"
+				data-overloaded={overloaded}
+				title={formatWorkload(load.minutes)}
+				className="absolute bottom-0 flex items-end justify-stretch px-px"
+				style={{
+					left: `${left}%`,
+					width: `${right - left}%`,
+					height: innerHeight,
+				}}
+			>
+				<span
+					className={cn(
+						"w-full rounded-sm",
+						overloaded ? "bg-destructive" : "bg-primary/70",
+					)}
+					style={{ height: fill }}
+				/>
+			</span>
+		);
+	};
+
+	return (
+		<div
+			data-testid="workload-strip"
+			className="pointer-events-none absolute inset-x-0"
+			style={{
+				top: row.top + STRIP_INSET_PX,
+				height: innerHeight,
+			}}
+		>
+			{row.workload.map(cell)}
+		</div>
+	);
+}

@@ -13,14 +13,25 @@ import { ROW_PADDING } from "../layout/row-metrics";
 import { useRowSelection } from "../selection/context";
 import { ONE_DAY, startOfUtcDay } from "../units/make-units";
 import type { RelativeTimeRangeOffset } from "../units/types";
-import { barHeight, GROUP_PADDING } from "./lane-metrics";
+import {
+	barHeight,
+	GROUP_PADDING,
+	WORKLOAD_STRIP_HEIGHT,
+} from "./lane-metrics";
 import type { SchedulerRow } from "./layout";
 import type { DragRole } from "./use-bar-drag";
 import type { LaneCreateDraft } from "./use-lane-create";
 import type { UnplannedDropDraft } from "./use-unplanned-drag";
+import { formatWorkload } from "./workload";
+import WorkloadStrip from "./workload-strip";
 
 /** Horizontal gap trimmed off each side of a bar so it reads as distinct. */
 const BAR_INLINE_INSET_PX = 3;
+/**
+ * Below this bar height there isn't room to stack the title over the hours, so
+ * the label collapses into a single truncating row (title + hours inline).
+ */
+const BAR_STACKED_MIN_HEIGHT = 32;
 
 export default function SchedulerLanes({
 	rows,
@@ -112,13 +123,22 @@ export default function SchedulerLanes({
 			)}
 			{rows.map((row) => (
 				<Fragment key={row.key}>
+					<WorkloadStrip
+						row={row}
+						geom={geom}
+						today={today}
+						getPercentageOffset={getPercentageOffset}
+					/>
 					<div
 						data-testid="scheduler-create-surface"
 						onPointerDown={(e) =>
 							beginCreate(e, { key: row.key, assigneeId: row.assignee?.id })
 						}
 						className="pointer-events-auto absolute inset-x-0 cursor-crosshair border-b border-border"
-						style={{ top: row.top, height: row.height }}
+						style={{
+							top: row.top + WORKLOAD_STRIP_HEIGHT,
+							height: row.height - WORKLOAD_STRIP_HEIGHT,
+						}}
 					/>
 					{createDraft?.laneKey === row.key &&
 						(() => {
@@ -134,8 +154,9 @@ export default function SchedulerLanes({
 									style={{
 										left: `${bounds.left}%`,
 										width: `${bounds.width}%`,
-										top: row.top + ROW_PADDING,
-										height: row.height - ROW_PADDING * 2,
+										top: row.top + WORKLOAD_STRIP_HEIGHT + ROW_PADDING,
+										height:
+											row.height - WORKLOAD_STRIP_HEIGHT - ROW_PADDING * 2,
 									}}
 								/>
 							);
@@ -161,8 +182,9 @@ export default function SchedulerLanes({
 									style={{
 										left: `${bounds.left}%`,
 										width: `${bounds.width}%`,
-										top: row.top + ROW_PADDING,
-										height: row.height - ROW_PADDING * 2,
+										top: row.top + WORKLOAD_STRIP_HEIGHT + ROW_PADDING,
+										height:
+											row.height - WORKLOAD_STRIP_HEIGHT - ROW_PADDING * 2,
 									}}
 								/>
 							);
@@ -192,7 +214,7 @@ export default function SchedulerLanes({
 							const top =
 								dragging && dragDraft?.pointerContentY != null
 									? dragDraft.pointerContentY - height / 2
-									: row.top + GROUP_PADDING + lane.top;
+									: row.top + WORKLOAD_STRIP_HEIGHT + GROUP_PADDING + lane.top;
 							const selected = isSelected(item.id);
 							const hovered = hoveredId === item.id;
 							if (renamingId === item.id) {
@@ -280,7 +302,10 @@ export default function SchedulerLanes({
 										backgroundColor: item.color,
 									}}
 									className={cn(
-										"group pointer-events-auto absolute flex cursor-grab items-center overflow-hidden rounded-md px-2 text-xs font-medium text-white shadow-sm",
+										"group pointer-events-auto absolute flex cursor-grab overflow-hidden rounded-md px-2 text-xs font-medium text-white shadow-sm",
+										height >= BAR_STACKED_MIN_HEIGHT
+											? "flex-col justify-between py-0.5"
+											: "items-center gap-1",
 										(selected || hovered) && "ring-2 ring-primary",
 									)}
 								>
@@ -290,7 +315,28 @@ export default function SchedulerLanes({
 											style={{ width: `${item.progress}%` }}
 										/>
 									)}
-									<span className="relative truncate">{item.name}</span>
+									<span
+										className={cn(
+											"relative truncate text-left leading-tight",
+											height >= BAR_STACKED_MIN_HEIGHT
+												? "w-full"
+												: "min-w-0 flex-1",
+										)}
+									>
+										{item.name}
+									</span>
+									{item.estimatedTime != null && (
+										<span
+											className={cn(
+												"relative font-normal text-[10px] text-white/80",
+												height >= BAR_STACKED_MIN_HEIGHT
+													? "self-end leading-none"
+													: "shrink-0",
+											)}
+										>
+											{formatWorkload(item.estimatedTime)}
+										</span>
+									)}
 									{item.kind === "task" && (
 										<span
 											data-testid="scheduler-bar-resize"

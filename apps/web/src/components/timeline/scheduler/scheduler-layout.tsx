@@ -1,6 +1,11 @@
 import { cn } from "@orbit/shared";
 import { UserAvatar } from "@orbit/ui/custom/user-avatar";
-import { ChevronLeft, ChevronRight, PanelRight } from "lucide-react";
+import {
+	ChevronDown,
+	ChevronLeft,
+	ChevronRight,
+	PanelRight,
+} from "lucide-react";
 import {
 	type ReactNode,
 	type RefObject,
@@ -49,7 +54,13 @@ function isTypingTarget(target: EventTarget | null): boolean {
 	);
 }
 
-function GroupHeader({ row }: { row: SchedulerRow }) {
+function GroupHeader({
+	row,
+	onToggleCollapsed,
+}: {
+	row: SchedulerRow;
+	onToggleCollapsed: (key: string) => void;
+}) {
 	return (
 		<div
 			data-testid="scheduler-group-header"
@@ -57,7 +68,22 @@ function GroupHeader({ row }: { row: SchedulerRow }) {
 			style={{ height: row.height }}
 		>
 			{/* Stick the assignee to the top so it stays visible on tall rows. */}
-			<div className="sticky top-0 flex items-center gap-2 bg-background-primary px-3 py-2">
+			<div className="sticky top-0 flex items-center gap-1.5 bg-background-primary px-2 py-2">
+				<button
+					type="button"
+					data-testid="scheduler-group-collapse"
+					aria-label={row.collapsed ? "Expand row" : "Collapse row"}
+					aria-expanded={!row.collapsed}
+					onClick={() => onToggleCollapsed(row.key)}
+					className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+				>
+					<ChevronDown
+						className={cn(
+							"size-4 transition-transform",
+							row.collapsed && "-rotate-90",
+						)}
+					/>
+				</button>
 				<UserAvatar
 					size="sm"
 					colorSeed={row.assignee?.id ?? row.key}
@@ -68,7 +94,7 @@ function GroupHeader({ row }: { row: SchedulerRow }) {
 					{row.label}
 				</span>
 				<span className="shrink-0 text-xs text-muted-foreground">
-					{row.lanes.reduce((n, lane) => n + lane.bars.length, 0)}
+					{row.taskCount}
 				</span>
 			</div>
 		</div>
@@ -90,7 +116,18 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 	const { tableWidth, collapsed, onDividerPointerDown } = useResizableDivider();
 	const { onWheel } = usePan();
 	const { clear } = useRowSelection();
-	const [showUnplanned, setShowUnplanned] = useState(true);
+	const [showUnplanned, setShowUnplanned] = useState(false);
+	const [collapsedRows, setCollapsedRows] = useState<ReadonlySet<string>>(
+		() => new Set(),
+	);
+	const toggleRowCollapsed = useCallback((key: string) => {
+		setCollapsedRows((prev) => {
+			const next = new Set(prev);
+			if (next.has(key)) next.delete(key);
+			else next.add(key);
+			return next;
+		});
+	}, []);
 	const unplannedPanelRef = useRef<HTMLDivElement | null>(null);
 	const {
 		items,
@@ -121,8 +158,15 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 	);
 
 	const { rows, totalHeight } = useMemo(
-		() => layoutScheduler(effectiveItems, "assignee", today, assignees),
-		[effectiveItems, today, assignees],
+		() =>
+			layoutScheduler(
+				effectiveItems,
+				"assignee",
+				today,
+				assignees,
+				collapsedRows,
+			),
+		[effectiveItems, today, assignees, collapsedRows],
 	);
 
 	const {
@@ -351,7 +395,11 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 										style={{ width: tableWidth }}
 									>
 										{rows.map((row) => (
-											<GroupHeader key={row.key} row={row} />
+											<GroupHeader
+												key={row.key}
+												row={row}
+												onToggleCollapsed={toggleRowCollapsed}
+											/>
 										))}
 									</div>
 								)}
