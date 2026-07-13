@@ -505,7 +505,7 @@ export default function ItemsLayer() {
 											transform,
 										}}
 										className={cn(
-											"group absolute z-20 flex h-4 w-5 cursor-crosshair items-center",
+											"group absolute z-20 flex h-4 w-5 items-center",
 											dotAlign,
 											hoveredId === item.id || linkDraft
 												? "pointer-events-auto opacity-100"

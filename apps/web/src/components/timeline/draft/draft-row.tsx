@@ -223,7 +223,7 @@ export function DraftLane({ rowIndex }: { rowIndex: number }) {
 		<div
 			data-testid="timeline-draft-lane"
 			onPointerDown={beginDrag}
-			className={cn("pointer-events-auto absolute inset-x-0 cursor-crosshair")}
+			className={cn("pointer-events-auto absolute inset-x-0")}
 			style={{ top, height: ROW_HEIGHT }}
 		>
 			{ghost}
