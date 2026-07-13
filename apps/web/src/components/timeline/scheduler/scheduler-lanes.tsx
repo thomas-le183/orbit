@@ -1,8 +1,14 @@
 import { cn } from "@orbit/shared";
 import {
+	HoverCard,
+	HoverCardContent,
+	HoverCardTrigger,
+} from "@orbit/ui/components/hover-card";
+import {
 	Fragment,
 	type PointerEvent as ReactPointerEvent,
 	useRef,
+	useState,
 } from "react";
 import { MIN_BAR_WIDTH_PX } from "../constants";
 import { useTimelineController } from "../controller/context";
@@ -19,6 +25,7 @@ import {
 	WORKLOAD_STRIP_HEIGHT,
 } from "./lane-metrics";
 import type { SchedulerRow } from "./layout";
+import TaskHoverCard from "./task-hover-card";
 import type { DragRole } from "./use-bar-drag";
 import type { LaneCreateDraft } from "./use-lane-create";
 import type { UnplannedDropDraft } from "./use-unplanned-drag";
@@ -46,6 +53,7 @@ export default function SchedulerLanes({
 	renamingId,
 	onRename,
 	clearRenaming,
+	interacting,
 }: {
 	rows: SchedulerRow[];
 	totalHeight: number;
@@ -78,6 +86,8 @@ export default function SchedulerLanes({
 	renamingId: string | null;
 	onRename: (id: string, name: string) => void;
 	clearRenaming: () => void;
+	/** True while any pointer gesture is live; suppresses hover cards. */
+	interacting: boolean;
 }) {
 	const { offsetMs, zoomLevel, viewportWidth, today } = useTimelineController();
 	const { getPercentageOffset } = useHorizontalPercentageOffset();
@@ -87,6 +97,9 @@ export default function SchedulerLanes({
 	// clear, which unmounts the focused input and, in a real browser, fires a
 	// native blur — this flag makes onBlur consume that unmount-blur once.
 	const renameCommittedRef = useRef(false);
+	// Which bar's hover card is open. Controlled so we can force it shut the
+	// moment a drag/resize/create gesture starts (`interacting`).
+	const [hoverCardId, setHoverCardId] = useState<string | null>(null);
 
 	if (viewportWidth <= 0) return null;
 	const geom: Geometry = { offsetMs, zoom: zoomLevel, viewportWidth };
@@ -134,7 +147,7 @@ export default function SchedulerLanes({
 						onPointerDown={(e) =>
 							beginCreate(e, { key: row.key, assigneeId: row.assignee?.id })
 						}
-						className="pointer-events-auto absolute inset-x-0 cursor-crosshair border-b border-border"
+						className="pointer-events-auto absolute inset-x-0 border-b border-border"
 						style={{
 							top: row.top + WORKLOAD_STRIP_HEIGHT,
 							height: row.height - WORKLOAD_STRIP_HEIGHT,
@@ -274,112 +287,124 @@ export default function SchedulerLanes({
 								);
 							}
 							return (
-								<button
-									type="button"
+								<HoverCard
 									key={item.id}
-									data-testid="scheduler-bar"
-									data-selected={selected}
-									title={item.name}
-									onMouseEnter={() => setHovered(item.id)}
-									onMouseLeave={() => setHovered(null)}
-									onClick={() => {
-										if (wasDragged()) return;
-										toggle(item.id);
-									}}
-									onPointerDown={(e) =>
-										beginDrag(e, {
-											id: item.id,
-											role: "move",
-											range,
-											laneKey: row.key,
-										})
-									}
-									style={{
-										left: `calc(${left}% + ${BAR_INLINE_INSET_PX}px)`,
-										width: `calc(${width}% - ${BAR_INLINE_INSET_PX * 2}px)`,
-										top,
-										height,
-										backgroundColor: item.color,
-									}}
-									className={cn(
-										"group pointer-events-auto absolute flex cursor-grab overflow-hidden rounded-md px-2 text-xs font-medium text-white shadow-sm",
-										height >= BAR_STACKED_MIN_HEIGHT
-											? "flex-col justify-between py-0.5"
-											: "items-center gap-1",
-										(selected || hovered) && "ring-2 ring-primary",
-									)}
+									open={hoverCardId === item.id && !interacting}
+									onOpenChange={(open) => setHoverCardId(open ? item.id : null)}
 								>
-									{item.progress !== undefined && (
-										<span
-											className="absolute inset-y-0 left-0 bg-black/20"
-											style={{ width: `${item.progress}%` }}
-										/>
-									)}
-									<span
-										className={cn(
-											"relative truncate text-left leading-tight",
-											height >= BAR_STACKED_MIN_HEIGHT
-												? "w-full"
-												: "min-w-0 flex-1",
-										)}
+									<HoverCardTrigger
+										render={
+											<button
+												type="button"
+												data-testid="scheduler-bar"
+												data-selected={selected}
+												title={item.name}
+												onMouseEnter={() => setHovered(item.id)}
+												onMouseLeave={() => setHovered(null)}
+												onClick={() => {
+													if (wasDragged()) return;
+													toggle(item.id);
+												}}
+												onPointerDown={(e) =>
+													beginDrag(e, {
+														id: item.id,
+														role: "move",
+														range,
+														laneKey: row.key,
+													})
+												}
+												style={{
+													left: `calc(${left}% + ${BAR_INLINE_INSET_PX}px)`,
+													width: `calc(${width}% - ${BAR_INLINE_INSET_PX * 2}px)`,
+													top,
+													height,
+													backgroundColor: item.color,
+												}}
+												className={cn(
+													"group pointer-events-auto absolute flex cursor-grab overflow-hidden rounded-md px-2 text-xs font-medium text-white shadow-sm",
+													height >= BAR_STACKED_MIN_HEIGHT
+														? "flex-col justify-between py-0.5"
+														: "items-center gap-1",
+													(selected || hovered) && "ring-2 ring-primary",
+												)}
+											/>
+										}
 									>
-										{item.name}
-									</span>
-									{item.estimatedTime != null && (
+										{item.progress !== undefined && (
+											<span
+												className="absolute inset-y-0 left-0 bg-black/20"
+												style={{ width: `${item.progress}%` }}
+											/>
+										)}
 										<span
 											className={cn(
-												"relative font-normal text-[10px] text-white/80",
+												"relative truncate text-left leading-tight",
 												height >= BAR_STACKED_MIN_HEIGHT
-													? "self-end leading-none"
-													: "shrink-0",
+													? "w-full"
+													: "min-w-0 flex-1",
 											)}
 										>
-											{formatWorkload(item.estimatedTime)}
+											{item.name}
 										</span>
-									)}
-									{item.kind === "task" && (
-										<span
-											data-testid="scheduler-bar-resize"
-											onPointerDown={(e) => {
-												e.stopPropagation();
-												beginResize(e, {
-													id: item.id,
-													startHeight: height,
-													days: spanDays(item.startDate, item.endDate),
-												});
-											}}
-											className="pointer-events-auto absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
-										/>
-									)}
-									{item.kind === "task" && (
-										<>
+										{item.estimatedTime != null && (
 											<span
-												data-testid="scheduler-bar-resize-start"
+												className={cn(
+													"relative font-normal text-[10px] text-white/80",
+													height >= BAR_STACKED_MIN_HEIGHT
+														? "self-end leading-none"
+														: "shrink-0",
+												)}
+											>
+												{formatWorkload(item.estimatedTime)}
+											</span>
+										)}
+										{item.kind === "task" && (
+											<span
+												data-testid="scheduler-bar-resize"
 												onPointerDown={(e) => {
 													e.stopPropagation();
-													beginDrag(e, {
+													beginResize(e, {
 														id: item.id,
-														role: "resize-start",
-														range,
+														startHeight: height,
+														days: spanDays(item.startDate, item.endDate),
 													});
 												}}
-												className="pointer-events-auto absolute inset-y-0 left-0 w-1.5 cursor-ew-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
+												className="pointer-events-auto absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
 											/>
-											<span
-												data-testid="scheduler-bar-resize-end"
-												onPointerDown={(e) => {
-													e.stopPropagation();
-													beginDrag(e, {
-														id: item.id,
-														role: "resize-end",
-														range,
-													});
-												}}
-												className="pointer-events-auto absolute inset-y-0 right-0 w-1.5 cursor-ew-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
-											/>
-										</>
-									)}
-								</button>
+										)}
+										{item.kind === "task" && (
+											<>
+												<span
+													data-testid="scheduler-bar-resize-start"
+													onPointerDown={(e) => {
+														e.stopPropagation();
+														beginDrag(e, {
+															id: item.id,
+															role: "resize-start",
+															range,
+														});
+													}}
+													className="pointer-events-auto absolute inset-y-0 left-0 w-1.5 cursor-ew-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
+												/>
+												<span
+													data-testid="scheduler-bar-resize-end"
+													onPointerDown={(e) => {
+														e.stopPropagation();
+														beginDrag(e, {
+															id: item.id,
+															role: "resize-end",
+															range,
+														});
+													}}
+													className="pointer-events-auto absolute inset-y-0 right-0 w-1.5 cursor-ew-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
+												/>
+											</>
+										)}
+									</HoverCardTrigger>
+									<HoverCardContent side="top" align="start">
+										<TaskHoverCard item={item} />
+									</HoverCardContent>
+								</HoverCard>
 							);
 						}),
 					)}

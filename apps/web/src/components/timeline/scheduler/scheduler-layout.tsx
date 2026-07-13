@@ -440,6 +440,9 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 										renamingId={renamingId}
 										onRename={renameTask}
 										clearRenaming={clearRenaming}
+										interacting={
+											!!(draft || dragDraft || createDraft || dropDraft)
+										}
 									/>
 								</div>
 							</div>
