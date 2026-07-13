@@ -365,7 +365,7 @@ export default function SchedulerLanes({
 														: "shrink-0",
 												)}
 											>
-												{formatWorkload(perDayMinutes)}/day
+												{formatWorkload(perDayMinutes)}/d
 											</span>
 										)}
 										{item.kind === "task" && (

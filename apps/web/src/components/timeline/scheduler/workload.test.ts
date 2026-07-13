@@ -6,6 +6,7 @@ import {
 	DEFAULT_DAILY_CAPACITY_MINUTES,
 	DEFAULT_DAILY_TASK_CAPACITY,
 	dailyWorkload,
+	formatDayLoad,
 	formatTaskCount,
 	formatWorkload,
 	taskCountRatio,
@@ -151,5 +152,19 @@ describe("formatTaskCount", () => {
 		expect(formatTaskCount(0)).toBe("0 tasks");
 		expect(formatTaskCount(1)).toBe("1 task");
 		expect(formatTaskCount(3)).toBe("3 tasks");
+	});
+});
+
+describe("formatDayLoad", () => {
+	it("reports both hours and task count in one label", () => {
+		expect(formatDayLoad({ dayMs: 0, minutes: 90, count: 3 })).toBe(
+			"1.5h · 3 tasks",
+		);
+	});
+
+	it("still reports the task count when there are no estimated hours", () => {
+		expect(formatDayLoad({ dayMs: 0, minutes: 0, count: 1 })).toBe(
+			"0h · 1 task",
+		);
 	});
 });

@@ -118,3 +118,12 @@ export function taskCountRatio(count: number): number {
 export function formatTaskCount(count: number): string {
 	return `${count} ${count === 1 ? "task" : "tasks"}`;
 }
+
+/**
+ * Combined label for a day's load, showing both metrics regardless of the
+ * active band mode, e.g. "1.5h · 3 tasks". Lets a tooltip report hours and task
+ * count together so the reading isn't tied to the current mode.
+ */
+export function formatDayLoad(load: DayLoad): string {
+	return `${formatWorkload(load.minutes)} · ${formatTaskCount(load.count)}`;
+}

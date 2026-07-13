@@ -6,7 +6,7 @@ import type { SchedulerRow } from "./layout";
 import {
 	capacityRatio,
 	type DayLoad,
-	formatTaskCount,
+	formatDayLoad,
 	formatWorkload,
 	taskCountRatio,
 	type WorkloadMetric,
@@ -16,23 +16,29 @@ import {
 const STRIP_INSET_PX = 4;
 /** Fills never render thinner than this, so a light day is still visible. */
 const MIN_FILL_PX = 2;
+/**
+ * A day cell narrower than this (px) has no room for its value text, so the
+ * number is dropped and only the fill bar shows — the tooltip still has both.
+ */
+const MIN_LABEL_WIDTH_PX = 18;
 
 /**
- * A day's fill fraction, over-capacity flag, and tooltip under the active
- * metric. In "hours" mode this is scheduled effort vs. the daily capacity; in
- * "count" mode it is the task count vs. the fixed task capacity. `empty` days
- * have nothing to show for this metric and are skipped.
+ * A day's fill fraction, over-capacity flag, and short on-cell value under the
+ * active metric. In "hours" mode this is scheduled effort vs. the daily capacity
+ * ("6h"); in "count" mode it is the task count vs. the fixed task capacity
+ * ("4"). `empty` days have nothing to show for this metric and are skipped. The
+ * tooltip is metric-independent (it reports both) and lives on the cell.
  */
 function dayMetric(
 	load: DayLoad,
 	mode: WorkloadMetric,
-): { ratio: number; overloaded: boolean; label: string; empty: boolean } {
+): { ratio: number; overloaded: boolean; value: string; empty: boolean } {
 	if (mode === "count") {
 		const ratio = taskCountRatio(load.count);
 		return {
 			ratio,
 			overloaded: ratio > 1,
-			label: formatTaskCount(load.count),
+			value: `${load.count}`,
 			empty: load.count === 0,
 		};
 	}
@@ -40,7 +46,7 @@ function dayMetric(
 	return {
 		ratio,
 		overloaded: ratio > 1,
-		label: formatWorkload(load.minutes),
+		value: formatWorkload(load.minutes),
 		empty: load.minutes <= 0,
 	};
 }
@@ -86,7 +92,7 @@ export default function WorkloadStrip({
 	}
 
 	const cell = (load: DayLoad) => {
-		const { ratio, overloaded, label, empty } = dayMetric(load, mode);
+		const { ratio, overloaded, value, empty } = dayMetric(load, mode);
 		if (empty) return null;
 		const from = load.dayMs - today;
 		const to = from + ONE_DAY;
@@ -95,12 +101,15 @@ export default function WorkloadStrip({
 		const right = getPercentageOffset(to);
 		if (!Number.isFinite(left) || !Number.isFinite(right)) return null;
 		const fill = Math.max(MIN_FILL_PX, Math.min(ratio, 1) * innerHeight);
+		// The day column's on-screen width decides whether its value text fits.
+		const widthPx = ((right - left) / 100) * geom.viewportWidth;
+		const showValue = widthPx >= MIN_LABEL_WIDTH_PX;
 		return (
 			<span
 				key={load.dayMs}
 				data-testid="workload-cell"
 				data-overloaded={overloaded}
-				title={label}
+				title={formatDayLoad(load)}
 				className="absolute bottom-0 flex items-end justify-stretch px-px"
 				style={{
 					left: `${left}%`,
@@ -108,6 +117,17 @@ export default function WorkloadStrip({
 					height: innerHeight,
 				}}
 			>
+				{showValue && (
+					<span
+						data-testid="workload-cell-value"
+						className={cn(
+							"absolute inset-x-0 top-0 truncate text-center text-[10px] font-semibold leading-none tabular-nums",
+							overloaded ? "text-destructive" : "text-foreground",
+						)}
+					>
+						{value}
+					</span>
+				)}
 				<span
 					className={cn(
 						"w-full rounded-sm",
