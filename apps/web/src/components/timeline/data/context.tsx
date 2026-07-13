@@ -48,14 +48,16 @@ type TimelineDataValue = {
 	moveDays: (id: string, days: number) => void;
 	undatedTaskRows: UndatedTaskRow[];
 	/**
-	 * Schedule a task onto the timeline. Pass `assigneeId` to also move it to a
-	 * new assignee in the same request (one PATCH covers dates + assignee).
+	 * Schedule a task onto the timeline. Pass `assigneeId` and/or `estimatedTime`
+	 * to also move it to a new assignee or resize its estimate in the same
+	 * request (one PATCH covers dates + assignee + estimate).
 	 */
 	scheduleTask: (
 		id: string,
 		startDate: string,
 		endDate: string,
 		assigneeId?: string,
+		estimatedTime?: number,
 	) => void;
 	setEstimate: (id: string, estimatedTime: number) => void;
 	createTask: (input: CreateTaskInput) => Promise<{ id: string }>;
@@ -131,10 +133,21 @@ export function TimelineDataProvider({
 	}, []);
 
 	const scheduleTask = useCallback(
-		(id: string, startDate: string, endDate: string, assigneeId?: string) => {
+		(
+			id: string,
+			startDate: string,
+			endDate: string,
+			assigneeId?: string,
+			estimatedTime?: number,
+		) => {
 			updateTask.mutate({
 				id,
-				input: { startDate, endDate, ...(assigneeId ? { assigneeId } : {}) },
+				input: {
+					startDate,
+					endDate,
+					...(assigneeId ? { assigneeId } : {}),
+					...(estimatedTime != null ? { estimatedTime } : {}),
+				},
 			});
 		},
 		[updateTask],

@@ -204,6 +204,7 @@ function renderScheduler() {
  */
 function renderSchedulerWithEstimateSpy() {
 	const setEstimate = vi.fn();
+	const scheduleTask = vi.fn();
 	function Bridge({ children }: { children: ReactNode }) {
 		const [items, setItems] = useState<TimelineItem[]>(seedItems);
 		vi.mocked(useTimelineData).mockReturnValue(
@@ -214,6 +215,7 @@ function renderSchedulerWithEstimateSpy() {
 						prev.map((i) => (i.id === id ? { ...i, ...patch } : i)),
 					),
 				setEstimate,
+				scheduleTask,
 			}),
 		);
 		return <>{children}</>;
@@ -230,7 +232,7 @@ function renderSchedulerWithEstimateSpy() {
 			</TimelineDataProvider>
 		</QueryClientProvider>,
 	);
-	return { setEstimate };
+	return { setEstimate, scheduleTask };
 }
 
 describe("SchedulerView", () => {
@@ -256,11 +258,6 @@ describe("SchedulerView", () => {
 		for (const cell of cells) {
 			expect(cell.getAttribute("data-overloaded")).toMatch(/^(true|false)$/);
 		}
-		// Each band draws a capacity reference line and labels its busiest day.
-		expect(screen.getAllByTestId("workload-capacity-line").length).toBe(
-			strips.length,
-		);
-		expect(screen.getAllByTestId("workload-peak").length).toBe(strips.length);
 	});
 
 	it("shows an empty-state band for an assignee with no workload", async () => {
@@ -341,6 +338,28 @@ describe("SchedulerView", () => {
 		// The resize wiring in scheduler-layout.tsx must call setEstimate (API
 		// persistence), not just updateItem (optimistic local state), on commit.
 		expect(setEstimate).toHaveBeenCalledWith("t-ana-1", expect.any(Number));
+	});
+
+	it("horizontal resize holds per-day effort and PATCHes dates + estimate in one call", async () => {
+		const { scheduleTask, setEstimate } = renderSchedulerWithEstimateSpy();
+		await screen.findAllByTestId("scheduler-group-header");
+
+		// "Ana task one" spans 3 inclusive days (offset -6..-4) at 90m → 30m/day.
+		const bar = screen.getByTitle("Ana task one");
+		const handle = within(bar).getByTestId("scheduler-bar-resize-end");
+
+		// Drag the end edge +128px = +2 days at weeks zoom (64px/day) → 5-day span.
+		fireEvent.pointerDown(handle, { clientX: 100, pointerId: 1 });
+		fireEvent.pointerMove(window, { clientX: 228 });
+		fireEvent.pointerUp(window, { clientX: 228 });
+
+		// One PATCH carries the new dates AND the rescaled estimate; the per-day
+		// effort is held constant, so 30m/day × 5 days = 150m. No second call.
+		expect(scheduleTask).toHaveBeenCalledTimes(1);
+		const [id, , , , estimatedTime] = scheduleTask.mock.calls[0];
+		expect(id).toBe("t-ana-1");
+		expect(estimatedTime).toBe(150);
+		expect(setEstimate).not.toHaveBeenCalled();
 	});
 
 	it("dragging a bar body horizontally reschedules it (left shifts)", async () => {

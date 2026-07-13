@@ -239,7 +239,7 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 					: undefined;
 			// A horizontal resize changes the day span, so carry the estimate with
 			// it at a constant per-day effort (a move keeps the span, so nothing to
-			// rescale). Persist the new total alongside the dates.
+			// rescale). Dates + assignee + estimate all go in one PATCH.
 			const item = items.find((i) => i.id === id);
 			const rescaled = item
 				? rescaleEstimateForSpan(
@@ -248,13 +248,19 @@ function SchedulerLayoutInner({ viewSwitch }: { viewSwitch?: ReactNode }) {
 						spanDays(dates.startDate, dates.endDate),
 					)
 				: null;
-			const patch = { ...dates, ...(assignee ? { assignee } : {}) };
-			updateItem(
+			const patch = {
+				...dates,
+				...(assignee ? { assignee } : {}),
+				...(rescaled != null ? { estimatedTime: rescaled } : {}),
+			};
+			updateItem(id, patch);
+			scheduleTask(
 				id,
-				rescaled != null ? { ...patch, estimatedTime: rescaled } : patch,
+				dates.startDate,
+				dates.endDate,
+				assignee?.id,
+				rescaled ?? undefined,
 			);
-			scheduleTask(id, dates.startDate, dates.endDate, assignee?.id);
-			if (rescaled != null) setEstimate(id, rescaled);
 		},
 		resolveLaneAt,
 	});
