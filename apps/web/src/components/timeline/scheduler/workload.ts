@@ -78,12 +78,11 @@ export function capacityRatio(minutes: number, dayMs: number): number {
 	return minutes / cap;
 }
 
-/** Compact "3h 30m" / "45m" / "2h" label for a workload amount. */
+/**
+ * Decimal-hour label for a workload amount, e.g. "0.25h" (15m), "1.5h", "8h".
+ * Rounded to two decimals, with trailing zeros dropped by the number literal.
+ */
 export function formatWorkload(minutes: number): string {
-	const rounded = Math.round(minutes);
-	const h = Math.floor(rounded / 60);
-	const m = rounded % 60;
-	if (h === 0) return `${m}m`;
-	if (m === 0) return `${h}h`;
-	return `${h}h ${m}m`;
+	const hours = Math.round((minutes / 60) * 100) / 100;
+	return `${hours}h`;
 }

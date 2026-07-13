@@ -96,11 +96,11 @@ describe("capacityRatio", () => {
 });
 
 describe("formatWorkload", () => {
-	it("formats hours and minutes compactly", () => {
-		expect(formatWorkload(45)).toBe("45m");
+	it("formats amounts as decimal hours", () => {
+		expect(formatWorkload(15)).toBe("0.25h");
+		expect(formatWorkload(90)).toBe("1.5h");
 		expect(formatWorkload(120)).toBe("2h");
-		expect(formatWorkload(210)).toBe("3h 30m");
-		// Rounds to the nearest minute.
-		expect(formatWorkload(59.6)).toBe("1h");
+		expect(formatWorkload(210)).toBe("3.5h");
+		expect(formatWorkload(480)).toBe("8h");
 	});
 });
