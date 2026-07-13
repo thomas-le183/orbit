@@ -223,6 +223,11 @@ export default function SchedulerLanes({
 								return null;
 							const width = Math.max(right - left, minWidthPercent);
 							const height = barHeight(item);
+							const days = spanDays(item.startDate, item.endDate);
+							// The bar height encodes per-day effort, so its label shows the
+							// same figure (total lives in the hover card).
+							const perDayMinutes =
+								item.estimatedTime != null ? item.estimatedTime / days : null;
 							const dragging = dragDraft?.id === item.id;
 							const top =
 								dragging && dragDraft?.pointerContentY != null
@@ -346,7 +351,7 @@ export default function SchedulerLanes({
 										>
 											{item.name}
 										</span>
-										{item.estimatedTime != null && (
+										{perDayMinutes != null && (
 											<span
 												className={cn(
 													"relative font-normal text-[10px] text-white/80",
@@ -355,7 +360,7 @@ export default function SchedulerLanes({
 														: "shrink-0",
 												)}
 											>
-												{formatWorkload(item.estimatedTime)}
+												{formatWorkload(perDayMinutes)}/day
 											</span>
 										)}
 										{item.kind === "task" && (
@@ -366,7 +371,7 @@ export default function SchedulerLanes({
 													beginResize(e, {
 														id: item.id,
 														startHeight: height,
-														days: spanDays(item.startDate, item.endDate),
+														days,
 													});
 												}}
 												className="pointer-events-auto absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize opacity-0 transition-opacity group-hover:opacity-100 group-data-[selected=true]:opacity-100"
