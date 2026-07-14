@@ -83,7 +83,6 @@ export default function WorkloadStrip({
 				className="pointer-events-none absolute inset-x-0 flex items-center justify-center"
 				style={{ top: row.top + STRIP_INSET_PX, height: innerHeight }}
 			>
-				<span className="absolute inset-x-2 bottom-0 border-border border-b border-dashed" />
 				<span className="rounded-sm bg-background-primary px-1 text-[10px] font-medium text-muted-foreground/60">
 					{mode === "count" ? "No tasks" : "No workload"}
 				</span>
